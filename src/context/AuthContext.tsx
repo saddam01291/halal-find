@@ -19,7 +19,7 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     isLoading: boolean;
-    signInWithGoogle: () => Promise<void>;
+    signInWithGoogle: (next?: string) => Promise<void>;
     signOut: () => Promise<void>;
 }
 
@@ -61,14 +61,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
-    const signInWithGoogle = async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
-        if (error) console.error('Error signing in:', error);
+    const signInWithGoogle = async (next?: string) => {
+        console.log('--- Sign In Attempt Started ---');
+
+        // Prevent duplicate calls
+        if (isLoading) {
+            console.log('Sign-in ignored: isLoading is true');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            let redirectUrl = `${window.location.origin}/auth/callback`;
+            if (next) {
+                redirectUrl += `?next=${encodeURIComponent(next)}`;
+            }
+            console.log('Current Origin:', window.location.origin);
+            console.log('Target Redirect URL:', redirectUrl);
+
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl,
+                    queryParams: {
+                        prompt: 'select_account',
+                        access_type: 'offline',
+                    }
+                },
+            });
+
+            if (error) {
+                console.error('Supabase OAuth Error:', error);
+                alert(`Login Error: ${error.message}\n\nPlease ensure ${window.location.origin} is added to Supabase "Redirect URLs".`);
+                setIsLoading(false);
+            } else {
+                console.log('OAuth URL generated successfully, redirecting...');
+                // If it doesn't redirect automatically for some reason:
+                if (data?.url) {
+                    window.location.href = data.url;
+                }
+            }
+        } catch (err) {
+            console.error('Unexpected Sign-in Exception:', err);
+            setIsLoading(false);
+        }
     };
 
     const signOut = async () => {

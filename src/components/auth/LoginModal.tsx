@@ -7,16 +7,23 @@ import { X, User } from 'lucide-react';
 interface LoginModalProps {
     isOpen: boolean;
     onClose: () => void;
+    redirectTo?: string;
 }
 
-export function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, redirectTo }: LoginModalProps) {
     const { signInWithGoogle, isLoading } = useAuth();
 
     if (!isOpen) return null;
 
     const handleGoogleLogin = async () => {
-        await signInWithGoogle();
-        onClose();
+        try {
+            await signInWithGoogle(redirectTo);
+            // We don't call onClose() here because the page will redirect.
+            // Closing the modal might make the screen flicker or look like it failed
+            // if the redirect takes a second.
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (

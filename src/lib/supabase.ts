@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // Database types
 export interface DbPlace {
@@ -33,6 +33,10 @@ export interface DbReview {
     user_avatar?: string;
     rating: number;
     comment: string;
+    is_halal_confirmed: boolean;
+    is_non_halal_report: boolean;
+    is_dispute_resolved: boolean;
+    resolution_note?: string;
     created_at: string;
 }
 
@@ -43,5 +47,13 @@ export interface DbVerificationRequest {
     certificate_url: string;
     status: 'pending' | 'approved' | 'rejected';
     user_id: string;
+    created_at: string;
+}
+
+export interface DbProfile {
+    id: string;
+    full_name: string;
+    avatar_url: string;
+    role: 'user' | 'admin';
     created_at: string;
 }

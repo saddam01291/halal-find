@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getPlaceById } from '@/lib/api';
-import { DbPlace } from '@/lib/supabase';
+import { getPlaceById, getReviewsForPlace } from '@/lib/api';
+import { DbPlace, DbReview } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { GoogleMap } from '@/components/map/Map';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
-import { Star, MapPin, Clock, Phone, Globe, ChevronLeft, ShieldCheck, Flag, Users } from 'lucide-react';
+import { Star, MapPin, Clock, Phone, Globe, ChevronLeft, ShieldCheck, Flag, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
@@ -20,11 +20,24 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
     const [loading, setLoading] = useState(true);
     const [isReviewing, setIsReviewing] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [confirmations, setConfirmations] = useState(0);
+    const [isDisputed, setIsDisputed] = useState(false);
 
     useEffect(() => {
         params.then(async (resolvedParams) => {
-            const foundPlace = await getPlaceById(resolvedParams.id);
+            const [foundPlace, reviews] = await Promise.all([
+                getPlaceById(resolvedParams.id),
+                getReviewsForPlace(resolvedParams.id)
+            ]);
+
             setPlace(foundPlace);
+            const confirmedCount = reviews.filter(r => r.is_halal_confirmed).length;
+            setConfirmations(confirmedCount);
+
+            // Safety Check: Is there any unresolved non-halal report?
+            const activeDispute = reviews.some(r => r.is_non_halal_report && !r.is_dispute_resolved);
+            setIsDisputed(activeDispute);
+
             setLoading(false);
         });
     }, [params]);
@@ -42,10 +55,9 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
-    // Mock Verification Status (Random for demo if not set)
-    // const isVerified = place.id === '1' || place.id === '3';
-    // Use real verified status
-    const isVerified = place.verified;
+    // Tiered Verification Logic
+    const isOwnerVerified = place.verified;
+    const isCommunityVerified = confirmations >= 5;
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -75,14 +87,30 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                                         </span>
                                     ))}
 
-                                    {isVerified ? (
-                                        <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/90 text-white border border-amber-400/50 backdrop-blur-sm shadow-sm">
-                                            <ShieldCheck className="h-3 w-3" /> Owner Verified
+                                    {isDisputed ? (
+                                        <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white border border-red-500 shadow-lg animate-pulse">
+                                            <AlertTriangle className="h-3 w-3" /> HALAL DISPUTED
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-500/50 text-slate-200 border border-slate-400/30 backdrop-blur-sm">
-                                            <Users className="h-3 w-3" /> Community Report
-                                        </span>
+                                        <>
+                                            {isOwnerVerified && (
+                                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white border border-amber-400 shadow-sm">
+                                                    <ShieldCheck className="h-3 w-3" /> Owner Verified
+                                                </span>
+                                            )}
+
+                                            {isCommunityVerified && (
+                                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white border border-emerald-500 shadow-sm">
+                                                    <CheckCircle2 className="h-3 w-3" /> Community Verified
+                                                </span>
+                                            )}
+
+                                            {!isOwnerVerified && !isCommunityVerified && (
+                                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-500/50 text-slate-200 border border-slate-400/30 backdrop-blur-sm">
+                                                    <Users className="h-3 w-3" /> Community Report
+                                                </span>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">{place.name}</h1>
@@ -100,7 +128,7 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                             </div>
 
                             <div className="flex gap-3">
-                                {!isVerified && (
+                                {!isOwnerVerified && (
                                     <Button size="sm" className="bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-white/20">
                                         Claim This Business
                                     </Button>
@@ -125,18 +153,47 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                             <p className="text-slate-600 leading-relaxed text-lg">
                                 Experience authentic {place.cuisine} cuisine at {place.name}.
                                 Known for our delicious dishes and warm atmosphere.
-                                All our meat is 100% Halal certified.
                             </p>
 
-                            {isVerified && (
+                            {isDisputed && (
+                                <div className="mt-6 p-5 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-4">
+                                    <div className="p-3 bg-red-100 rounded-full text-red-600 ring-4 ring-red-50">
+                                        <AlertTriangle className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-red-900 text-lg leading-tight">CAUTION: Halal Status Disputed</h4>
+                                        <p className="text-sm text-red-700 mt-2 font-medium">
+                                            A member of our community has reported that this restaurant has <span className="underline">stopped</span> serving Halal meat.
+                                            Our team is currently investigating. Proceed with caution and verify with the restaurant staff personally.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isDisputed && isOwnerVerified && place.certificate_url && (
                                 <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
                                     <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
                                         <ShieldCheck className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-emerald-900">Halal Certified</h4>
+                                        <h4 className="font-semibold text-emerald-900">Owner Verified</h4>
                                         <p className="text-sm text-emerald-700 mt-1">
-                                            The owner has uploaded a valid Halal certificate. Verified by Find Halal team.
+                                            The owner has provided a valid Halal certificate, verified by the Find Halal team. This establishment officially maintains Halal standards.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!place.verified && isCommunityVerified && (
+                                <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
+                                    <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
+                                        <CheckCircle2 className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-emerald-900">Community Verified Halal</h4>
+                                        <p className="text-sm text-emerald-700 mt-1">
+                                            This restaurant has been confirmed as Halal by {confirmations} members of our community.
+                                            Users have reported that this establishment serves Halal food.
                                         </p>
                                     </div>
                                 </div>

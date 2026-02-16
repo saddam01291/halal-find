@@ -28,17 +28,17 @@ export function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">For Businesses</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><Link href="#" className="hover:text-amber-400 transition-colors">List Your Restaurant</Link></li>
-                            <li><Link href="#" className="hover:text-amber-400 transition-colors">Claim Your Business</Link></li>
-                            <li><Link href="#" className="hover:text-amber-400 transition-colors">Partner with Us</Link></li>
+                            <li><Link href="/for-businesses" className="hover:text-amber-400 transition-colors">List Your Restaurant</Link></li>
+                            <li><Link href="/for-businesses" className="hover:text-amber-400 transition-colors">Claim Your Business</Link></li>
+                            <li><Link href="/for-businesses" className="hover:text-amber-400 transition-colors">Partner with Us</Link></li>
                         </ul>
                     </div>
                 </div>
                 <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center text-xs">
                     <p>&copy; {new Date().getFullYear()} FindHalal. All rights reserved.</p>
                     <div className="flex gap-4 mt-4 md:mt-0">
-                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link>
                     </div>
                 </div>
             </div>

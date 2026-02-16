@@ -18,19 +18,22 @@ function SearchContent() {
     const [query, setQuery] = useState(initialQuery);
     const [places, setPlaces] = useState<DbPlace[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     useEffect(() => {
         setQuery(initialQuery);
         const fetchPlaces = async () => {
+            console.log(`Search: Fetching places for query: "${initialQuery}"`);
             setLoading(true);
+            setError(null);
             try {
-                // If query is empty, maybe fetch all or popular? API searchPlaces might need query.
-                // If query is empty, we can use getPlaces()
                 const data = initialQuery ? await searchPlaces(initialQuery) : await getPlaces();
-                setPlaces(data);
-            } catch (error) {
-                console.error('Error searching places:', error);
+                console.log(`Search: Received ${data?.length || 0} places`);
+                setPlaces(data || []);
+            } catch (err: any) {
+                console.error('Search: Fetch error:', err);
+                setError(err.message || 'Failed to fetch places');
             } finally {
                 setLoading(false);
             }
@@ -66,15 +69,28 @@ function SearchContent() {
                         <h1 className="text-lg font-semibold text-slate-800">
                             {initialQuery ? `Results: "${initialQuery}"` : 'Explore Places'}
                         </h1>
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                            {places.length} found
-                        </span>
+                        {!loading && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                {places.length} found
+                            </span>
+                        )}
                     </div>
                 </div>
 
                 <div className="divide-y divide-slate-100">
                     {loading ? (
-                        <div className="p-10 text-center text-slate-500">Loading results...</div>
+                        <div className="p-10 text-center text-slate-500">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                            Loading results...
+                        </div>
+                    ) : error ? (
+                        <div className="p-10 text-center text-red-500 bg-red-50 m-4 rounded-xl border border-red-100">
+                            <p className="font-bold">Error loading results</p>
+                            <p className="text-sm mt-1">{error}</p>
+                            <Button variant="outline" size="sm" className="mt-4 border-red-200 text-red-700" onClick={() => window.location.reload()}>
+                                Try Again
+                            </Button>
+                        </div>
                     ) : (
                         <>
                             {places.map((place) => (

@@ -53,14 +53,16 @@ export function Navbar() {
                                             className="h-8 w-8 rounded-full border border-slate-200"
                                         />
                                     </button>
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 hidden group-hover:block animate-in fade-in slide-in-from-top-2">
-                                        <div className="px-4 py-2 border-b border-slate-50">
-                                            <p className="text-sm font-semibold text-slate-900">{user.full_name || 'User'}</p>
-                                            <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                                    <div className="absolute right-0 top-full pt-2 w-48 hidden group-hover:block">
+                                        <div className="bg-white rounded-xl shadow-xl border border-slate-100 py-1 animate-in fade-in slide-in-from-top-2">
+                                            <div className="px-4 py-2 border-b border-slate-50">
+                                                <p className="text-sm font-semibold text-slate-900">{user.full_name || 'User'}</p>
+                                                <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                                            </div>
+                                            <button onClick={signOut} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                                <LogOut className="h-4 w-4" /> Sign Out
+                                            </button>
                                         </div>
-                                        <button onClick={signOut} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                            <LogOut className="h-4 w-4" /> Sign Out
-                                        </button>
                                     </div>
                                 </div>
                             </div>
