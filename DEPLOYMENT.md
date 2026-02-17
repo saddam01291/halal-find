@@ -1,53 +1,59 @@
-# 🚀 Launch Guide: findhalalonly.com
+# 🚀 Step-by-Step Launch: findhalalonly.com
 
-Congratulations on securing your domain! Here are the steps to get **Find Halal** live on the internet.
+Follow these exact steps to get your website live.
 
-## Phase 0: Database Clean Slate
-Before launching, you should remove the test data (fake reviews) used during development.
+## Step 1: Create a GitHub Repository
+1.  Go to [GitHub.com](https://github.com/) and Log in.
+2.  Click the **+** icon in the top right and select **New repository**.
+3.  Name it: `find-halal`.
+4.  Keep it **Public** (recommended for Vercel Free).
+5.  Click **Create repository**.
+6.  You will see a page with code. Look for the "Quick setup" URL:  
+    `https://github.com/YOUR_USERNAME/find-halal.git` (Keep this handy).
 
-1.  Go to your **Supabase Dashboard > SQL Editor**.
-2.  Run the following command to delete all test reviews while keeping your restaurant data:
-    ```sql
-    DELETE FROM reviews;
-    ```
-    *(Note: This ensures your app starts with 0 reviews so your real community can fill it up!)*
+## Step 2: Push Your Code to GitHub
+Open your terminal in `d:/PROJECT- FIND HALAL/find-halal` and run these commands one at a time:
+```bash
+# 1. Connect your local code to your new GitHub Repo
+git remote add origin https://github.com/YOUR_USERNAME/find-halal.git
 
-## Phase 1: Deploy to Vercel
-1. **GitHub**: If not already done, create a new repository on GitHub and push your code.
-2. **Connect**: Log in to [Vercel](https://vercel.com/) and click **Add New > Project**. Select your GitHub repo.
-3. **Environment Variables**: During setup, manually copy every variable from your `.env.local` to Vercel's "Environment Variables" section:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-4. **Deploy**: Click the "Deploy" button. You will get a temporary URL (e.g., `find-halal.vercel.app`).
+# 2. Rename the main branch
+git branch -M main
 
-## Phase 2: Connect findhalalonly.com (GoDaddy)
-1. **In Vercel**: 
-   - Go to your Project > **Settings > Domains**.
-   - Type in `findhalalonly.com` and click **Add**.
-   - Vercel will show you the **DNS Records** you need.
-2. **In GoDaddy**:
-   - Log in and go to your **Domain Portfolio > DNS Management** for `findhalalonly.com`.
-   - **Add A Record**: Set Name to `@` and Value to the IP provided by Vercel (usually `76.76.21.21`).
-   - **Add CNAME Record**: Set Name to `www` and Value to `cname.vercel-dns.com`.
-3. **Wait**: It may take 10-60 minutes for the domain to "propagate" (start working).
+# 3. Upload everything!
+git push -u origin main
+```
 
-## Phase 3: Update Integrations (CRITICAL)
-Your app won't allow logins or show maps until you whitelist the new domain.
+## Step 3: Connect to Vercel
+1.  Go to [Vercel.com](https://vercel.com/) and Log in with GitHub.
+2.  Click **"Add New" > "Project"**.
+3.  Find your `find-halal` repo and click **Import**.
+4.  **Crucial: Environment Variables**
+    Look for the "Environment Variables" section and add these three:
+    - **Key**: `NEXT_PUBLIC_SUPABASE_URL` | **Value**: (Copy from your `.env.local`)
+    - **Key**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Value**: (Copy from your `.env.local`)
+    - **Key**: `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | **Value**: (Copy from your `.env.local`)
+5.  Click **Deploy**.
 
-### 1. Supabase (Login Fix)
-- Go to [Supabase Dashboard](https://supabase.com/) > **Authentication > URL Configuration**.
-- **Site URL**: Change to `https://findhalalonly.com`.
-- **Redirect URLs**: Add `https://findhalalonly.com/**`.
+## Step 4: Connect findhalalonly.com
+1.  In Vercel, go to your Project > **Settings > Domains**.
+2.  Add `findhalalonly.com`.
+3.  Vercel will show "Invalid Configuration" because we need to update GoDaddy.
+4.  **Log in to GoDaddy** > DNS Management:
+    - **A Record**: Name: `@` | Value: `76.76.21.21`
+    - **CNAME Record**: Name: `www` | Value: `cname.vercel-dns.com`
+5.  Wait about 30 minutes, and the domain will turn green in Vercel.
 
-### 2. Google Maps (Visuals Fix)
-- Go to [Google Cloud Console](https://console.cloud.google.com/).
-- Select your project > **APIs & Services > Credentials**.
-- Edit your API Key.
-- Under **Website restrictions**, add:
-  - `findhalalonly.com/*`
-  - `*.findhalalonly.com/*`
+## Step 5: Whitelist Your Domain (VITAL)
+Your site won't let people log in until you tell Supabase the new domain is safe.
+
+1.  **Supabase**: Go to Authentication > **URL Configuration**.
+    - Set **Site URL** to `https://findhalalonly.com`
+    - In **Redirect URLs**, add: `https://findhalalonly.com/**`
+2.  **Google Maps**: Go to Google Cloud Console > APIs & Services > Credentials.
+    - Edit your API Key.
+    - Under **Website restrictions**, add `*.findhalalonly.com/*`
 
 ---
 > [!IMPORTANT]
-> Always test your login and search once the domain is live to ensure the redirects are working correctly!
+> Once everything is done, your site will be live at **https://findhalalonly.com**!
