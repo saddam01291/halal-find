@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Park Circus",
+    "center": { "lat": 22.5448, "lng": 88.3658 },
+    "radius": 1500
+  },
+  {
+    "name": "Zakaria Street / Burrabazar",
+    "center": { "lat": 22.5785, "lng": 88.3533 },
+    "radius": 1500
+  },
+  {
+    "name": "New Market / Esplanade",
+    "center": { "lat": 22.5603, "lng": 88.3511 },
+    "radius": 1200
+  },
+  {
+    "name": "Kidderpore",
+    "center": { "lat": 22.5369, "lng": 88.3244 },
+    "radius": 2000
+  },
+  {
+    "name": "Metiabruz",
+    "center": { "lat": 22.5441, "lng": 88.2709 },
+    "radius": 2000
+  },
+  {
+    "name": "Rajabazar / Sealdah",
+    "center": { "lat": 22.5701, "lng": 88.3719 },
+    "radius": 1500
+  },
+  {
+    "name": "Entally / Tangra",
+    "center": { "lat": 22.5534, "lng": 88.3748 },
+    "radius": 1500
+  },
+  {
+    "name": "Tollygunge / Anwar Shah",
+    "center": { "lat": 22.5021, "lng": 88.3456 },
+    "radius": 2000
+  },
+  {
+    "name": "Garia / Jadavpur",
+    "center": { "lat": 22.4839, "lng": 88.3752 },
+    "radius": 2000
+  },
+  {
+    "name": "Salt Lake / Sector V",
+    "center": { "lat": 22.5726, "lng": 88.4339 },
+    "radius": 2500
+  },
+  {
+    "name": "Rajarhat / New Town",
+    "center": { "lat": 22.5839, "lng": 88.4728 },
+    "radius": 3000
+  },
+  {
+    "name": "Howrah Station Area",
+    "center": { "lat": 22.5855, "lng": 88.3409 },
+    "radius": 1500
+  }
+]

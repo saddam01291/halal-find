@@ -74,35 +74,33 @@ export function ReviewForm({ placeId, onCancel, onSubmit }: { placeId: string; o
             </div>
 
             <div className="space-y-3">
-                <div className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${isHalalConfirmed ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-gray-200 opacity-60 grayscale cursor-not-allowed'
-                    } ${!isNonHalalReport ? 'opacity-100 grayscale-0 cursor-default' : ''}`}>
+                <div className={`flex items-center gap-3 p-3 border rounded-xl transition-all shadow-sm ${isHalalConfirmed ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'
+                    } ${isNonHalalReport ? 'opacity-40' : ''}`}>
                     <input
                         type="checkbox"
                         id="confirm-halal"
                         disabled={isNonHalalReport}
-                        className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
+                        className="h-5 w-5 rounded-full border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-50 transition-transform hover:scale-110"
                         checked={isHalalConfirmed}
                         onChange={(e) => setIsHalalConfirmed(e.target.checked)}
                     />
-                    <label htmlFor="confirm-halal" className="text-sm font-medium text-gray-700 cursor-pointer">
-                        I confirm this restaurant serves <span className="text-emerald-600 font-bold">100% Halal</span> food
+                    <label htmlFor="confirm-halal" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
+                        Help the community: <span className="text-emerald-700">I confirm this place is 100% Halal</span> ✅
                     </label>
                 </div>
 
-                <div className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${isNonHalalReport ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
-                    }`}>
+                <div className={`flex items-center gap-3 p-3 border rounded-xl transition-all shadow-sm ${isNonHalalReport ? 'bg-red-50 border-red-400' : 'bg-white border-slate-200'
+                    } ${isHalalConfirmed ? 'opacity-40' : ''}`}>
                     <input
                         type="checkbox"
                         id="report-non-halal"
-                        className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        disabled={isHalalConfirmed}
+                        className="h-5 w-5 rounded-full border-slate-300 text-red-600 focus:ring-red-500 disabled:opacity-50 transition-transform hover:scale-110"
                         checked={isNonHalalReport}
-                        onChange={(e) => {
-                            setIsNonHalalReport(e.target.checked);
-                            if (e.target.checked) setIsHalalConfirmed(false);
-                        }}
+                        onChange={(e) => setIsNonHalalReport(e.target.checked)}
                     />
-                    <label htmlFor="report-non-halal" className="text-sm font-medium text-red-700 cursor-pointer">
-                        <span className="font-bold underline">Report Warning:</span> This restaurant has <span className="font-bold">stopped</span> serving Halal meat
+                    <label htmlFor="report-non-halal" className="text-sm font-semibold text-red-700 cursor-pointer select-none">
+                        Urgent Warning: <span className="underline">This place no longer serves Halal meat</span> ⚠️
                     </label>
                 </div>
             </div>

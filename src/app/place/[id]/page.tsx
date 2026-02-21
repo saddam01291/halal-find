@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import Link from 'next/link';
+import { HalalBadge } from '@/components/ui/HalalBadge';
+import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
 import { LoginModal } from '@/components/auth/LoginModal';
 
@@ -59,8 +61,42 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
     const isOwnerVerified = place.verified;
     const isCommunityVerified = confirmations >= 5;
 
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": place.name,
+        "image": place.image,
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": place.address,
+            "addressLocality": place.city,
+            "addressCountry": "IN"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": place.lat,
+            "longitude": place.lng
+        },
+        "url": `https://findhalalonly.com/place/${place.id}`,
+        "servesCuisine": place.cuisine,
+        "dietaryRestrictions": "Halal",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": place.rating,
+            "reviewCount": place.review_count
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
+            <Head>
+                <title>{`${place.name} | Halal Restaurant in ${place.city}`}</title>
+                <meta name="description" content={`Find out if ${place.name} in ${place.city} is Halal. See community reviews, certificates, and more on Find Halal.`} />
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+                />
+            </Head>
             {/* Hero Image / Banner */}
             <div className="relative h-80 md:h-96 w-full">
                 <div
@@ -80,9 +116,9 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                     <div className="container mx-auto">
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                             <div>
-                                <div className="flex gap-2 mb-3">
+                                <div className="flex gap-2 mb-3 items-center">
                                     {(place.tags || []).map(tag => (
-                                        <span key={tag} className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-100 border border-emerald-500/20 backdrop-blur-sm">
+                                        <span key={tag} className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-emerald-100 border border-emerald-500/20 backdrop-blur-sm">
                                             {tag}
                                         </span>
                                     ))}
@@ -92,25 +128,10 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                                             <AlertTriangle className="h-3 w-3" /> HALAL DISPUTED
                                         </span>
                                     ) : (
-                                        <>
-                                            {isOwnerVerified && (
-                                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white border border-amber-400 shadow-sm">
-                                                    <ShieldCheck className="h-3 w-3" /> Owner Verified
-                                                </span>
-                                            )}
-
-                                            {isCommunityVerified && (
-                                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white border border-emerald-500 shadow-sm">
-                                                    <CheckCircle2 className="h-3 w-3" /> Community Verified
-                                                </span>
-                                            )}
-
-                                            {!isOwnerVerified && !isCommunityVerified && (
-                                                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-500/50 text-slate-200 border border-slate-400/30 backdrop-blur-sm">
-                                                    <Users className="h-3 w-3" /> Community Report
-                                                </span>
-                                            )}
-                                        </>
+                                        <HalalBadge
+                                            status={place.verification_status}
+                                            className="bg-emerald-500 text-white border-emerald-400 py-0.5"
+                                        />
                                     )}
                                 </div>
                                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">{place.name}</h1>

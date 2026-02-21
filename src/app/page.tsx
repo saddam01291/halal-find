@@ -10,6 +10,7 @@ import { getPlaces, searchPlaces } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
 import { getDistance } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { HalalBadge } from '@/components/ui/HalalBadge';
 import { LoginModal } from '@/components/auth/LoginModal';
 
 export default function Home() {
@@ -207,12 +208,13 @@ export default function Home() {
                       )}
                     </div>
                     <div className="p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1">{place.name}</h3>
-                        <span className="flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-100">
+                      <div className="flex justify-between items-start mb-1">
+                        <HalalBadge status={place.verification_status} />
+                        <span className="flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-100">
                           {place.rating} ★
                         </span>
                       </div>
+                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2">{place.name}</h3>
                       <p className="text-slate-500 text-sm mb-5 line-clamp-2">{place.address}</p>
                       <div className="flex gap-2 flex-wrap">
                         {(place.tags || []).slice(0, 3).map(tag => (

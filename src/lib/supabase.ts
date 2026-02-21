@@ -12,6 +12,8 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Database types
+export type VerificationStatus = 'unverified' | 'community_verified' | 'owner_verified';
+
 export interface DbPlace {
     id: string;
     name: string;
@@ -25,7 +27,7 @@ export interface DbPlace {
     lng: number;
     tags: string[];
     verified: boolean;
-    added_by: 'owner' | 'community';
+    verification_status: VerificationStatus;
     owner_id?: string;
     certificate_url?: string;
     created_at: string;
