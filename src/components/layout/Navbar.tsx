@@ -153,129 +153,123 @@ export function Navbar() {
                     </div>
                 </div>
 
-                {/* 📱 Mobile Menu Overlay (Full Screen) */}
-                {isMobileMenuOpen && (
-                    <div className="fixed inset-0 z-[100] sm:hidden">
-                        {/* Semi-transparent Backdrop */}
-                        <div
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        />
+            </nav>
 
-                        {/* Menu Content Tray */}
-                        <div className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
-                            {/* Header in Menu */}
-                            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600">
-                                        <MapPin className="h-4 w-4 text-white" />
-                                    </div>
-                                    <span className="font-bold text-slate-900">Menu</span>
+            {/* 📱 Mobile Menu Overlay (Full Screen) */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[100] sm:hidden flex justify-end">
+                    {/* Semi-transparent Backdrop */}
+                    <div
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+
+                    {/* Menu Content Tray */}
+                    <div className="relative h-full w-[280px] bg-white shadow-2xl flex flex-col border-l border-slate-100">
+                        {/* Header in Menu */}
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 shadow-sm">
+                                    <MapPin className="h-4 w-4 text-white" />
                                 </div>
-                                <button
+                                <span className="font-bold text-slate-900">Menu</span>
+                            </div>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 rounded-full hover:bg-slate-100 text-slate-400 active:scale-95 transition-transform"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                            {/* Primary Actions */}
+                            <div className="space-y-3">
+                                <Link
+                                    href="/search"
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="p-2 rounded-full hover:bg-slate-100 text-slate-400"
+                                    className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-slate-900 active:bg-slate-100 transition-colors"
                                 >
-                                    <X className="h-6 w-6" />
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-sm">
+                                        <MapPin className="h-4 w-4 text-emerald-600" />
+                                    </div>
+                                    <span className="font-bold text-sm">Explore Restaurants</span>
+                                </Link>
+
+                                <button
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        setIsAddPlaceOpen(true);
+                                    }}
+                                    className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100/50 text-emerald-900 active:bg-emerald-100 transition-colors w-full text-left"
+                                >
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-sm">
+                                        <PlusCircle className="h-4 w-4 text-emerald-600" />
+                                    </div>
+                                    <span className="font-bold text-sm">Add New Place</span>
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                                {/* Primary Actions */}
-                                <div className="grid grid-cols-1 gap-4">
-                                    <Link
-                                        href="/search"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-900 active:bg-slate-100 transition-colors"
-                                    >
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
-                                            <MapPin className="h-5 w-5 text-emerald-600" />
+                            {/* User Section */}
+                            <div className="pt-2">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">Account</p>
+                                {user ? (
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 mb-3">
+                                            <img
+                                                src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name}`}
+                                                alt="User"
+                                                className="h-10 w-10 rounded-full border border-white shadow-sm"
+                                            />
+                                            <div className="overflow-hidden">
+                                                <p className="text-sm font-bold text-slate-900 truncate">{user.full_name || 'User'}</p>
+                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{user.role}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-bold">Explore Halal</p>
-                                            <p className="text-xs text-slate-500">Find nearby restaurants</p>
-                                        </div>
-                                    </Link>
 
-                                    <button
+                                        {user.role === 'admin' && (
+                                            <Link
+                                                href="/admin"
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 font-bold text-sm text-slate-700"
+                                            >
+                                                <LayoutDashboard className="h-4 w-4 text-emerald-600" /> Admin Dashboard
+                                            </Link>
+                                        )}
+                                        <button
+                                            disabled={isLoggingOut}
+                                            onClick={async () => {
+                                                setIsLoggingOut(true);
+                                                await signOut();
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 font-bold text-sm text-red-600 w-full text-left disabled:opacity-50"
+                                        >
+                                            <LogOut className={`h-4 w-4 ${isLoggingOut ? 'animate-spin' : ''}`} />
+                                            {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <Button
                                         onClick={() => {
                                             setIsMobileMenuOpen(false);
-                                            setIsAddPlaceOpen(true);
+                                            setIsLoginOpen(true);
                                         }}
-                                        className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-900 active:bg-emerald-100 transition-colors w-full text-left"
+                                        className="w-full h-12 rounded-xl bg-slate-900 text-white font-bold"
                                     >
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm border border-emerald-100">
-                                            <PlusCircle className="h-5 w-5 text-emerald-600" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold">Add New Place</p>
-                                            <p className="text-xs text-emerald-700">Contribute to community</p>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                {/* User / Login Section */}
-                                <div className="pt-4 border-t border-slate-100">
-                                    {user ? (
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-4 p-2">
-                                                <img
-                                                    src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name}`}
-                                                    alt="User"
-                                                    className="h-14 w-14 rounded-full border-2 border-emerald-500/20 shadow-sm"
-                                                />
-                                                <div>
-                                                    <p className="text-lg font-bold text-slate-900 leading-tight">{user.full_name || 'Assalamu Alaikum'}</p>
-                                                    <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mt-1">{user.role}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 gap-2 pt-2">
-                                                {user.role === 'admin' && (
-                                                    <Link
-                                                        href="/admin"
-                                                        onClick={() => setIsMobileMenuOpen(false)}
-                                                        className="flex items-center gap-3 p-4 rounded-xl hover:bg-slate-50 font-bold text-slate-700 border border-transparent active:border-slate-200"
-                                                    >
-                                                        <LayoutDashboard className="h-5 w-5 text-emerald-600" /> Admin Dashboard
-                                                    </Link>
-                                                )}
-                                                <button
-                                                    disabled={isLoggingOut}
-                                                    onClick={async () => {
-                                                        setIsLoggingOut(true);
-                                                        await signOut();
-                                                        setIsMobileMenuOpen(false);
-                                                    }}
-                                                    className="flex items-center gap-3 p-4 rounded-xl hover:bg-red-50 font-bold text-red-600 border border-transparent active:border-red-100 disabled:opacity-50"
-                                                >
-                                                    <LogOut className={`h-5 w-5 ${isLoggingOut ? 'animate-spin' : ''}`} />
-                                                    {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <Button
-                                            onClick={() => {
-                                                setIsMobileMenuOpen(false);
-                                                setIsLoginOpen(true);
-                                            }}
-                                            className="w-full h-14 rounded-2xl bg-slate-900 text-white font-bold text-lg shadow-xl shadow-slate-200"
-                                        >
-                                            Sign In / Register
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Footer in Menu */}
-                            <div className="p-8 text-center border-t border-slate-50">
-                                <span className="text-xs text-slate-400 font-medium">FindHalal GOURMET v1.0</span>
+                                        Sign In / Partner
+                                    </Button>
+                                )}
                             </div>
                         </div>
+
+                        {/* Footer in Menu */}
+                        <div className="p-6 text-center border-t border-slate-50">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">FindHalal GOURMET</span>
+                        </div>
                     </div>
-                )}
-            </nav>
+                </div>
+            )}
 
             <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
             <AddPlaceModal isOpen={isAddPlaceOpen} onClose={() => setIsAddPlaceOpen(false)} />
