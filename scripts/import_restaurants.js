@@ -13,7 +13,8 @@ if (!supabaseUrl || !supabaseKey || !googleApiKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const GRID_FILE = './scripts/kolkata_grid.json';
+const path = require('path');
+const GRID_FILE = path.join(__dirname, 'kolkata_grid.json');
 const grid = require(GRID_FILE);
 
 const SEARCH_KEYWORDS = ['Halal restaurant', 'Biryani', 'Mughlai', 'Muslim food', 'Kebab'];
@@ -38,8 +39,17 @@ async function searchGrid() {
                     }
                 });
 
-                const results = response.data.results;
-                console.log(`  Found ${results.length} results for "${keyword}"`);
+                const data = response.data;
+
+                if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+                    console.error(`  Google API Error (${data.status}): ${data.error_message || 'Check your Google Cloud Console'}`);
+                    if (data.status === 'REQUEST_DENIED') {
+                        console.error('  TIP: Most common reason is "Places API (Old)" is not enabled or Billing is missing.');
+                    }
+                }
+
+                const results = data.results || [];
+                console.log(`  Found ${results.length} results for "${keyword}" (Status: ${data.status})`);
                 totalFound += results.length;
 
                 for (const place of results) {
