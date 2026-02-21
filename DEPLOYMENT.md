@@ -53,6 +53,9 @@ Your site won't let people log in until you tell Supabase the new domain is safe
 2.  **Google Maps**: Go to Google Cloud Console > APIs & Services > Credentials.
     - Edit your API Key.
     - Under **Website restrictions**, add `*.findhalalonly.com/*`
+3.  **Troubleshooting "This page can't load Google Maps correctly"**:
+    - If you see this error, open your browser Console (F12).
+    - If it says `BillingNotEnabledMapError`, go to [Google Cloud Billing](https://console.cloud.google.com/billing) and link a credit card to your project. Google requires this even for free usage.
 
 ---
 > [!IMPORTANT]

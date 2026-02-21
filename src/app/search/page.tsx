@@ -23,19 +23,40 @@ function SearchContent() {
 
     useEffect(() => {
         setQuery(initialQuery);
-        const fetchPlaces = async () => {
-            console.log(`Search: Fetching places for query: "${initialQuery}"`);
+        const fetchPlaces = async (retryCount = 0) => {
+            console.log(`Search: Fetching places for query: "${initialQuery}" (retry: ${retryCount})`);
             setLoading(true);
             setError(null);
+
+            // Timeout to prevent stuck loading
+            const timeoutId = setTimeout(() => {
+                setLoading((prevLoading) => {
+                    if (prevLoading) {
+                        console.warn('Search: Fetch timed out');
+                        setError('Connection is taking too long. Please try again.');
+                        return false;
+                    }
+                    return prevLoading;
+                });
+            }, 15000);
+
             try {
                 const data = initialQuery ? await searchPlaces(initialQuery) : await getPlaces();
-                console.log(`Search: Received ${data?.length || 0} places`);
+                clearTimeout(timeoutId);
+                console.log(`Search: Success, received ${data?.length || 0} places`);
                 setPlaces(data || []);
-            } catch (err: any) {
-                console.error('Search: Fetch error:', err);
-                setError(err.message || 'Failed to fetch places');
-            } finally {
                 setLoading(false);
+            } catch (err: any) {
+                clearTimeout(timeoutId);
+                console.error('Search: Fetch error:', err);
+
+                if (retryCount < 2) {
+                    console.log(`Search: Retrying (${retryCount + 1})...`);
+                    setTimeout(() => fetchPlaces(retryCount + 1), 2000);
+                } else {
+                    setError(err.message || 'Failed to fetch places');
+                    setLoading(false);
+                }
             }
         };
         fetchPlaces();

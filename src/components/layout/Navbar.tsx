@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, LogOut, PlusCircle } from 'lucide-react';
+import { MapPin, LogOut, PlusCircle, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { LoginModal } from '@/components/auth/LoginModal';
@@ -59,6 +59,16 @@ export function Navbar() {
                                                 <p className="text-sm font-semibold text-slate-900">{user.full_name || 'User'}</p>
                                                 <p className="text-xs text-slate-500 capitalize">{user.role}</p>
                                             </div>
+
+                                            {user.role === 'admin' && (
+                                                <Link
+                                                    href="/admin"
+                                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-50"
+                                                >
+                                                    <LayoutDashboard className="h-4 w-4 text-emerald-600" /> Admin Dashboard
+                                                </Link>
+                                            )}
+
                                             <button onClick={signOut} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                                                 <LogOut className="h-4 w-4" /> Sign Out
                                             </button>

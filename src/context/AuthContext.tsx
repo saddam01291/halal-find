@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 export type UserRole = 'guest' | 'user' | 'owner' | 'admin';
 
@@ -29,88 +28,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
+
+    const applySession = (s: Session | null) => {
+        setSession(s);
+        if (s?.user) {
+            setUser({
+                id: s.user.id,
+                email: s.user.email,
+                role: 'user',
+                full_name: s.user.user_metadata?.full_name,
+                avatar_url: s.user.user_metadata?.avatar_url,
+            });
+        } else {
+            setUser(null);
+        }
+        setIsLoading(false);
+    };
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
-                setSession(session);
+        // 1. Sync immediately from cookies / storage
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+            applySession(s);
 
-                if (session?.user) {
-                    // Fetch profile
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .single();
-
-                    setUser({
-                        id: session.user.id,
-                        email: session.user.email,
-                        role: (profile?.role as UserRole) || 'user',
-                        full_name: profile?.full_name || session.user.user_metadata?.full_name,
-                        avatar_url: profile?.avatar_url || session.user.user_metadata?.avatar_url,
+            // Fetch enriched profile in background if logged in
+            if (s?.user) {
+                supabase
+                    .from('profiles')
+                    .select('role, full_name, avatar_url')
+                    .eq('id', s.user.id)
+                    .single()
+                    .then(({ data: profile }) => {
+                        if (profile) {
+                            setUser(prev => prev ? {
+                                ...prev,
+                                role: (profile.role as UserRole) || prev.role,
+                                full_name: profile.full_name || prev.full_name,
+                                avatar_url: profile.avatar_url || prev.avatar_url,
+                            } : null);
+                        }
                     });
-                } else {
-                    setUser(null);
-                }
-                setIsLoading(false);
             }
-        );
+        });
+
+        // 2. Listen to future changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+            console.log('Auth Event:', event);
+
+            if (event === 'SIGNED_IN') {
+                // Auto-reload the page so the fresh session is fully picked up.
+                // SIGNED_IN fires only once after the OAuth redirect.
+                // Subsequent page loads fire INITIAL_SESSION — so no infinite loop.
+                window.location.reload();
+                return;
+            }
+
+            applySession(s);
+        });
 
         return () => subscription.unsubscribe();
     }, []);
 
     const signInWithGoogle = async (next?: string) => {
-        console.log('--- Sign In Attempt Started ---');
-
-        // Prevent duplicate calls
-        if (isLoading) {
-            console.log('Sign-in ignored: isLoading is true');
-            return;
-        }
-
         setIsLoading(true);
-
         try {
-            let redirectUrl = `${window.location.origin}/auth/callback`;
-            if (next) {
-                redirectUrl += `?next=${encodeURIComponent(next)}`;
-            }
-            console.log('Current Origin:', window.location.origin);
-            console.log('Target Redirect URL:', redirectUrl);
-
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const redirectUrl = `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+            const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: redirectUrl,
-                    queryParams: {
-                        prompt: 'select_account',
-                        access_type: 'offline',
-                    }
-                },
+                options: { redirectTo: redirectUrl },
             });
-
             if (error) {
-                console.error('Supabase OAuth Error:', error);
-                alert(`Login Error: ${error.message}\n\nPlease ensure ${window.location.origin} is added to Supabase "Redirect URLs".`);
+                alert(`Login Error: ${error.message}`);
                 setIsLoading(false);
-            } else {
-                console.log('OAuth URL generated successfully, redirecting...');
-                // If it doesn't redirect automatically for some reason:
-                if (data?.url) {
-                    window.location.href = data.url;
-                }
             }
         } catch (err) {
-            console.error('Unexpected Sign-in Exception:', err);
+            console.error(err);
             setIsLoading(false);
         }
     };
 
     const signOut = async () => {
+        setIsLoading(true);
         await supabase.auth.signOut();
-        router.push('/');
+        // Hard navigation to bypass Next.js Router Cache
+        window.location.href = '/';
     };
 
     return (

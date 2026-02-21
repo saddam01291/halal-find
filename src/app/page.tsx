@@ -1,20 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
 import { MapPin, ArrowRight, Store, ChefHat, Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
-import { useRef } from 'react';
+import Image from 'next/image';
 import { getPlaces, searchPlaces } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
 import { getDistance } from '@/lib/utils';
-
+import { useAuth } from '@/context/AuthContext';
 import { LoginModal } from '@/components/auth/LoginModal';
 
 export default function Home() {
-  const router = useRouter();
+  const { isLoading: authLoading } = useAuth();
   const exploreRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchTerm, setActiveSearchTerm] = useState('');
@@ -24,42 +23,62 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPlaces = async (query?: string) => {
+  const fetchPlaces = async (query?: string, retryCount = 0) => {
+    console.log(`Home: fetchPlaces (query: "${query || ''}", retry: ${retryCount})`);
     setLoading(true);
     setError(null);
+
+    // Timeout to prevent stuck loading
+    const timeoutId = setTimeout(() => {
+      setLoading((prevLoading) => {
+        if (prevLoading) {
+          console.warn('Home: Fetch timed out');
+          setError('Slow connection detected. Check your internet or try again.');
+          return false;
+        }
+        return prevLoading;
+      });
+    }, 15000);
+
     try {
       const data = query ? await searchPlaces(query) : await getPlaces();
-      console.log('Home: Received places', data.length);
+      clearTimeout(timeoutId);
+      console.log('Home: Fetch success, items:', data.length);
       setPlaces(data);
-    } catch (err: any) {
-      console.error('Home: Fetch error', err);
-      setError(err.message || 'Failed to load restaurants');
-    } finally {
       setLoading(false);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.error('Home: Fetch error', err);
+
+      if (retryCount < 2) {
+        console.log(`Home: Retrying (${retryCount + 1})...`);
+        setTimeout(() => fetchPlaces(query, retryCount + 1), 2000);
+      } else {
+        setError(err.message || 'Failed to load restaurants');
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    // 1. Get Location
+    if (authLoading) return; // Wait for auth to resolve before fetching
+
+    // Get Location
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('Location granted:', position.coords);
           setUserCoords({
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
         },
-        (err) => {
-          console.warn('Geolocation error or denied:', err);
-        },
+        () => { /* location denied - that's fine */ },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
 
-    // 2. Initial Fetch
     fetchPlaces();
-  }, []);
+  }, [authLoading]);
 
   // Proximity Sorting
   const sortedPlaces = [...places].sort((a, b) => {
@@ -171,7 +190,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sortedPlaces.slice(0, 12).map((place) => {
+            {sortedPlaces.slice(0, 12).map((place, index) => {
               const distance = userCoords
                 ? getDistance(userCoords.lat, userCoords.lng, place.lat, place.lng)
                 : null;
@@ -179,12 +198,17 @@ export default function Home() {
               return (
                 <Link href={`/place/${place.id}`} key={place.id} className="group">
                   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1">
-                    <div
-                      className="h-60 bg-slate-100 bg-cover bg-center group-hover:scale-105 transition-transform duration-700 relative"
-                      style={{ backgroundImage: `url(${place.image})` }}
-                    >
+                    <div className="h-60 bg-slate-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
+                      <Image
+                        src={place.image || '/images/placeholder-restaurant.jpg'}
+                        alt={place.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                        priority={index < 3} // Prioritize first few images
+                      />
                       {distance !== null && (
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-emerald-700 shadow-sm border border-emerald-100/50 uppercase tracking-wider">
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-emerald-700 shadow-sm border border-emerald-100/50 uppercase tracking-wider z-10">
                           {distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km away`}
                         </div>
                       )}

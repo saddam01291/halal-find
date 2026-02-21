@@ -3,20 +3,31 @@ import { supabase, DbPlace, DbReview, DbVerificationRequest, DbProfile } from '.
 
 // --- Places ---
 
-export async function getPlaces(): Promise<DbPlace[]> {
-    console.log('API: Fetching all places...');
-    const { data, error } = await supabase
-        .from('places')
-        .select('*')
-        .order('created_at', { ascending: false });
+// Optimization: Selection of specific columns for list views
+const PLACE_LIST_COLUMNS = 'id, name, cuisine, address, city, rating, image, lat, lng, tags, verified';
 
-    if (error) {
-        console.error('API Error fetching places:', error);
+export async function getPlaces(): Promise<DbPlace[]> {
+    console.log('API: Starting fetch request for all places...');
+    const startTime = performance.now();
+    try {
+        const { data, error } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .order('created_at', { ascending: false });
+
+        const duration = (performance.now() - startTime).toFixed(2);
+
+        if (error) {
+            console.error(`API: Supabase error after ${duration}ms:`, error);
+            return [];
+        }
+
+        console.log(`API: Successfully fetched ${data?.length || 0} places in ${duration}ms`);
+        return data as DbPlace[] || [];
+    } catch (err) {
+        console.error('API: Unexpected catch error:', err);
         return [];
     }
-
-    console.log(`API: Fetched ${data?.length || 0} places`);
-    return data || [];
 }
 
 export async function getPlaceById(id: string): Promise<DbPlace | null> {
@@ -37,18 +48,28 @@ export async function getPlaceById(id: string): Promise<DbPlace | null> {
 }
 
 export async function searchPlaces(query: string): Promise<DbPlace[]> {
-    const { data, error } = await supabase
-        .from('places')
-        .select('*')
-        .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%,address.ilike.%${query}%`)
-        .order('rating', { ascending: false });
+    console.log(`API: Starting search for: "${query}"`);
+    const startTime = performance.now();
+    try {
+        const { data, error } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%,address.ilike.%${query}%`)
+            .order('rating', { ascending: false });
 
-    if (error) {
-        console.error('Error searching places:', error);
+        const duration = (performance.now() - startTime).toFixed(2);
+
+        if (error) {
+            console.error(`API: Error searching places after ${duration}ms:`, error);
+            return [];
+        }
+
+        console.log(`API: Search completed in ${duration}ms, items: ${data?.length || 0}`);
+        return data as DbPlace[] || [];
+    } catch (err) {
+        console.error('API: Search exception:', err);
         return [];
     }
-
-    return data || [];
 }
 
 // --- Reviews ---
