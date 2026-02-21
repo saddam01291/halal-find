@@ -7,31 +7,25 @@ import { supabase, DbPlace, DbReview, DbVerificationRequest, DbProfile } from '.
 const PLACE_LIST_COLUMNS = 'id, name, cuisine, address, city, rating, image, lat, lng, tags, verified';
 
 export async function getPlaces(): Promise<DbPlace[]> {
-    console.log('API: Starting fetch request for all places...');
-    const startTime = performance.now();
     try {
         const { data, error } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
             .order('created_at', { ascending: false });
 
-        const duration = (performance.now() - startTime).toFixed(2);
-
         if (error) {
-            console.error(`API: Supabase error after ${duration}ms:`, error);
+            console.error('getPlaces error:', error);
             return [];
         }
 
-        console.log(`API: Successfully fetched ${data?.length || 0} places in ${duration}ms`);
         return data as DbPlace[] || [];
     } catch (err) {
-        console.error('API: Unexpected catch error:', err);
+        console.error('getPlaces unexpected error:', err);
         return [];
     }
 }
 
 export async function getPlaceById(id: string): Promise<DbPlace | null> {
-    console.log(`API: Fetching place by ID: ${id}`);
     const { data, error } = await supabase
         .from('places')
         .select('*')
@@ -39,17 +33,14 @@ export async function getPlaceById(id: string): Promise<DbPlace | null> {
         .single();
 
     if (error) {
-        console.error(`API Error fetching place ${id}:`, error);
+        console.error(`getPlaceById error for ${id}:`, error);
         return null;
     }
 
-    console.log(`API: Fetched place: ${data?.name}`);
     return data;
 }
 
 export async function searchPlaces(query: string): Promise<DbPlace[]> {
-    console.log(`API: Starting search for: "${query}"`);
-    const startTime = performance.now();
     try {
         const { data, error } = await supabase
             .from('places')
@@ -57,17 +48,14 @@ export async function searchPlaces(query: string): Promise<DbPlace[]> {
             .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%,address.ilike.%${query}%`)
             .order('rating', { ascending: false });
 
-        const duration = (performance.now() - startTime).toFixed(2);
-
         if (error) {
-            console.error(`API: Error searching places after ${duration}ms:`, error);
+            console.error('searchPlaces error:', error);
             return [];
         }
 
-        console.log(`API: Search completed in ${duration}ms, items: ${data?.length || 0}`);
         return data as DbPlace[] || [];
     } catch (err) {
-        console.error('API: Search exception:', err);
+        console.error('searchPlaces unexpected error:', err);
         return [];
     }
 }

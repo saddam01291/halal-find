@@ -32,10 +32,8 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // Refreshes the session if expired — MUST call getUser (not getSession)
-    // getSession does not validate with Supabase server, getUser does
-    const { data: { user } } = await supabase.auth.getUser()
-    console.log('Middleware: user', user?.id || 'anonymous', 'for', request.nextUrl.pathname)
+    // Refresh session if expired — validates with Supabase server
+    await supabase.auth.getUser()
 
     return supabaseResponse
 }

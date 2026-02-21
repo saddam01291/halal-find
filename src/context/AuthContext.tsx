@@ -72,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // 2. Listen to future changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-            console.log('Auth Event:', event);
 
             if (event === 'SIGNED_IN') {
                 // Auto-reload the page so the fresh session is fully picked up.

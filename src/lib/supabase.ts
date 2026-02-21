@@ -3,9 +3,6 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-console.log('Supabase: Initializing with URL:', supabaseUrl?.substring(0, 15) + '...');
-console.log('Supabase: Key present:', !!supabaseAnonKey);
-
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,

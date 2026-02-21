@@ -24,37 +24,30 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPlaces = async (query?: string, retryCount = 0) => {
-    console.log(`Home: fetchPlaces (query: "${query || ''}", retry: ${retryCount})`);
     setLoading(true);
     setError(null);
 
-    // Timeout to prevent stuck loading
     const timeoutId = setTimeout(() => {
-      setLoading((prevLoading) => {
-        if (prevLoading) {
-          console.warn('Home: Fetch timed out');
-          setError('Slow connection detected. Check your internet or try again.');
+      setLoading((prev) => {
+        if (prev) {
+          setError('Slow connection detected. Please check your internet and try again.');
           return false;
         }
-        return prevLoading;
+        return prev;
       });
-    }, 15000);
+    }, 12000);
 
     try {
       const data = query ? await searchPlaces(query) : await getPlaces();
       clearTimeout(timeoutId);
-      console.log('Home: Fetch success, items:', data.length);
       setPlaces(data);
       setLoading(false);
     } catch (err: any) {
       clearTimeout(timeoutId);
-      console.error('Home: Fetch error', err);
-
       if (retryCount < 2) {
-        console.log(`Home: Retrying (${retryCount + 1})...`);
         setTimeout(() => fetchPlaces(query, retryCount + 1), 2000);
       } else {
-        setError(err.message || 'Failed to load restaurants');
+        setError(err.message || 'Failed to load restaurants.');
         setLoading(false);
       }
     }
