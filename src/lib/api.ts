@@ -4,7 +4,7 @@ import { supabase, DbPlace, DbReview, DbVerificationRequest, DbProfile } from '.
 // --- Places ---
 
 // Optimization: Selection of specific columns for list views
-const PLACE_LIST_COLUMNS = 'id, name, cuisine, address, city, rating, image, lat, lng, tags, verified';
+const PLACE_LIST_COLUMNS = 'id, name, cuisine, address, city, rating, image, lat, lng, tags, verified, verification_status, is_mixed_neighborhood, serves_alcohol';
 
 export async function getPlaces(): Promise<DbPlace[]> {
     try {

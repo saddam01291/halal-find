@@ -12,6 +12,7 @@ import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import Link from 'next/link';
 import { HalalBadge } from '@/components/ui/HalalBadge';
+import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
 import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
 import { LoginModal } from '@/components/auth/LoginModal';
@@ -175,6 +176,10 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                                 Experience authentic {place.cuisine} cuisine at {place.name}.
                                 Known for our delicious dishes and warm atmosphere.
                             </p>
+
+                            <div className="mt-8">
+                                <SafetyTransparency place={place} />
+                            </div>
 
                             {isDisputed && (
                                 <div className="mt-6 p-5 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-4">

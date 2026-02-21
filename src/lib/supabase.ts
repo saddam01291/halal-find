@@ -30,6 +30,10 @@ export interface DbPlace {
     verification_status: VerificationStatus;
     owner_id?: string;
     certificate_url?: string;
+    serves_alcohol?: boolean;
+    halal_source?: string;
+    contamination_risk?: 'none' | 'low' | 'moderate' | 'high';
+    is_mixed_neighborhood?: boolean;
     created_at: string;
 }
 
