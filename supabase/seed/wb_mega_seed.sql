@@ -53,11 +53,17 @@ VALUES
 -- SURI
 ('Bawarcheese', 'Mughlai', 'Bus Stand Area, Suri 731101', 'Suri', 4.1, 1200, 'https://images.unsplash.com/photo-1512132411229-c30391241dd8?auto=format&fit=crop&q=80', 23.9100, 87.5300, ARRAY['Halal', 'Mughlai', 'Suri'], true, 'community_verified'),
 
--- ADDITIONAL KOLKATA GEMS
-('Oudh 1590', 'Awadhi', 'Multiple Locations (Deshapriya Park / Salt Lake)', 'Kolkata', 4.5, 12500, 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?auto=format&fit=crop&q=80', 22.5200, 88.3500, ARRAY['Halal', 'Luxury', 'Awadhi'], true, 'community_verified'),
-('Shimla Biryani', 'Biryani', 'EM Bypass, VIP Nagar, Kolkata 700100', 'Kolkata', 4.0, 9500, 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?auto=format&fit=crop&q=80', 22.5350, 88.4000, ARRAY['Halal', 'Biryani', 'EM Bypass'], true, 'community_verified'),
-('Bawarchi (Jadavpur)', 'Multi-cuisine', 'Beside 8B Bus Stand, Jadavpur, Kolkata 700032', 'Kolkata', 4.1, 6200, 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80', 22.4950, 88.3700, ARRAY['Halal', 'Rolls', 'Indian'], true, 'community_verified'),
-('Dada Boudi Hotel (Barrackpore)', 'Biryani', 'Barrackpore Station Road, Kolkata 700120', 'Kolkata', 4.6, 65000, 'https://images.unsplash.com/photo-1623341214825-9f4f963a5ccb?auto=format&fit=crop&q=80', 22.7597, 88.3644, ARRAY['Halal', 'Legendary', 'Massive Portions'], true, 'community_verified')
+-- KOLKATA: METIABRUZ & GARDEN REACH (MINI LUCKNOW)
+('Royal Biryani (Metiabruz)', 'Biryani', 'Near Metiabruz Market, Kolkata 700024', 'Kolkata', 4.3, 3100, 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?auto=format&fit=crop&q=80', 22.5320, 88.2910, ARRAY['Halal', 'Metiabruz Special', 'Beef Biryani'], true, 'community_verified'),
+('Muslim Restaurant', 'Mughlai / Traditional', 'Garden Reach Road, Kolkata 700024', 'Kolkata', 4.1, 8500, 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80', 22.5345, 88.2930, ARRAY['Halal', 'Legendary', 'Beef Chaap'], true, 'community_verified'),
+('Al Helal Restaurant', 'Mughlai', 'Garden Reach Road, South Eastern Railway Area, Kolkata 700013', 'Kolkata', 4.2, 5200, 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80', 22.5360, 88.2950, ARRAY['Halal', 'Mughlai', 'Traditional'], true, 'community_verified'),
+('Al Zaffran Restaurant & Caterer', 'Biryani / Mughlai', 'T-43/1/D, Railway Line Road, Metiabruz, Kolkata 700044', 'Kolkata', 4.4, 2100, 'https://images.unsplash.com/photo-1601050690597-df056fb13295?auto=format&fit=crop&q=80', 22.5310, 88.2900, ARRAY['Halal', 'Kolkata Biryani', 'Catering'], true, 'community_verified'),
+('Shahi Mahal (Garden Reach)', 'Mughlai', 'Q-187, Garden Reach Rd, Kolkata 700024', 'Kolkata', 4.0, 4800, 'https://images.unsplash.com/photo-1545231027-63b3b1cdf437?auto=format&fit=crop&q=80', 22.5355, 88.2940, ARRAY['Halal', 'Mughlai', 'Biryani'], true, 'community_verified'),
+('Afreen Restaurant (Garden Reach)', 'Mughlai', 'Garden Reach Area, Kolkata 700024', 'Kolkata', 4.1, 3500, 'https://images.unsplash.com/photo-1512132411229-c30391241dd8?auto=format&fit=crop&q=80', 22.5330, 88.2920, ARRAY['Halal', 'Rolls', 'Biryani'], true, 'community_verified'),
+
+-- KOLKATA: RAJABAZAR & SEALDAH
+('Nafees Restaurant', 'Mughlai', '24, Rajabazar Crossing, APC Road, Kolkata 700009', 'Kolkata', 4.2, 7500, 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80', 22.5740, 88.3710, ARRAY['Halal', 'Rajabazar', 'Mutton Curry'], true, 'community_verified'),
+('Laziz Kabab', 'Kebabs', 'APC Road, near Sealdah, Kolkata 700009', 'Kolkata', 4.3, 1200, 'https://images.unsplash.com/photo-1529193591184-b1d58b34ecdf?auto=format&fit=crop&q=80', 22.5720, 88.3700, ARRAY['Halal', 'Street Food', 'Beef Boti'], true, 'community_verified'),
 ON CONFLICT (name, address) DO UPDATE 
 SET 
   cuisine = EXCLUDED.cuisine,
