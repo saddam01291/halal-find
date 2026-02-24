@@ -29,59 +29,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const applySession = (s: Session | null) => {
-        setSession(s);
-        if (s?.user) {
-            setUser({
-                id: s.user.id,
-                email: s.user.email,
-                role: 'user',
-                full_name: s.user.user_metadata?.full_name,
-                avatar_url: s.user.user_metadata?.avatar_url,
-            });
-        } else {
+    const refreshProfile = async (session: Session | null) => {
+        if (!session?.user) {
             setUser(null);
+            setIsLoading(false);
+            return;
         }
-        setIsLoading(false);
+
+        try {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role, full_name, avatar_url')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) {
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email,
+                    role: (profile.role as UserRole) || 'user',
+                    full_name: profile.full_name || session.user.user_metadata?.full_name,
+                    avatar_url: profile.avatar_url || session.user.user_metadata?.avatar_url,
+                });
+            } else {
+                // Fallback for new accounts without profiles yet
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email,
+                    role: 'user',
+                    full_name: session.user.user_metadata?.full_name,
+                    avatar_url: session.user.user_metadata?.avatar_url,
+                });
+            }
+        } catch (err) {
+            console.error('refreshProfile error:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
-        // 1. Sync immediately from cookies / storage
+        // 1. Initial Load
         supabase.auth.getSession().then(({ data: { session: s } }) => {
-            applySession(s);
-
-            // Fetch enriched profile in background if logged in
-            if (s?.user) {
-                supabase
-                    .from('profiles')
-                    .select('role, full_name, avatar_url')
-                    .eq('id', s.user.id)
-                    .single()
-                    .then(({ data: profile }) => {
-                        if (profile) {
-                            setUser(prev => prev ? {
-                                ...prev,
-                                role: (profile.role as UserRole) || prev.role,
-                                full_name: profile.full_name || prev.full_name,
-                                avatar_url: profile.avatar_url || prev.avatar_url,
-                            } : null);
-                        }
-                    });
-            }
+            setSession(s);
+            refreshProfile(s);
         });
 
-        // 2. Listen to future changes
+        // 2. Listen to Auth Changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-
             if (event === 'SIGNED_IN') {
-                // Auto-reload the page so the fresh session is fully picked up.
-                // SIGNED_IN fires only once after the OAuth redirect.
-                // Subsequent page loads fire INITIAL_SESSION — so no infinite loop.
-                window.location.reload();
+                setSession(s);
+                if (s) refreshProfile(s);
                 return;
             }
 
-            applySession(s);
+            if (event === 'SIGNED_OUT') {
+                setUser(null);
+                setSession(null);
+                setIsLoading(false);
+                return;
+            }
+
+            // For other events like token refresh or initial session recovery
+            setSession(s);
+            if (s) {
+                refreshProfile(s);
+            } else {
+                setUser(null);
+                setIsLoading(false);
+            }
         });
 
         return () => subscription.unsubscribe();

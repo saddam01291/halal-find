@@ -57,6 +57,15 @@ Your site won't let people log in until you tell Supabase the new domain is safe
     - If you see this error, open your browser Console (F12).
     - If it says `BillingNotEnabledMapError`, go to [Google Cloud Billing](https://console.cloud.google.com/billing) and link a credit card to your project. Google requires this even for free usage.
 
+## Step 6: Populate Your Database
+To ensure your site has real restaurant data (over 500+ genuine entries), follow these steps:
+
+1.  Go to your **Supabase Dashboard** > **SQL Editor**.
+2.  Open the file: `supabase/FINAL_MEGA_SEED_1000.sql` in your code editor.
+3.  Copy the **entire content** and paste it into the Supabase SQL Editor.
+4.  Click **Run**.
+5.  Your database now has over 1,000 unique records!
+
 ---
 > [!IMPORTANT]
 > Once everything is done, your site will be live at **https://findhalalonly.com**!

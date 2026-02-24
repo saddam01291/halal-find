@@ -151,7 +151,35 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
 
                             <div className="flex gap-3">
                                 {!isOwnerVerified && (
-                                    <Button size="sm" className="bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-white/20">
+                                    <Button
+                                        size="sm"
+                                        className="bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-white/20"
+                                        onClick={async () => {
+                                            if (!user) {
+                                                setIsLoginOpen(true);
+                                                return;
+                                            }
+                                            if (user.role !== 'owner') {
+                                                alert('Only restaurant owners can claim business listings. Please update your profile.');
+                                                return;
+                                            }
+
+                                            try {
+                                                const { submitVerificationRequest } = await import('@/lib/api');
+                                                await submitVerificationRequest({
+                                                    restaurant_name: place.name,
+                                                    owner_name: user.full_name || 'Owner',
+                                                    certificate_url: '', // Will be uploaded later
+                                                    place_id: place.id,
+                                                    type: 'claim'
+                                                });
+                                                alert('Verification claim submitted! Our team will review your request.');
+                                            } catch (err) {
+                                                console.error('Error claiming business:', err);
+                                                alert('Failed to submit claim. Please try again.');
+                                            }
+                                        }}
+                                    >
                                         Claim This Business
                                     </Button>
                                 )}

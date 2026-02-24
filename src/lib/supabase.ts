@@ -14,6 +14,8 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
 // Database types
 export type VerificationStatus = 'unverified' | 'community_verified' | 'owner_verified';
 
+export type HalalStatus = 'Full Halal' | 'Halal Menu' | 'Pork Free' | 'Not Halal';
+
 export interface DbPlace {
     id: string;
     name: string;
@@ -30,6 +32,7 @@ export interface DbPlace {
     verification_status: VerificationStatus;
     owner_id?: string;
     certificate_url?: string;
+    halal_status?: HalalStatus;
     serves_alcohol?: boolean;
     halal_source?: string;
     contamination_risk?: 'none' | 'low' | 'moderate' | 'high';
@@ -59,6 +62,8 @@ export interface DbVerificationRequest {
     certificate_url: string;
     status: 'pending' | 'approved' | 'rejected';
     user_id: string;
+    place_id?: string;
+    type: 'new_place' | 'claim' | 'community_addition';
     created_at: string;
 }
 

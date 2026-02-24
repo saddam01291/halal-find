@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
-import { X, Upload, Building2 } from 'lucide-react';
+import { addPlace, submitVerificationRequest, uploadImage } from '@/lib/api';
+import { X, Upload, Building2, Loader2, Info } from 'lucide-react';
 
 interface AddPlaceModalProps {
     isOpen: boolean;
@@ -12,121 +13,229 @@ interface AddPlaceModalProps {
 
 export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
     const { user } = useAuth();
-    const [isOwner, setIsOwner] = useState(user?.role === 'owner');
+    const [isOwner, setIsOwner] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         cuisine: '',
+        city: '',
         address: '',
-        image: null
+        halal_status: 'Full Halal',
+        serves_alcohol: false,
+        halal_source: ''
     });
+
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [certFile, setCertFile] = useState<File | null>(null);
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate API call
-        setTimeout(() => {
+        setIsSubmitting(true);
+        try {
+            // 1. Image Uploads
+            let imageUrl = '';
+            let certUrl = '';
+
+            if (imageFile) {
+                imageUrl = await uploadImage(imageFile) || '';
+            }
+            if (certFile) {
+                certUrl = await uploadImage(certFile) || '';
+            }
+
+            // 2. Create Restaurant
+            const newPlace = await addPlace({
+                name: formData.name,
+                cuisine: formData.cuisine,
+                address: formData.address || formData.city,
+                city: formData.city,
+                image: imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80',
+                lat: 0,
+                lng: 0,
+                tags: ['Halal', formData.cuisine, formData.halal_status],
+                is_mixed_neighborhood: false,
+                halal_status: formData.halal_status as any,
+                serves_alcohol: formData.serves_alcohol,
+                halal_source: formData.halal_source
+            });
+
+            // 3. Create Verification
+            if (newPlace) {
+                await submitVerificationRequest({
+                    restaurant_name: formData.name,
+                    owner_name: user?.full_name || 'Contributor',
+                    certificate_url: certUrl,
+                    place_id: newPlace.id,
+                    type: isOwner ? 'claim' : 'community_addition'
+                });
+            }
+
+            alert(isOwner ? 'Restaurant submitted! Admin will verify soon.' : 'Thank you! Added for community review.');
             onClose();
-            alert(isOwner ? 'Restaurant submitted for verification!' : 'Thank you for your contribution!');
-        }, 1000);
+        } catch (error) {
+            console.error('Submission error:', error);
+            alert('Could not submit. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-6 border-b border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-900">Add a Halal Place</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-                        <X className="h-5 w-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-white">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 leading-none">Add a Halal Place</h2>
+                        <p className="inline-block bg-red-600 text-white px-2 py-0.5 rounded mt-1.5 text-[8px] font-black uppercase tracking-widest animate-pulse">VER 2.0: NEW FORM LOADED ✅</p>
+                    </div>
+                    <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-colors">
+                        <X className="h-6 w-6 text-slate-400" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
-                    <div className="flex gap-4 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="ownership"
-                                checked={!isOwner}
-                                onChange={() => setIsOwner(false)}
-                                className="text-emerald-600 focus:ring-emerald-500"
-                            />
-                            <span className="text-sm font-medium text-slate-700">Generic User</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="ownership"
-                                checked={isOwner}
-                                onChange={() => setIsOwner(true)}
-                                className="text-emerald-600 focus:ring-emerald-500"
-                            />
-                            <span className="text-sm font-medium text-slate-700">I am the Owner</span>
-                        </label>
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* User Type */}
+                    <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-100">
+                        <button
+                            type="button"
+                            onClick={() => setIsOwner(false)}
+                            className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${!isOwner ? 'bg-white text-slate-900 shadow-sm shadow-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            Generic User
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsOwner(true)}
+                            className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${isOwner ? 'bg-white text-emerald-600 shadow-sm shadow-emerald-100' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            I am Owner
+                        </button>
                     </div>
 
                     {isOwner && (
-                        <div className="bg-amber-50 border border-amber-100 text-amber-800 px-4 py-3 rounded-md text-sm mb-4 flex items-start gap-2">
-                            <Building2 className="h-5 w-5 flex-shrink-0" />
-                            <p>Owners must provide a valid Halal certificate for verification. Your listing will be marked as <strong>Owner Verified</strong>.</p>
+                        <div className="flex gap-3 p-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-100 items-start">
+                            <Building2 className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs font-bold leading-relaxed">Owner listings are prioritized. Please provide your business details and any proof of Halal certification.</p>
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Restaurant Name</label>
-                        <input
-                            type="text"
-                            required
-                            className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            placeholder="e.g. Sultan's Dine"
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Cuisine</label>
+                    {/* Form Fields */}
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Restaurant Name</label>
                             <input
-                                type="text"
                                 required
-                                className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                placeholder="e.g. Turkish"
-                                value={formData.cuisine}
-                                onChange={e => setFormData({ ...formData, cuisine: e.target.value })}
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:bg-white bg-slate-50/50 transition-all outline-none text-sm font-bold"
+                                placeholder="e.g. Sultan's Dine"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                            <input
-                                type="text"
-                                required
-                                className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                placeholder="e.g. New York"
-                                value={formData.address}
-                                onChange={e => setFormData({ ...formData, address: e.target.value })}
-                            />
-                        </div>
-                    </div>
 
-                    {isOwner && (
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Upload Certificate</label>
-                            <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:bg-slate-50 cursor-pointer transition-colors block w-full">
-                                <Upload className="h-6 w-6 text-slate-400 mx-auto mb-2" />
-                                <span className="text-sm text-slate-500">Certificate PDF/Image</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cuisine Type</label>
+                                <input
+                                    required
+                                    value={formData.cuisine}
+                                    onChange={e => setFormData({ ...formData, cuisine: e.target.value })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:bg-white bg-slate-50/50 transition-all outline-none text-sm font-bold"
+                                    placeholder="e.g. Turkish"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">City</label>
+                                <input
+                                    required
+                                    value={formData.city}
+                                    onChange={e => setFormData({ ...formData, city: e.target.value })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:bg-white bg-slate-50/50 transition-all outline-none text-sm font-bold"
+                                    placeholder="e.g. London"
+                                />
                             </div>
                         </div>
-                    )}
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                            {isOwner ? 'Submit for Verification' : 'Add to Community'}
-                        </Button>
+                        {/* Halal Status - CRITICAL FIELD */}
+                        <div className="space-y-3 pt-2">
+                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                Halal Classification <Info className="h-3 w-3 text-slate-300" />
+                            </label>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                                {['Full Halal', 'Halal Menu', 'Pork Free', 'Not Halal'].map((s) => (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, halal_status: s })}
+                                        className={`py-2.5 px-1 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${formData.halal_status === s
+                                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                                            : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                            }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Alcohol Serve?</label>
+                                <div className="flex gap-2 h-12 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                    <button type="button" onClick={() => setFormData({ ...formData, serves_alcohol: true })} className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${formData.serves_alcohol ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400'}`}>Yes</button>
+                                    <button type="button" onClick={() => setFormData({ ...formData, serves_alcohol: false })} className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${!formData.serves_alcohol ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>No</button>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Halal Proof</label>
+                                <input
+                                    value={formData.halal_source}
+                                    onChange={e => setFormData({ ...formData, halal_source: e.target.value })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:bg-white bg-slate-50/50 transition-all outline-none text-sm font-bold"
+                                    placeholder="e.g. Muslim Hand"
+                                />
+                            </div>
+                        </div>
+
+                        {/* File Uploads */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Restaurant Photo</label>
+                                <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer bg-white group">
+                                    <input type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
+                                    <Upload className={`h-5 w-5 ${imageFile ? 'text-emerald-500' : 'text-slate-300'} group-hover:scale-110 transition-transform`} />
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">
+                                        {imageFile ? imageFile.name.substring(0, 15) : 'Select Storefront'}
+                                    </span>
+                                </label>
+                            </div>
+                            {isOwner && (
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1">Hallal Certificate</label>
+                                    <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-amber-200 rounded-2xl hover:bg-amber-50 transition-colors cursor-pointer bg-amber-50/20 group">
+                                        <input type="file" accept="image/*,application/pdf" className="hidden" onChange={e => setCertFile(e.target.files?.[0] || null)} />
+                                        <Upload className={`h-5 w-5 ${certFile ? 'text-amber-500' : 'text-amber-300'} group-hover:scale-110 transition-transform`} />
+                                        <span className="text-[8px] font-black text-amber-500 uppercase tracking-[0.2em] mt-1">
+                                            {certFile ? certFile.name.substring(0, 15) : 'Upload Official'}
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </form>
+
+                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex gap-4">
+                    <Button variant="ghost" className="flex-1 h-12 rounded-xl text-slate-500 font-bold" onClick={onClose}>Discard</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="flex-[2] h-12 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-xl shadow-slate-200 disabled:opacity-50"
+                    >
+                        {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm Submission'}
+                    </Button>
+                </div>
             </div>
         </div>
     );
