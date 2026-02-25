@@ -653,7 +653,6 @@ function AdminDashboardContent() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 p-2 bg-white/40 rounded-3xl border border-white/60 backdrop-blur-sm">
                 <div className="p-4">
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none uppercase">Admin Console</h1>
-                    <p className="inline-block bg-red-600 text-white px-3 py-1 rounded-full mt-2 font-bold text-[9px] uppercase tracking-widest animate-pulse">VER 2.0: NEW INTERFACE LOADED ✅</p>
                 </div>
                 <div className="p-4 flex gap-2 w-full sm:w-auto">
                     <Button

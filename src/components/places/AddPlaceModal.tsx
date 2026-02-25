@@ -88,7 +88,6 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-white">
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 leading-none">Add a Halal Place</h2>
-                        <p className="inline-block bg-red-600 text-white px-2 py-0.5 rounded mt-1.5 text-[8px] font-black uppercase tracking-widest animate-pulse">VER 2.0: NEW FORM LOADED ✅</p>
                     </div>
                     <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-colors">
                         <X className="h-6 w-6 text-slate-400" />
@@ -202,12 +201,15 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Restaurant Photo</label>
-                                <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer bg-white group">
+                                <label className="flex flex-col items-center justify-center min-h-[100px] border-2 border-dashed border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all cursor-pointer bg-white group shadow-sm">
                                     <input type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
-                                    <Upload className={`h-5 w-5 ${imageFile ? 'text-emerald-500' : 'text-slate-300'} group-hover:scale-110 transition-transform`} />
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">
-                                        {imageFile ? imageFile.name.substring(0, 15) : 'Select Storefront'}
+                                    <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors mb-2">
+                                        <Upload className={`h-5 w-5 ${imageFile ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">
+                                        {imageFile ? imageFile.name.substring(0, 20) : 'Add Restaurant Photo'}
                                     </span>
+                                    <span className="text-[8px] text-slate-400 mt-1 font-bold uppercase">(Optional but recommended)</span>
                                 </label>
                             </div>
                             {isOwner && (

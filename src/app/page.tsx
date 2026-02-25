@@ -93,10 +93,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] bg-slate-50 relative">
-      {/* GLOBAL DEBUG BANNER */}
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] bg-red-600 text-white px-6 py-3 rounded-full font-black text-xl shadow-2xl animate-bounce pointer-events-none">
-        VER 2.0: GLOBAL UPDATE ACTIVE ✅
-      </div>
       {/* Hero Section - Gold to Green Gradient */}
       <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 py-24 overflow-hidden bg-gradient-to-br from-amber-50 via-white to-emerald-50">
 
