@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { LayoutDashboard, ShieldCheck, MapPin, Settings, LogOut, AlertTriangle, Lock, UserX, X } from 'lucide-react';
 import { LoginModal } from '@/components/auth/LoginModal';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const { user, signOut, isLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         );
     }
 
-    if (user.role !== 'admin') {
+    if (user?.role !== 'admin') {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 max-w-md w-full text-center text-red-500">
@@ -129,10 +129,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </nav>
 
                 <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">{user.full_name?.charAt(0) || 'A'}</div>
+                    <div className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">{user?.full_name?.charAt(0) || 'A'}</div>
                     <div className="overflow-hidden">
-                        <p className="text-[10px] font-bold text-white truncate">{user.full_name || 'Admin'}</p>
-                        <p className="text-[8px] text-slate-500 truncate">{user.email}</p>
+                        <p className="text-[10px] font-bold text-white truncate">{user?.full_name || 'Admin'}</p>
+                        <p className="text-[8px] text-slate-500 truncate">{user?.email}</p>
                     </div>
                 </div>
             </aside>
@@ -142,5 +142,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {children}
             </main>
         </div>
+    );
+}
+
+import { Suspense } from 'react';
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-emerald-500 font-bold uppercase tracking-widest gap-4">
+                <div className="h-12 w-12 border-4 border-emerald-900 border-t-emerald-500 rounded-full animate-spin" />
+                Updating Admin Panel...
+            </div>
+        }>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+        </Suspense>
     );
 }

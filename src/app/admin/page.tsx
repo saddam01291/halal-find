@@ -12,7 +12,7 @@ type TabType = 'overview' | 'restaurants' | 'users' | 'verifications' | 'dispute
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const activeTab = (searchParams.get('tab') || 'overview') as TabType;
@@ -744,5 +744,20 @@ export default function AdminDashboard() {
                 </div>
             )}
         </div>
+    );
+}
+
+import { Suspense } from 'react';
+
+export default function AdminDashboard() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center py-32 gap-6 bg-slate-50 min-h-screen">
+                <div className="h-16 w-16 border-[6px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+                <p className="text-slate-900 font-black uppercase tracking-widest text-sm animate-pulse">Syncing Command Center...</p>
+            </div>
+        }>
+            <AdminDashboardContent />
+        </Suspense>
     );
 }

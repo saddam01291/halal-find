@@ -3,7 +3,7 @@
 import { supabase } from './supabase';
 import { DbPlace, DbProfile, DbVerificationRequest, DbReview } from './supabase';
 
-export const PLACE_LIST_COLUMNS = 'id, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source';
+export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source';
 
 // --- Places ---
 
@@ -15,6 +15,20 @@ export async function getPlaces(): Promise<DbPlace[]> {
 
     if (error) {
         console.error('Error fetching places:', error);
+        return [];
+    }
+    return data || [];
+}
+
+export async function searchPlaces(query: string): Promise<DbPlace[]> {
+    const { data, error } = await supabase
+        .from('places')
+        .select(PLACE_LIST_COLUMNS)
+        .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`)
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error('Error searching places:', error);
         return [];
     }
     return data || [];
@@ -53,7 +67,7 @@ export async function addPlace(place: Omit<DbPlace, 'id' | 'created_at' | 'revie
 
 // --- Reviews ---
 
-export async function getReviews(placeId: string): Promise<DbReview[]> {
+export async function getReviewsForPlace(placeId: string): Promise<DbReview[]> {
     const { data, error } = await supabase
         .from('reviews')
         .select('*')
@@ -67,7 +81,7 @@ export async function getReviews(placeId: string): Promise<DbReview[]> {
     return data || [];
 }
 
-export async function addReview(review: Omit<DbReview, 'id' | 'created_at' | 'user_id' | 'user_name' | 'user_avatar'>) {
+export async function createReview(review: Omit<DbReview, 'id' | 'created_at' | 'user_id' | 'user_name' | 'user_avatar'>) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
