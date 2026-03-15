@@ -199,7 +199,11 @@ export function Navbar() {
                                 <button
                                     onClick={() => {
                                         setIsMobileMenuOpen(false);
-                                        setIsAddPlaceOpen(true);
+                                        if (!user) {
+                                            setIsLoginOpen(true);
+                                        } else {
+                                            setIsAddPlaceOpen(true);
+                                        }
                                     }}
                                     className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100/50 text-emerald-900 active:bg-emerald-100 transition-colors w-full text-left"
                                 >

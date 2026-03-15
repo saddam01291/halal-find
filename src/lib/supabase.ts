@@ -14,7 +14,7 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
 // Database types
 export type VerificationStatus = 'unverified' | 'community_verified' | 'owner_verified';
 
-export type HalalStatus = 'Full Halal' | 'Halal Menu' | 'Pork Free' | 'Not Halal';
+export type HalalStatus = string;
 
 export interface DbPlace {
     id: string;

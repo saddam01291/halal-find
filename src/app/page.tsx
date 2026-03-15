@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getPlaces, searchPlaces } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
-import { getDistance } from '@/lib/utils';
+import { getDistance, getValidImageUrl } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { LoginModal } from '@/components/auth/LoginModal';
@@ -194,7 +194,7 @@ export default function Home() {
                   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1">
                     <div className="h-60 bg-slate-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
                       <Image
-                        src={place.image || '/images/placeholder-restaurant.jpg'}
+                        src={getValidImageUrl(place.image)}
                         alt={place.name}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

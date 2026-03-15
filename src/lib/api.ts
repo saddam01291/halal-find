@@ -298,22 +298,41 @@ export async function updateAdminSettings(settings: Record<string, any>) {
 // --- Storage ---
 
 export async function uploadImage(file: File) {
-    const fileExt = file.name.split('.').pop();
+    console.log('--- STORAGE UPLOAD DEBUG ---');
+    console.log('File Name:', file.name);
+    console.log('File Size:', (file.size / 1024).toFixed(2), 'KB');
+    console.log('File Type:', file.type);
+
+    let fileExt = file.name.split('.').pop()?.toLowerCase();
+    // Normalize .wbp to .webp if needed
+    if (fileExt === 'wbp') fileExt = 'webp';
+    if (!fileExt) fileExt = 'jpg';
+
     const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `rest-${Date.now()}-${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    console.log('Target Bucket: restaurant-images');
+    console.log('Target Path:', filePath);
+    console.log('Detected MIME:', file.type || 'image/webp');
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
         .from('restaurant-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+            contentType: file.type || 'image/webp',
+            cacheControl: '3600',
+            upsert: false
+        });
 
     if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        return null;
+        console.error('SUPABASE STORAGE ERROR:', JSON.stringify(uploadError, null, 2));
+        throw new Error(`STORAGE_FAIL: ${uploadError.message} (Bucket: restaurant-images, Path: ${filePath}, Hint: Check if bucket exists and RLS is applied)`);
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    console.log('UPLOAD SUCCESS:', uploadData);
+
+    const { data } = supabase.storage
         .from('restaurant-images')
         .getPublicUrl(filePath);
 
-    return publicUrl;
+    return data.publicUrl;
 }

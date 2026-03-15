@@ -43,3 +43,16 @@ export function getDistance(lat1: number, lon1: number, lat2: number, lon2: numb
 function deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
 }
+
+export function getValidImageUrl(url?: string | null): string {
+    const fallback = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&q=80';
+    if (!url) return fallback;
+    if (url.startsWith('/')) return url;
+
+    try {
+        new URL(url);
+        return url;
+    } catch (e) {
+        return fallback;
+    }
+}
