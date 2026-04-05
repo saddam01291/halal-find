@@ -73,8 +73,11 @@ function AdminDashboardContent() {
         setStats(prev => ({ ...prev, verifications: Math.max(0, prev.verifications - 1) }));
         try {
             await updateVerificationStatus(id, status);
-        } catch (error) {
+            // Refresh all stats so "Total Restaurants" and other counts are accurate
+            loadData();
+        } catch (error: any) {
             console.error('Error updating verification:', error);
+            alert(`Failed: ${error.message || JSON.stringify(error)}\nPlease let the assistant know you saw this error.`);
             // Revert on error
             loadData();
         }

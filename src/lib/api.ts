@@ -166,14 +166,25 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
 
     // 3. If approved, update the corresponding place
     if (status === 'approved' && request.place_id) {
+        // Build update payload based on request type:
+        // - 'claim': owner is claiming their restaurant → owner_verified + owner_id
+        // - 'community_addition' / 'new_place': community member submitted → community_verified, no owner
+        const placeUpdate: Record<string, unknown> = { verified: true };
+
+        if (request.type === 'claim') {
+            placeUpdate.verification_status = 'owner_verified';
+            placeUpdate.owner_id = request.user_id;
+            if (request.certificate_url) {
+                placeUpdate.certificate_url = request.certificate_url;
+            }
+        } else {
+            // community_addition or new_place
+            placeUpdate.verification_status = 'community_verified';
+        }
+
         const { error: placeError } = await supabase
             .from('places')
-            .update({
-                verified: true,
-                verification_status: 'owner_verified',
-                owner_id: request.user_id,
-                certificate_url: request.certificate_url
-            })
+            .update(placeUpdate)
             .eq('id', request.place_id);
 
         if (placeError) {
