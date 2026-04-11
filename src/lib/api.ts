@@ -3,7 +3,7 @@
 import { supabase } from './supabase';
 import { DbPlace, DbProfile, DbVerificationRequest, DbReview } from './supabase';
 
-export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source';
+export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol';
 
 // --- Places ---
 
@@ -55,6 +55,51 @@ export async function addPlace(place: Omit<DbPlace, 'id' | 'created_at' | 'revie
             ...place,
             verified: false,
             verification_status: 'unverified',
+            review_count: 0,
+            rating: 0
+        })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function updatePlace(id: string, updates: Partial<Omit<DbPlace, 'id' | 'created_at'>>) {
+    const { data, error } = await supabase
+        .from('places')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function deletePlace(id: string) {
+    // Also delete associated verification requests first
+    await supabase
+        .from('verification_requests')
+        .delete()
+        .eq('place_id', id);
+
+    const { error } = await supabase
+        .from('places')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+}
+
+export async function addPlaceAsAdmin(place: Omit<DbPlace, 'id' | 'created_at' | 'review_count' | 'rating'>) {
+    const { data, error } = await supabase
+        .from('places')
+        .insert({
+            ...place,
+            verified: true,
+            verification_status: 'owner_verified',
             review_count: 0,
             rating: 0
         })
@@ -164,34 +209,81 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
 
     if (error) throw error;
 
-    // 3. If approved, update the corresponding place
-    if (status === 'approved' && request.place_id) {
-        // Build update payload based on request type:
-        // - 'claim': owner is claiming their restaurant → owner_verified + owner_id
-        // - 'community_addition' / 'new_place': community member submitted → community_verified, no owner
-        const placeUpdate: Record<string, unknown> = { verified: true };
+    // 3. If approved, update the corresponding place OR create it
+    if (status === 'approved') {
+        // Build update payload based on request fields (now with more data!)
+        const placeUpdate: Record<string, any> = {
+            name: request.restaurant_name,
+            cuisine: request.cuisine,
+            address: request.address,
+            city: request.city,
+            lat: request.lat,
+            lng: request.lng,
+            tags: request.tags,
+            halal_status: request.halal_status,
+            serves_alcohol: request.serves_alcohol,
+            halal_source: request.halal_source,
+            verified: true,
+            image: request.certificate_url // Use certificate as image by default for community additions
+        };
 
-        if (request.type === 'claim') {
+        if (request.type === 'claim' && request.place_id) {
             placeUpdate.verification_status = 'owner_verified';
             placeUpdate.owner_id = request.user_id;
-            if (request.certificate_url) {
-                placeUpdate.certificate_url = request.certificate_url;
-            }
-        } else {
-            // community_addition or new_place
+            
+            const { error: placeError } = await supabase
+                .from('places')
+                .update(placeUpdate)
+                .eq('id', request.place_id);
+
+            if (placeError) console.error('Error updating place on claim approval:', placeError);
+        } else if (request.type === 'community_addition' || request.type === 'new_place') {
             placeUpdate.verification_status = 'community_verified';
-        }
-
-        const { error: placeError } = await supabase
-            .from('places')
-            .update(placeUpdate)
-            .eq('id', request.place_id);
-
-        if (placeError) {
-            console.error('Error updating place status during verification approval:', placeError);
+            
+            if (request.place_id) {
+                // Update existing place if it was somehow linked
+                const { error: placeError } = await supabase
+                    .from('places')
+                    .update(placeUpdate)
+                    .eq('id', request.place_id);
+                if (placeError) console.error('Error updating existing place on community approval:', placeError);
+            } else {
+                // Create NEW place
+                const { data: newPlace, error: placeError } = await supabase
+                    .from('places')
+                    .insert({
+                        ...placeUpdate,
+                        review_count: 0,
+                        rating: 0
+                    })
+                    .select()
+                    .single();
+                
+                if (placeError) {
+                    console.error('Error creating new place on approval:', placeError);
+                } else if (newPlace) {
+                    // Link the request to the new place id
+                    await supabase
+                        .from('verification_requests')
+                        .update({ place_id: newPlace.id })
+                        .eq('id', id);
+                }
+            }
         }
     }
 
+    return data;
+}
+
+export async function updateVerificationRequest(id: string, updates: Partial<DbVerificationRequest>) {
+    const { data, error } = await supabase
+        .from('verification_requests')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
     return data;
 }
 
@@ -226,6 +318,30 @@ export async function resolveDispute(id: string, note: string) {
 
     if (error) throw error;
     return data;
+}
+
+export async function updateUserRole(id: string, role: 'admin' | 'user') {
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+// --- Reviews (Admin) ---
+
+export async function deleteReview(id: string) {
+    const { error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
 }
 
 // --- Profiles (Admin) ---

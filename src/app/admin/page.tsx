@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Building2, ShieldCheck, Activity, Check, X, Search, Filter, MoreVertical, ExternalLink, Trash2, CheckCircle, AlertTriangle, RefreshCw, Database, MessageSquare, LogOut } from 'lucide-react';
-import { getPendingVerifications, updateVerificationStatus, getProfiles, getPlaces, getSystemStats, getAdminSettings, updateAdminSettings, getDisputedReviews, resolveDispute } from '@/lib/api';
+import { Users, Building2, ShieldCheck, Activity, Check, X, Search, Filter, MoreVertical, ExternalLink, Trash2, CheckCircle, AlertTriangle, RefreshCw, Database, MessageSquare, LogOut, Pencil, Plus, Upload, Loader2, Save } from 'lucide-react';
+import { getPendingVerifications, updateVerificationStatus, getProfiles, getPlaces, getSystemStats, getAdminSettings, updateAdminSettings, getDisputedReviews, resolveDispute, updatePlace, deletePlace, addPlaceAsAdmin, uploadImage, updateVerificationRequest, updateUserRole, deleteReview } from '@/lib/api';
+import { EditPlaceModal } from '@/components/admin/EditPlaceModal';
 import { supabase, DbVerificationRequest, DbProfile, DbPlace, DbReview } from '@/lib/supabase';
 import { formatDistanceToNow } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -30,6 +31,25 @@ function AdminDashboardContent() {
     const [settingsSaved, setSettingsSaved] = useState(false);
     const [indexRebuilding, setIndexRebuilding] = useState(false);
     const [cacheClearing, setCacheClearing] = useState(false);
+
+    // Restaurant management state
+    const [restaurantSearch, setRestaurantSearch] = useState('');
+    const [userSearch, setUserSearch] = useState('');
+    const [disputeSearch, setDisputeSearch] = useState('');
+    const [editingPlace, setEditingPlace] = useState<DbPlace | null>(null);
+    const [editingRequest, setEditingRequest] = useState<DbVerificationRequest | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isSavingPlace, setIsSavingPlace] = useState(false);
+    const [deletingPlaceId, setDeletingPlaceId] = useState<string | null>(null);
+    const [addForm, setAddForm] = useState({
+        name: '', cuisine: '', city: '', address: '',
+        halal_status: 'Full Halal', serves_alcohol: false,
+        halal_source: '', image: '',
+        lat: 22.5726, lng: 88.3639, // Default to Kolkata as a placeholder
+        tags: '',
+    });
+    const [addImageFile, setAddImageFile] = useState<File | null>(null);
 
     const setActiveTab = (tab: TabType) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -135,11 +155,151 @@ function AdminDashboardContent() {
         }
     };
 
-    const VerificationCard = ({ req, onApprove, onReject, onDelete }: {
+    const handleDeleteReview = async (id: string) => {
+        if (!confirm('Are you sure you want to permanently delete this review? This action cannot be undone.')) return;
+        
+        try {
+            await deleteReview(id);
+            setDisputes(prev => prev.filter(r => r.id !== id));
+            alert('Review deleted successfully');
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            alert('Failed to delete review');
+        }
+    };
+
+    // --- User Handlers ---
+    const handleUpdateRole = async (userId: string, currentRole: string) => {
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        if (!confirm(`Are you sure you want to change this user's role to ${newRole.toUpperCase()}?`)) return;
+
+        try {
+            await updateUserRole(userId, newRole);
+            setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p));
+        } catch (error) {
+            console.error('Error updating role:', error);
+            alert('Failed to update user role');
+        }
+    };
+
+    // --- Restaurant CRUD Handlers ---
+    const openEditModal = (place: DbPlace) => {
+        setEditingRequest(null);
+        setEditingPlace(place);
+        setIsEditModalOpen(true);
+    };
+
+    const openEditRequestModal = (req: DbVerificationRequest) => {
+        // Mock a place object for the modal using all request fields
+        const mockPlace: DbPlace = {
+            id: req.place_id || req.id,
+            name: req.restaurant_name,
+            cuisine: req.cuisine || '',
+            address: req.address || '',
+            city: req.city || '',
+            rating: 0,
+            review_count: 0,
+            image: req.certificate_url || '',
+            lat: req.lat || 22.5726,
+            lng: req.lng || 88.3639,
+            tags: req.tags || [],
+            verified: false,
+            verification_status: 'unverified',
+            halal_status: req.halal_status || 'Full Halal',
+            serves_alcohol: req.serves_alcohol || false,
+            halal_source: req.halal_source || '',
+            created_at: req.created_at
+        };
+
+        // If it's a claim, try to find the actual place
+        if (req.place_id) {
+            const actualPlace = places.find(p => p.id === req.place_id);
+            if (actualPlace) {
+                setEditingPlace(actualPlace);
+            } else {
+                setEditingPlace(mockPlace);
+            }
+        } else {
+            setEditingPlace(mockPlace);
+        }
+
+        setEditingRequest(req);
+        setIsEditModalOpen(true);
+    };
+
+    const handleDeletePlace = async (id: string) => {
+        setDeletingPlaceId(id);
+    };
+
+    const confirmDeletePlace = async () => {
+        if (!deletingPlaceId) return;
+        try {
+            await deletePlace(deletingPlaceId);
+            setPlaces(prev => prev.filter(p => p.id !== deletingPlaceId));
+            setStats(prev => ({ ...prev, places: Math.max(0, prev.places - 1) }));
+            setDeletingPlaceId(null);
+        } catch (error: any) {
+            console.error('Error deleting place:', error);
+            alert(`Delete failed: ${error.message || JSON.stringify(error)}`);
+        }
+    };
+
+    const handleAdminAddPlace = async () => {
+        if (!addForm.name || !addForm.cuisine || !addForm.city) {
+            alert('Please fill Name, Cuisine, and City.');
+            return;
+        }
+        setIsSavingPlace(true);
+        try {
+            let imageUrl = addForm.image;
+            if (addImageFile) {
+                imageUrl = await uploadImage(addImageFile);
+            }
+            await addPlaceAsAdmin({
+                name: addForm.name,
+                cuisine: addForm.cuisine,
+                city: addForm.city,
+                address: addForm.address || addForm.city,
+                image: imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80',
+                lat: Number(addForm.lat),
+                lng: Number(addForm.lng),
+                tags: addForm.tags.split(',').map(t => t.trim()).filter(t => t),
+                verified: true,
+                verification_status: 'owner_verified',
+                halal_status: addForm.halal_status,
+                serves_alcohol: addForm.serves_alcohol,
+                halal_source: addForm.halal_source,
+            });
+            setIsAddModalOpen(false);
+            setAddForm({
+                name: '', cuisine: '', city: '', address: '',
+                halal_status: 'Full Halal', serves_alcohol: false,
+                halal_source: '', image: '',
+                lat: 22.5726, lng: 88.3639,
+                tags: ''
+            });
+            setAddImageFile(null);
+            loadData();
+        } catch (error: any) {
+            console.error('Error adding place:', error);
+            alert(`Failed to add: ${error.message || JSON.stringify(error)}`);
+        } finally {
+            setIsSavingPlace(false);
+        }
+    };
+
+    const filteredPlaces = places.filter(p => {
+        if (!restaurantSearch) return true;
+        const q = restaurantSearch.toLowerCase();
+        return p.name.toLowerCase().includes(q) || p.city?.toLowerCase().includes(q) || p.cuisine?.toLowerCase().includes(q);
+    });
+
+    const VerificationCard = ({ req, onApprove, onReject, onDelete, onEdit }: {
         req: DbVerificationRequest,
         onApprove: (id: string, status: 'approved') => void,
         onReject: (id: string, status: 'rejected') => void,
-        onDelete: (id: string) => void
+        onDelete: (id: string) => void,
+        onEdit: (req: DbVerificationRequest) => void
     }) => (
         <div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
             <div className="flex items-start justify-between gap-4">
@@ -153,6 +313,7 @@ function AdminDashboardContent() {
                     </div>
                 </div>
                 <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="sm" variant="ghost" onClick={() => onEdit(req)} className="h-8 w-8 p-0 text-slate-300 hover:text-blue-500 rounded-lg" title="Edit Data"><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => onDelete(req.id)} className="h-8 w-8 p-0 text-slate-300 hover:text-red-500 rounded-lg"><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>
             </div>
@@ -176,6 +337,9 @@ function AdminDashboardContent() {
             <div className="mt-4 grid grid-cols-2 gap-2">
                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[10px] tracking-widest h-9 rounded-lg shadow-sm" onClick={() => onApprove(req.id, 'approved')}>
                     <Check className="h-3 w-3 mr-1" /> Approve
+                </Button>
+                <Button size="sm" variant="outline" className="text-slate-500 border-slate-200 hover:bg-slate-50 font-black uppercase text-[10px] tracking-widest h-9 rounded-lg" onClick={() => onEdit(req)}>
+                    <Pencil className="h-3 w-3 mr-1" /> Edit
                 </Button>
                 <Button size="sm" variant="outline" className="text-red-600 border-red-100 hover:bg-red-50 font-black uppercase text-[10px] tracking-widest h-9 rounded-lg" onClick={() => onReject(req.id, 'rejected')}>
                     <X className="h-3 w-3 mr-1" /> Reject
@@ -271,7 +435,8 @@ function AdminDashboardContent() {
                                             <div className="h-8 w-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">{req.restaurant_name.charAt(0)}</div>
                                             <span className="text-xs font-bold text-slate-800">{req.restaurant_name}</span>
                                         </div>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1.5">
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-300 hover:text-blue-500 rounded-lg" onClick={() => openEditRequestModal(req)} title="Edit Request"><Pencil className="h-3 w-3" /></Button>
                                             <Button size="sm" className="h-7 px-2 text-[9px] bg-emerald-600 font-black uppercase" onClick={() => handleVerification(req.id, 'approved')}>Ok</Button>
                                             <Button size="sm" variant="outline" className="h-7 px-2 text-[9px] text-red-500 border-red-100 font-black uppercase" onClick={() => handleVerification(req.id, 'rejected')}>X</Button>
                                         </div>
@@ -295,7 +460,8 @@ function AdminDashboardContent() {
                                             <div className="h-8 w-8 rounded bg-amber-100 flex items-center justify-center text-amber-600 text-[10px] font-bold">{req.restaurant_name.charAt(0)}</div>
                                             <span className="text-xs font-bold text-slate-800">{req.restaurant_name}</span>
                                         </div>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1.5">
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-300 hover:text-blue-500 rounded-lg" onClick={() => openEditRequestModal(req)} title="Edit Request"><Pencil className="h-3 w-3" /></Button>
                                             <Button size="sm" className="h-7 px-2 text-[9px] bg-emerald-600 font-black uppercase" onClick={() => handleVerification(req.id, 'approved')}>Ok</Button>
                                             <Button size="sm" variant="outline" className="h-7 px-2 text-[9px] text-red-500 border-red-100 font-black uppercase" onClick={() => handleVerification(req.id, 'rejected')}>X</Button>
                                         </div>
@@ -338,20 +504,37 @@ function AdminDashboardContent() {
         </div>
     );
 
+    const filteredDisputes = disputes.filter(r => 
+        r.user_name?.toLowerCase().includes(disputeSearch.toLowerCase()) || 
+        r.comment?.toLowerCase().includes(disputeSearch.toLowerCase())
+    );
+
     const renderDisputes = () => (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mx-auto max-w-5xl">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
-                <h2 className="font-black text-xl text-slate-900 uppercase">Community Disputes</h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Handle {disputes.length} reports of non-halal data</p>
+            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
+                <div>
+                    <h2 className="font-black text-xl text-slate-900 uppercase">Community Disputes</h2>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Handle {filteredDisputes.length} reports of non-halal data</p>
+                </div>
+                <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input 
+                        type="text" 
+                        placeholder="Search disputes..." 
+                        value={disputeSearch}
+                        onChange={(e) => setDisputeSearch(e.target.value)}
+                        className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none w-64" 
+                    />
+                </div>
             </div>
             <div className="divide-y divide-slate-100">
-                {disputes.length === 0 ? (
+                {filteredDisputes.length === 0 ? (
                     <div className="py-20 text-center">
                         <MessageSquare className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">No active disputes</p>
                     </div>
                 ) : (
-                    disputes.map((dispute) => (
+                    filteredDisputes.map((dispute) => (
                         <div key={dispute.id} className="p-6 hover:bg-slate-50 transition-colors">
                             <div className="flex justify-between gap-4">
                                 <div className="flex gap-4">
@@ -368,7 +551,7 @@ function AdminDashboardContent() {
                                 </div>
                                 <div className="flex flex-col gap-2 min-w-[120px]">
                                     <Button size="sm" className="bg-slate-900 text-white font-black uppercase text-[10px] tracking-widest h-10" onClick={() => handleResolveDispute(dispute.id, 'Acknowledged and verified.')}>Resolve</Button>
-                                    <Button size="sm" variant="ghost" className="text-red-500 hover:bg-red-50 font-black uppercase text-[10px] tracking-widest h-10">Delete Review</Button>
+                                    <Button size="sm" variant="ghost" className="text-red-500 hover:bg-red-50 font-black uppercase text-[10px] tracking-widest h-10" onClick={() => handleDeleteReview(dispute.id)}>Delete Review</Button>
                                 </div>
                             </div>
                         </div>
@@ -388,7 +571,13 @@ function AdminDashboardContent() {
                 <div className="flex gap-2">
                     <div className="relative">
                         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input type="text" placeholder="Search by name or email..." className="pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all w-64" />
+                        <input 
+                            type="text" 
+                            placeholder="Search by name or email..." 
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            className="pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all w-64" 
+                        />
                     </div>
                 </div>
             </div>
@@ -404,10 +593,10 @@ function AdminDashboardContent() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {profiles.length === 0 ? (
+                        {profiles.filter(u => u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) || u.id.includes(userSearch)).length === 0 ? (
                             <tr><td colSpan={5} className="py-20 text-center text-slate-400 font-bold">No users found.</td></tr>
                         ) : (
-                            profiles.map((user) => (
+                            profiles.filter(u => u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) || u.id.includes(userSearch)).map((user) => (
                                 <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
@@ -427,10 +616,13 @@ function AdminDashboardContent() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${user.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
-                                            }`}>
+                                        <button 
+                                            onClick={() => handleUpdateRole(user.id, user.role)}
+                                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer hover:scale-105 transition-transform ${user.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                                            }`}
+                                        >
                                             {user.role}
-                                        </span>
+                                        </button>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-black uppercase tracking-widest">
@@ -441,7 +633,16 @@ function AdminDashboardContent() {
                                         {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-slate-200 transition-colors"><MoreVertical className="h-4 w-4" /></Button>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className={`h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' ? 'text-purple-600 hover:bg-purple-50' : 'text-blue-600 hover:bg-blue-50'}`}
+                                                onClick={() => handleUpdateRole(user.id, user.role)}
+                                            >
+                                                {user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -453,14 +654,41 @@ function AdminDashboardContent() {
     );
 
     const renderRestaurants = () => (
+        <>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mx-auto max-w-7xl">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+            <div className="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/30">
                 <div>
                     <h2 className="font-black text-xl text-slate-900">Total Restaurants</h2>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">Audit and manage {places.length} global entries</p>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Manage {filteredPlaces.length} of {places.length} global entries</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-2 h-10 border-slate-200 rounded-xl font-bold px-4 hover:bg-slate-50 transition-all"><Filter className="h-4 w-4" /> Advanced Filter</Button>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <div className="relative flex-1 md:flex-initial">
+                        <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={restaurantSearch}
+                            onChange={e => setRestaurantSearch(e.target.value)}
+                            placeholder="Search name, city, cuisine..."
+                            className="pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all w-full md:w-64"
+                        />
+                    </div>
+                    <Button
+                        onClick={() => {
+                            setAddForm({
+                                name: '', cuisine: '', city: '', address: '',
+                                halal_status: 'Full Halal', serves_alcohol: false,
+                                halal_source: '', image: '',
+                                lat: 22.5726, lng: 88.3639,
+                                tags: ''
+                            });
+                            setAddImageFile(null);
+                            setIsAddModalOpen(true);
+                        }}
+                        size="sm"
+                        className="gap-2 h-10 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest px-4 shadow-lg shadow-emerald-500/20"
+                    >
+                        <Plus className="h-4 w-4" /> Add Place
+                    </Button>
                 </div>
             </div>
             <div className="overflow-x-auto">
@@ -469,20 +697,21 @@ function AdminDashboardContent() {
                         <tr>
                             <th className="px-6 py-4">Brand &amp; Cuisine</th>
                             <th className="px-6 py-4">Geography</th>
+                            <th className="px-6 py-4">Halal Status</th>
                             <th className="px-6 py-4">Trust Status</th>
-                            <th className="px-6 py-4">Community Rating</th>
-                            <th className="px-6 py-4 text-right">Verification</th>
+                            <th className="px-6 py-4">Rating</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {places.length === 0 ? (
-                            <tr><td colSpan={5} className="py-20 text-center text-slate-400 font-bold">No restaurants in database.</td></tr>
+                        {filteredPlaces.length === 0 ? (
+                            <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold">No restaurants found.</td></tr>
                         ) : (
-                            places.map((place) => (
+                            filteredPlaces.map((place) => (
                                 <tr key={place.id} className="hover:bg-slate-50/80 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="h-12 w-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm relative group">
+                                            <div className="h-12 w-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm relative">
                                                 {place.image ? (
                                                     <img src={place.image} alt={place.name} className="h-full w-full object-cover transition-transform group-hover:scale-110 duration-500" />
                                                 ) : (
@@ -502,13 +731,27 @@ function AdminDashboardContent() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                                            place.halal_status === 'Not Halal'
+                                                ? 'bg-red-50 text-red-700 border-red-100'
+                                                : place.halal_status === 'Pork Free'
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                        }`}>
+                                            {place.halal_status || 'Unknown'}
+                                        </span>
+                                        {place.serves_alcohol && (
+                                            <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded bg-red-50 text-red-500 text-[9px] font-black uppercase border border-red-100">Alcohol</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4">
                                         {place.verified ? (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-widest">
-                                                <Check className="h-3 w-3" /> Certified
+                                                <Check className="h-3 w-3" /> Verified
                                             </span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black uppercase tracking-widest">
-                                                Community
+                                                Unverified
                                             </span>
                                         )}
                                     </td>
@@ -518,9 +761,27 @@ function AdminDashboardContent() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Link href={`/place/${place.id}`} target="_blank" className="inline-flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-emerald-600 font-black uppercase tracking-widest transition-colors">
-                                            Preview Item <ExternalLink className="h-3.5 w-3.5" />
-                                        </Link>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => openEditModal(place)} 
+                                                className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest border-slate-200 hover:border-blue-500 hover:text-blue-600 transition-all bg-white"
+                                            >
+                                                <Pencil className="h-3 w-3 mr-1.5" /> Edit
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                onClick={() => handleDeletePlace(place.id)} 
+                                                className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Link href={`/place/${place.id}`} target="_blank" className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 inline-flex items-center justify-center">
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -529,6 +790,248 @@ function AdminDashboardContent() {
                 </table>
             </div>
         </div>
+
+        {/* ===== DELETE CONFIRMATION DIALOG ===== */}
+        {deletingPlaceId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center animate-in zoom-in-95 duration-300">
+                    <div className="h-16 w-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <Trash2 className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Delete Restaurant?</h3>
+                    <p className="text-sm text-slate-500 mt-2 mb-8">This will permanently remove this restaurant and all associated verification requests. This cannot be undone.</p>
+                    <div className="flex gap-3">
+                        <Button variant="ghost" className="flex-1 h-12 rounded-xl font-black uppercase text-[10px] tracking-widest" onClick={() => setDeletingPlaceId(null)}>Cancel</Button>
+                        <Button className="flex-1 h-12 bg-red-600 hover:bg-red-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-500/20" onClick={confirmDeletePlace}>Delete Forever</Button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Edit Restaurant Modal */}
+        {editingPlace && (
+            <EditPlaceModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditingPlace(null);
+                    setEditingRequest(null);
+                }}
+                place={editingPlace}
+                onSave={async () => {
+                    // Logic handled by onUpdate if provided, or just reload data
+                    loadData();
+                }}
+                onUpdate={editingRequest ? async (updates: Partial<DbPlace>) => {
+                    try {
+                        // 1. Update the request itself with ALL edited fields
+                        await updateVerificationRequest(editingRequest.id, {
+                            restaurant_name: updates.name,
+                            cuisine: updates.cuisine,
+                            address: updates.address,
+                            city: updates.city,
+                            lat: updates.lat,
+                            lng: updates.lng,
+                            tags: updates.tags,
+                            halal_status: updates.halal_status,
+                            serves_alcohol: updates.serves_alcohol,
+                            halal_source: updates.halal_source,
+                            certificate_url: updates.image || editingRequest.certificate_url
+                        });
+                        
+                        // 2. If it's a claim, update the linked place too
+                        if (editingRequest.place_id) {
+                            await updatePlace(editingRequest.place_id, updates);
+                        }
+                        
+                        loadData();
+                    } catch (error) {
+                        console.error('Error updating request:', error);
+                        throw error; // Re-throw to be caught by modal's handler
+                    }
+                } : undefined}
+            />
+        )}
+
+        {/* ===== ADD MODAL ===== */}
+        {isAddModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300">
+                    {/* Add Modal Header */}
+                    <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                                <Plus className="text-white h-5 w-5" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Admin Add Restaurant</h2>
+                                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Auto-verified • Instant Publish</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setIsAddModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
+                            <X className="h-5 w-5 text-slate-400" />
+                        </button>
+                    </div>
+
+                    {/* Add Modal Body */}
+                    <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                        {/* Image Upload */}
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Restaurant Photo</label>
+                            <label className="flex items-center justify-center h-32 border-2 border-dashed border-slate-200 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50/30 transition-all cursor-pointer group">
+                                <input type="file" accept="image/*" className="hidden" onChange={e => setAddImageFile(e.target.files?.[0] || null)} />
+                                <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-600 transition-colors">
+                                    {addImageFile ? (
+                                        <><Upload className="h-6 w-6" /><span className="text-xs font-black uppercase tracking-widest">{addImageFile.name}</span></>
+                                    ) : (
+                                        <><Upload className="h-6 w-6" /><span className="text-xs font-black uppercase tracking-widest">Upload Photo</span><span className="text-[10px] font-bold">(Optional)</span></>
+                                    )}
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Name */}
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Restaurant Name *</label>
+                            <input
+                                value={addForm.name}
+                                onChange={e => setAddForm({ ...addForm, name: e.target.value })}
+                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                placeholder="Full restaurant name"
+                            />
+                        </div>
+
+                        {/* Cuisine & City */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Cuisine *</label>
+                                <input
+                                    value={addForm.cuisine}
+                                    onChange={e => setAddForm({ ...addForm, cuisine: e.target.value })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                    placeholder="e.g. Indian, Turkish"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">City *</label>
+                                <input
+                                    value={addForm.city}
+                                    onChange={e => setAddForm({ ...addForm, city: e.target.value })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                    placeholder="City name"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Address */}
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Full Address</label>
+                            <input
+                                value={addForm.address}
+                                onChange={e => setAddForm({ ...addForm, address: e.target.value })}
+                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                placeholder="Full address for maps"
+                            />
+                        </div>
+
+                        {/* Lat & Lng */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Latitude *</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={addForm.lat}
+                                    onChange={e => setAddForm({ ...addForm, lat: parseFloat(e.target.value) })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Longitude *</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={addForm.lng}
+                                    onChange={e => setAddForm({ ...addForm, lng: parseFloat(e.target.value) })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Tags */}
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Tags (Comma Separated)</label>
+                            <input
+                                value={addForm.tags}
+                                onChange={e => setAddForm({ ...addForm, tags: e.target.value })}
+                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                placeholder="e.g. Halal, Indian, Family Friendly"
+                            />
+                        </div>
+
+                        <hr className="border-slate-100" />
+
+                        {/* Halal Status */}
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                <ShieldCheck className="h-4 w-4 text-emerald-600" /> Halal Classification
+                            </label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {['Full Halal', 'Pork Free', 'Not Halal'].map(s => (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => setAddForm({ ...addForm, halal_status: s })}
+                                        className={`h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${
+                                            addForm.halal_status === s
+                                                ? s === 'Not Halal'
+                                                    ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-500/20'
+                                                    : 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                                                : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Halal Source & Alcohol */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Halal Source</label>
+                                <input
+                                    value={addForm.halal_source}
+                                    onChange={e => setAddForm({ ...addForm, halal_source: e.target.value })}
+                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                    placeholder="e.g. HMC, MUIS"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Serves Alcohol?</label>
+                                <div className="flex gap-2 h-12 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                    <button type="button" onClick={() => setAddForm({ ...addForm, serves_alcohol: true })} className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${addForm.serves_alcohol ? 'bg-red-50 text-red-600 border border-red-200 shadow-sm' : 'text-slate-400'}`}>Yes</button>
+                                    <button type="button" onClick={() => setAddForm({ ...addForm, serves_alcohol: false })} className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${!addForm.serves_alcohol ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' : 'text-slate-400'}`}>No</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Add Modal Footer */}
+                    <div className="px-8 py-6 border-t border-slate-100 bg-white rounded-b-[2rem] flex justify-between items-center">
+                        <Button variant="ghost" className="h-12 px-6 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleAdminAddPlace}
+                            disabled={isSavingPlace}
+                            className="h-12 px-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/20 flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {isSavingPlace ? <><Loader2 className="h-4 w-4 animate-spin" /> Adding...</> : <><Plus className="h-4 w-4" /> Add &amp; Publish</>}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 
     const renderSettings = () => (
@@ -715,7 +1218,7 @@ function AdminDashboardContent() {
                                                 <p className="text-center py-8 text-xs text-slate-400 font-medium bg-slate-50/50 rounded-xl border border-dashed border-slate-200">No pending claims</p>
                                             ) : (
                                                 verifications.filter(v => v.type === 'claim').map((req) => (
-                                                    <VerificationCard key={req.id} req={req} onApprove={handleVerification} onReject={handleVerification} onDelete={handleDeleteVerification} />
+                                                    <VerificationCard key={req.id} req={req} onApprove={handleVerification} onReject={handleVerification} onDelete={handleDeleteVerification} onEdit={openEditRequestModal} />
                                                 ))
                                             )}
                                         </div>
@@ -732,7 +1235,7 @@ function AdminDashboardContent() {
                                                 <p className="text-center py-8 text-xs text-slate-400 font-medium bg-slate-50/50 rounded-xl border border-dashed border-slate-200">No new additions</p>
                                             ) : (
                                                 verifications.filter(v => v.type !== 'claim').map((req) => (
-                                                    <VerificationCard key={req.id} req={req} onApprove={handleVerification} onReject={handleVerification} onDelete={handleDeleteVerification} />
+                                                    <VerificationCard key={req.id} req={req} onApprove={handleVerification} onReject={handleVerification} onDelete={handleDeleteVerification} onEdit={openEditRequestModal} />
                                                 ))
                                             )}
                                         </div>

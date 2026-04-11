@@ -59,6 +59,15 @@ export interface DbVerificationRequest {
     id: string;
     owner_name: string;
     restaurant_name: string;
+    cuisine?: string;
+    address?: string;
+    city?: string;
+    lat?: number;
+    lng?: number;
+    tags?: string[];
+    halal_status?: string;
+    serves_alcohol?: boolean;
+    halal_source?: string;
     certificate_url: string;
     status: 'pending' | 'approved' | 'rejected';
     user_id: string;

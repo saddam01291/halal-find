@@ -16,6 +16,10 @@ import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
 import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
 import { LoginModal } from '@/components/auth/LoginModal';
+import { useRouter } from 'next/navigation';
+import { EditPlaceModal } from '@/components/admin/EditPlaceModal';
+import { deletePlace } from '@/lib/api';
+import { Pencil, Trash2, Loader2, Save } from 'lucide-react';
 
 export default function PlacePage({ params }: { params: Promise<{ id: string }> }) {
     const { user } = useAuth();
@@ -25,6 +29,9 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [confirmations, setConfirmations] = useState(0);
     const [isDisputed, setIsDisputed] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         params.then(async (resolvedParams) => {
@@ -57,6 +64,22 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
     if (!place) return notFound();
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
+    const handleDelete = async () => {
+        if (!place) return;
+        if (!window.confirm(`Are you sure you want to PERMANENTLY delete "${place.name}"? This cannot be undone.`)) return;
+
+        setIsDeleting(true);
+        try {
+            await deletePlace(place.id);
+            router.push('/search');
+        } catch (error) {
+            console.error('Error deleting place:', error);
+            alert('Failed to delete restaurant. Please try again.');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     // Tiered Verification Logic
     const isOwnerVerified = place.verified;
@@ -98,6 +121,39 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
                 />
             </Head>
+
+            {/* Admin Action Bar */}
+            {user?.role === 'admin' && (
+                <div className="bg-slate-900 border-b border-white/10 px-6 py-3 flex items-center justify-between sticky top-0 z-[100] shadow-xl">
+                    <div className="flex items-center gap-3">
+                        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Administrator Mode</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="bg-white/10 border-white/10 text-white hover:bg-white hover:text-slate-900 h-9 rounded-lg font-bold text-[10px] uppercase tracking-widest px-4"
+                            onClick={() => setIsEditModalOpen(true)}
+                        >
+                            <Pencil className="h-3 w-3 mr-2" /> Edit Restaurant
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={isDeleting}
+                            className="bg-red-600/20 border border-red-500/20 text-red-500 hover:bg-red-600 hover:text-white h-9 rounded-lg font-bold text-[10px] uppercase tracking-widest px-4 disabled:opacity-50"
+                            onClick={handleDelete}
+                        >
+                            {isDeleting ? (
+                                <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Deleting...</>
+                            ) : (
+                                <><Trash2 className="h-3 w-3 mr-2" /> Delete Entry</>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            )}
             {/* Hero Image / Banner */}
             <div className="relative h-80 md:h-96 w-full">
                 <div
@@ -348,6 +404,15 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
             </div>
 
             <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+            
+            {place && (
+                <EditPlaceModal 
+                    isOpen={isEditModalOpen} 
+                    onClose={() => setIsEditModalOpen(false)} 
+                    place={place} 
+                    onSave={() => window.location.reload()} 
+                />
+            )}
         </div>
     );
 }

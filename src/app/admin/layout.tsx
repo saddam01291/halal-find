@@ -65,6 +65,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
 
+    const displayUser = user;
+
     const NavLink = ({ tab, icon: Icon, label }: { tab: string, icon: any, label: string }) => {
         const isActive = activeTab === tab;
         return (
@@ -129,10 +131,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">{user?.full_name?.charAt(0) || 'A'}</div>
+                    <div className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">{displayUser?.full_name?.charAt(0) || 'A'}</div>
                     <div className="overflow-hidden">
-                        <p className="text-[10px] font-bold text-white truncate">{user?.full_name || 'Admin'}</p>
-                        <p className="text-[8px] text-slate-500 truncate">{user?.email}</p>
+                        <p className="text-[10px] font-bold text-white truncate">{displayUser?.full_name || 'Admin'}</p>
+                        <p className="text-[8px] text-slate-500 truncate">{displayUser?.email}</p>
                     </div>
                 </div>
             </aside>
