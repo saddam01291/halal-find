@@ -114,15 +114,15 @@ function SearchContent() {
                         </div>
                     ) : (
                         <>
-                            {places.map((place) => (
+                            {places.slice(0, 50).map((place, index) => (
                                 <Link
                                     href={`/place/${place.id}`}
-                                    key={place.id}
+                                    key={`${place.id}-${index}`}
                                     className="flex gap-4 p-4 hover:bg-slate-50 transition-colors group"
                                 >
                                     <div
                                         className="h-28 w-28 flex-shrink-0 rounded-xl bg-slate-100 bg-cover bg-center border border-slate-200 group-hover:border-emerald-500/30 transition-colors"
-                                        style={{ backgroundImage: `url(${place.image})` }}
+                                        style={{ backgroundImage: `url(${place.image ? place.image : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&q=80'})` }}
                                     />
                                     <div className="flex-1 min-w-0 py-1">
                                         <div className="flex justify-between items-start">
@@ -143,11 +143,11 @@ function SearchContent() {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {(place.tags || []).slice(0, 2).map((tag, i) => (
-                                                <span key={i} className="text-[10px] uppercase tracking-wider bg-slate-50 text-slate-500 px-2 py-0.5 rounded border border-slate-100">
+                                            {Array.isArray(place.tags) ? place.tags.slice(0, 2).map((tag, i) => (
+                                                <span key={`${tag}-${i}`} className="text-[10px] uppercase tracking-wider bg-slate-50 text-slate-500 px-2 py-0.5 rounded border border-slate-100">
                                                     {tag}
                                                 </span>
-                                            ))}
+                                            )) : null}
                                         </div>
                                     </div>
                                 </Link>
@@ -190,9 +190,9 @@ function SearchContent() {
                                 : { lat: 40.7128, lng: -74.0060 }
                         }
                     >
-                        {places.map((place) => (
+                        {places.slice(0, 50).filter(place => place.lat && place.lng).map((place, index) => (
                             <AdvancedMarker
-                                key={place.id}
+                                key={`marker-${place.id}-${index}`}
                                 position={{ lat: place.lat, lng: place.lng }}
                                 title={place.name}
                             />

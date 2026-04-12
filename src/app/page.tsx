@@ -74,13 +74,24 @@ export default function Home() {
     fetchPlaces();
   }, [authLoading]);
 
-  // Proximity Sorting
-  const sortedPlaces = [...places].sort((a, b) => {
-    if (!userCoords) return 0;
-    const distA = getDistance(userCoords.lat, userCoords.lng, a.lat, a.lng);
-    const distB = getDistance(userCoords.lat, userCoords.lng, b.lat, b.lng);
-    return distA - distB;
-  });
+  // Proximity Filter & Sorting
+  const sortedPlaces = [...places]
+    .filter(place => {
+      // If user has coords, strictly hide restaurants > 30km UNLESS they are searching a specific place/city.
+      if (userCoords && !activeSearchTerm) {
+         if (!place.lat || !place.lng) return false;
+         const distanceToPlace = getDistance(userCoords.lat, userCoords.lng, place.lat, place.lng);
+         return distanceToPlace <= 30; // 30km radius restriction
+      }
+      return true; // Show all on search or if user denied location tracking
+    })
+    .sort((a, b) => {
+      if (!userCoords) return 0;
+      const distA = (a.lat && a.lng) ? getDistance(userCoords.lat, userCoords.lng, a.lat, a.lng) : Infinity;
+      const distB = (b.lat && b.lng) ? getDistance(userCoords.lat, userCoords.lng, b.lat, b.lng) : Infinity;
+      const diff = distA - distB;
+      return isNaN(diff) ? 0 : diff; // Strictly return valid number to prevent JS Engine sort-crashes
+    });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,24 +195,24 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sortedPlaces.map((place, index) => {
-              const distance = userCoords
+            {sortedPlaces.slice(0, 30).map((place, index) => {
+              const distance = (userCoords && place.lat && place.lng)
                 ? getDistance(userCoords.lat, userCoords.lng, place.lat, place.lng)
                 : null;
 
               return (
-                <Link href={`/place/${place.id}`} key={place.id} className="group">
+                <Link href={`/place/${place.id}`} key={`${place.id}-${index}`} className="group">
                   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1">
                     <div className="h-60 bg-slate-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
                       <Image
                         src={getValidImageUrl(place.image)}
-                        alt={place.name}
+                        alt={place.name || "Restaurant"}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
                         priority={index < 3} // Prioritize first few images
                       />
-                      {distance !== null && (
+                      {distance !== null && !isNaN(distance) && (
                         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-emerald-700 shadow-sm border border-emerald-100/50 uppercase tracking-wider z-10">
                           {distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km away`}
                         </div>
@@ -217,11 +228,11 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2">{place.name}</h3>
                       <p className="text-slate-500 text-sm mb-5 line-clamp-2">{place.address}</p>
                       <div className="flex gap-2 flex-wrap">
-                        {(place.tags || []).slice(0, 3).map(tag => (
-                          <span key={tag} className="text-xs bg-slate-50 text-slate-600 px-3 py-1.5 rounded-full border border-slate-100 font-medium">
+                        {Array.isArray(place.tags) ? place.tags.slice(0, 3).filter(Boolean).map((tag, tagIndex) => (
+                          <span key={`${tag}-${tagIndex}`} className="text-xs bg-slate-50 text-slate-600 px-3 py-1.5 rounded-full border border-slate-100 font-medium">
                             {tag}
                           </span>
-                        ))}
+                        )) : null}
                       </div>
                     </div>
                   </div>
