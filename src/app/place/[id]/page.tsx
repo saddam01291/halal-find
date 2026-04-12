@@ -6,14 +6,14 @@ import { DbPlace, DbReview } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { GoogleMap } from '@/components/map/Map';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
-import { Star, MapPin, Clock, Phone, Globe, ChevronLeft, ShieldCheck, Flag, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Star, MapPin, Clock, Phone, Globe, ChevronLeft, ShieldCheck, Flag, Users, CheckCircle2, AlertTriangle, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import Link from 'next/link';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
-import Head from 'next/head';
+
 import { useAuth } from '@/context/AuthContext';
 import { LoginModal } from '@/components/auth/LoginModal';
 import { useRouter } from 'next/navigation';
@@ -111,16 +111,32 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
         }
     };
 
+    const handleShare = async () => {
+        if (!place) return;
+        const shareData = {
+            title: `${place.name} | Find Halal`,
+            text: `Check out ${place.name} on Find Halal!`,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                alert('Link copied to clipboard!');
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
-            <Head>
-                <title>{`${place.name} | Halal Restaurant in ${place.city}`}</title>
-                <meta name="description" content={`Find out if ${place.name} in ${place.city} is Halal. See community reviews, certificates, and more on Find Halal.`} />
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-                />
-            </Head>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+            />
 
             {/* Admin Action Bar */}
             {user?.role === 'admin' && (
@@ -239,6 +255,9 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                                         Claim This Business
                                     </Button>
                                 )}
+                                <Button size="icon" variant="ghost" className="bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-emerald-500/20 hover:text-emerald-200 hover:border-emerald-500/30" title="Share" onClick={handleShare}>
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
                                 <Button size="icon" variant="ghost" className="bg-white/10 backdrop-blur text-white border border-white/20 hover:bg-red-500/20 hover:text-red-200 hover:border-red-500/30" title="Report Issue">
                                     <Flag className="h-4 w-4" />
                                 </Button>
