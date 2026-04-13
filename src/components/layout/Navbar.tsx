@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { MapPin, LogOut, PlusCircle, LayoutDashboard, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { LoginModal } from '@/components/auth/LoginModal';
 import { AddPlaceModal } from '@/components/places/AddPlaceModal';
 
 export function Navbar() {
     const { user, signOut } = useAuth();
+    const { userCoords, locationStatus, requestLocation, cityName } = useLocation();
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isAddPlaceOpen, setIsAddPlaceOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -49,6 +51,31 @@ export function Navbar() {
                             >
                                 Explore
                             </Link>
+
+                            {/* Location Status Indicator */}
+                            <div className="h-6 w-px bg-slate-100 mx-1" />
+                            {locationStatus === 'granted' ? (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100 animate-in fade-in slide-in-from-left-2 duration-500">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest leading-none">
+                                        Near {cityName || 'You'}
+                                    </span>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={requestLocation}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
+                                        locationStatus === 'loading'
+                                            ? 'bg-slate-50 border-slate-100 text-slate-400'
+                                            : 'bg-white border-slate-100 text-slate-400 hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50/30'
+                                    }`}
+                                >
+                                    <MapPin className={`h-3 w-3 ${locationStatus === 'loading' ? 'animate-pulse' : ''}`} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none whitespace-nowrap">
+                                        {locationStatus === 'loading' ? 'Sharing...' : 'Turn On Device Location'}
+                                    </span>
+                                </button>
+                            )}
 
                             {user ? (
                                 <div className="flex items-center gap-3">
@@ -183,6 +210,41 @@ export function Navbar() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                            {/* Proximity / Location Toggle */}
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Location</p>
+                                {locationStatus === 'granted' ? (
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-100/50 text-emerald-900 transition-colors w-full text-left">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 shadow-sm relative">
+                                            <MapPin className="h-4 w-4 text-emerald-600" />
+                                            <div className="absolute top-0 right-0 h-2 w-2 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <span className="font-bold text-xs uppercase tracking-tight block">Browsing Nearby</span>
+                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">{cityName || 'Your Current Area'}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            requestLocation();
+                                        }}
+                                        className={`flex items-center gap-3 p-4 rounded-xl border transition-all active:scale-95 w-full text-left ${
+                                            locationStatus === 'loading'
+                                                ? 'bg-slate-50 border-slate-100 text-slate-400'
+                                                : 'bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-200 animate-in pulse duration-1000'
+                                        }`}
+                                    >
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 shadow-sm">
+                                            <MapPin className={`h-4 w-4 ${locationStatus === 'loading' ? 'animate-pulse' : ''}`} />
+                                        </div>
+                                        <span className="font-bold text-sm uppercase tracking-wide">
+                                            {locationStatus === 'loading' ? 'Locating...' : 'Turn On Device Location'}
+                                        </span>
+                                    </button>
+                                )}
+                            </div>
+
                             {/* Primary Actions */}
                             <div className="space-y-3">
                                 <Link

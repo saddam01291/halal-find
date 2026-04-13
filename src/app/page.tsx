@@ -8,22 +8,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getPlaces, searchPlaces } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
-import { getDistance, getValidImageUrl } from '@/lib/utils';
+import { getDistance, getValidImageUrl, getAreaFromAddress } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { useLocation } from '@/context/LocationContext';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { LoginModal } from '@/components/auth/LoginModal';
 
 export default function Home() {
   const { isLoading: authLoading } = useAuth();
+  const { userCoords, locationStatus, requestLocation } = useLocation();
   const exploreRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchTerm, setActiveSearchTerm] = useState('');
   const [places, setPlaces] = useState<DbPlace[]>([]);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [locationDenied, setLocationDenied] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
   const fetchPlaces = async (query?: string, coords?: { lat: number; lng: number }, retryCount = 0) => {
     setLoading(true);
@@ -59,87 +60,54 @@ export default function Home() {
     }
   };
 
-  const handleRefreshLocation = () => {
-    setLocationDenied(false);
-    setLoading(true);
-    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setUserCoords(coords);
-          fetchPlaces(searchQuery, coords);
-        },
-        () => { 
-          setLocationDenied(true);
-          fetchPlaces(searchQuery); 
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
-  };
+  const availableAreas = Array.from(new Set(
+    places.map(p => getAreaFromAddress(p.address, p.city))
+  )).filter(Boolean).slice(0, 8);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to resolve before fetching
-
-    // Get Location
-    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setUserCoords(coords);
-          fetchPlaces(searchQuery, coords);
-        },
-        () => { 
-          // location denied - that's fine
-          setLocationDenied(true);
-          fetchPlaces(searchQuery); 
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    } else {
-      fetchPlaces(searchQuery);
-    }
-  }, [authLoading]);
+    if (authLoading) return;
+    fetchPlaces(searchQuery, userCoords || undefined);
+  }, [authLoading, userCoords]);
 
   // Proximity Filter & Smart Radius Sorting
   const getSortedPlaces = () => {
+    let filtered = [...places];
+
+    // Area Filtering
+    if (selectedArea) {
+      filtered = filtered.filter(p => getAreaFromAddress(p.address, p.city) === selectedArea);
+    }
+
     if (!userCoords || activeSearchTerm) {
-      // Default: Sort by rating if location is missing or searching
-      return [...places].sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.review_count || 0) - (a.review_count || 0));
+      // Default: High-weight on rating and verification
+      return filtered.sort((a, b) => {
+        const scoreA = (a.rating * 20) + (a.verified ? 100 : 0) + (a.review_count / 10);
+        const scoreB = (b.rating * 20) + (b.verified ? 100 : 0) + (b.review_count / 10);
+        return scoreB - scoreA;
+      });
     }
 
-    const placesWithDistance = places
-      .filter(p => p.lat && p.lng)
-      .map(p => ({
-        ...p,
-        distance: getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng)
-      }));
+    const scoredPlaces = filtered.map(p => {
+        const distance = (p.lat && p.lng) 
+            ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng)
+            : 50; // Neutral distance for restaurants without coords
 
-    // Start with 30km
-    let filtered = placesWithDistance.filter(p => p.distance <= 30);
-    
-    // Expand to 100km if sparse
-    if (filtered.length < 6) {
-      filtered = placesWithDistance.filter(p => p.distance <= 100);
-    }
+        // Relevance Score Calculation
+        // Bonus for proximity (up to 100 points)
+        const distanceScore = Math.max(0, 100 - distance); 
+        // Bonus for rating (up to 100 points)
+        const ratingScore = (p.rating || 0) * 20;
+        // Bonus for verification (100 points)
+        const verificationBonus = p.verified ? 100 : 0;
 
-    // Expand to 500km if still sparse
-    if (filtered.length < 6) {
-      filtered = placesWithDistance.filter(p => p.distance <= 500);
-    }
+        return {
+            ...p,
+            distance,
+            relevance: distanceScore + ratingScore + verificationBonus
+        };
+    });
 
-    // If still sparse, show all but sort by distance (don't show across the globe if possible)
-    if (filtered.length < 3) {
-      filtered = [...placesWithDistance];
-    }
-
-    return filtered.sort((a, b) => a.distance - b.distance);
+    return scoredPlaces.sort((a, b) => b.relevance - a.relevance);
   };
 
   const sortedPlaces = getSortedPlaces();
@@ -186,48 +154,65 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 drop-shadow-sm">
-            Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-emerald-600">Exquisite</span><br />
-            Halal Cuisine
+            {locationStatus === 'prompt' ? (
+              <>Halal Discovery from your <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-emerald-600">Current Device</span></>
+            ) : (
+              <>Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-emerald-600">Exquisite</span><br />Halal Cuisine</>
+            )}
           </h1>
 
           <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Your contributions help thousands of Muslim families find trusted Halal dining.
+            {locationStatus === 'prompt' 
+              ? 'Please turn on your device location to see verified Halal restaurants in your immediate neighborhood.'
+              : 'Your contributions help thousands of Muslim families find trusted Halal dining.'}
           </p>
 
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 w-full max-w-xl mx-auto mt-8 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50">
-            <div className="relative flex-1">
-              <MapPin className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
-              <Input
-                placeholder="Cuisine, Restaurant, or City..."
-                className="pl-11 h-12 text-base bg-transparent border-0 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button type="submit" size="lg" className="h-12 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg">
-              Search
-            </Button>
-          </form>
+          <div className="flex flex-col items-center gap-6 mt-8">
+            {locationStatus === 'prompt' && (
+              <Button 
+                onClick={requestLocation}
+                size="lg" 
+                className="h-16 px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 text-lg font-bold flex items-center gap-3 animate-in zoom-in duration-500"
+              >
+                <MapPin className="h-6 w-6" />
+                Turn On Device Location
+              </Button>
+            )}
 
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 w-full max-w-xl p-2 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50">
+              <div className="relative flex-1">
+                <MapPin className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
+                <Input
+                  placeholder="Area, City, or Category..."
+                  className="pl-11 h-12 text-base bg-transparent border-0 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button type="submit" size="lg" className="h-12 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg">
+                Search
+              </Button>
+            </form>
+          </div>
 
           <div className="flex items-center justify-center gap-8 pt-8 text-slate-600">
-            <div className="flex items-center gap-2"><ChefHat className="h-5 w-5 text-amber-600" /> <span className="text-sm font-semibold">Curated Chefs</span></div>
+            <div className="flex items-center gap-2"><ChefHat className="h-5 w-5 text-amber-600" /> <span className="text-sm font-semibold">Gourmet Spots</span></div>
             <div className="flex items-center gap-2"><Store className="h-5 w-5 text-emerald-600" /> <span className="text-sm font-semibold">Verified Places</span></div>
-            <div className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-600" /> <span className="text-sm font-semibold">Community Reviews</span></div>
+            <div className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-600" /> <span className="text-sm font-semibold">Community Verified</span></div>
           </div>
         </div>
 
-        {locationDenied && (
-          <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {locationStatus === 'denied' && (
+          <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 font-bold">
             <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-4 bg-white/80 backdrop-blur-md border border-amber-100 rounded-2xl shadow-sm">
               <div className="flex items-center gap-3 text-amber-700">
                 <div className="p-2 bg-amber-100 rounded-full">
                   <MapPin className="h-5 w-5" />
                 </div>
-                <p className="text-sm font-medium">Location access is disabled. Enable it for better results near you.</p>
+                <p className="text-sm">Location is disabled. Search by City above to explore manually.</p>
               </div>
               <Button 
-                onClick={handleRefreshLocation}
+                onClick={requestLocation}
                 variant="outline" 
                 size="sm" 
                 className="bg-amber-600 hover:bg-amber-700 text-white border-0 rounded-xl"
@@ -278,6 +263,41 @@ export default function Home() {
             </Link>
           </div>
 
+          {/* Smart Area Chips */}
+          {availableAreas.length > 0 && (
+            <div className="mb-12">
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Nearby Neighborhoods</p>
+              <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                <button
+                  onClick={() => setSelectedArea(null)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap border-2 transition-all ${
+                    !selectedArea 
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-200' 
+                      : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                  }`}
+                >
+                  All Areas
+                </button>
+                {availableAreas.map(area => (
+                  <button
+                    key={area}
+                    onClick={() => {
+                        setSelectedArea(area);
+                        exploreRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap border-2 transition-all ${
+                      selectedArea === area
+                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-200' 
+                        : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                    }`}
+                  >
+                    {area}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {sortedPlaces.slice(0, 30).map((place, index) => {
               const distance = (userCoords && place.lat && place.lng)
@@ -286,34 +306,45 @@ export default function Home() {
 
               return (
                 <Link href={`/place/${place.id}`} key={`${place.id}-${index}`} className="group">
-                  <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1">
-                    <div className="h-60 bg-slate-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
+                  <div className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 hover:-translate-y-2">
+                    <div className="h-64 bg-slate-100 relative overflow-hidden">
                       <Image
                         src={getValidImageUrl(place.image, place.id)}
                         alt={place.name || "Restaurant"}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover"
+                        className="object-cover transition-transform duration-[3s] group-hover:scale-110"
                         priority={index < 3} // Prioritize first few images
                       />
                       {distance !== null && !isNaN(distance) && (
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-emerald-700 shadow-sm border border-emerald-100/50 uppercase tracking-wider z-10">
-                          {distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km away`}
+                        <div className="absolute top-5 right-5 bg-white/40 backdrop-blur-xl px-4 py-2 rounded-2xl text-[10px] font-black text-slate-900 shadow-xl border border-white/40 uppercase tracking-widest z-10 transition-transform group-hover:scale-110">
+                          {distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km`}
                         </div>
                       )}
+                      
+                      {/* Premium Overlay on Hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-1">
+                    <div className="p-8">
+                      <div className="flex justify-between items-start mb-4">
                         <HalalBadge status={place.verification_status} />
-                        <span className="flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-100">
+                        <span className="flex items-center gap-1.5 bg-amber-500/10 text-amber-700 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/20 uppercase tracking-wider">
                           {place.rating} ★
                         </span>
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2">{place.name}</h3>
-                      <p className="text-slate-500 text-sm mb-5 line-clamp-2">{place.address}</p>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2 tracking-tight">{place.name}</h3>
+                      <div className="flex flex-col gap-1 mb-6 min-h-[40px]">
+                        <p className="text-slate-800 text-sm font-bold truncate">
+                          {getAreaFromAddress(place.address, place.city)}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <MapPin className="h-3 w-3" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider">{place.city}</span>
+                        </div>
+                      </div>
                       <div className="flex gap-2 flex-wrap">
                         {Array.isArray(place.tags) ? place.tags.slice(0, 3).filter(Boolean).map((tag, tagIndex) => (
-                          <span key={`${tag}-${tagIndex}`} className="text-xs bg-slate-50 text-slate-600 px-3 py-1.5 rounded-full border border-slate-100 font-medium">
+                          <span key={`${tag}-${tagIndex}`} className="text-[10px] bg-slate-50 text-slate-500 px-3.5 py-2 rounded-xl border border-slate-100 font-bold uppercase tracking-widest">
                             {tag}
                           </span>
                         )) : null}

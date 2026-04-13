@@ -46,13 +46,13 @@ function deg2rad(deg: number): number {
 
 export function getValidImageUrl(url?: string | null, seed?: string): string {
     const FALLBACK_IMAGES = [
-        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80', // Burger
-        'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80', // Pizza
+        '/assets/placeholders/burger.png',
+        '/assets/placeholders/biryani.png',
+        '/assets/placeholders/cafe.png',
         'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', // Steak/Meat
         'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', // Pizza/Italian
         'https://images.unsplash.com/photo-1567306301408-9b74779a11af?w=800&q=80', // Salad/Healthy
         'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80', // Bowl
-        'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=800&q=80', // Pizza/Platter
         'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800&q=80', // Dessert
         'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800&q=80', // Sandwich
         'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80', // Gourmet
@@ -79,4 +79,47 @@ export function getValidImageUrl(url?: string | null, seed?: string): string {
     } catch (e) {
         return FALLBACK_IMAGES[0];
     }
+}
+
+export function calculateTrustScore(place: any, confirmations: number = 0): number {
+    let score = 30; // Base score for being listed
+
+    // Verification Boost
+    if (place.verified || place.verification_status === 'verified') score += 40;
+    else if (place.verification_status === 'pending') score += 10;
+
+    // Community Boost (max 20 points)
+    score += Math.min(confirmations * 4, 20);
+
+    // Safety Transparency Boost (max 10 points)
+    if (!place.serves_alcohol) score += 5;
+    if (place.contamination_risk === 'none') score += 5;
+
+    // Penalty for disputes
+    // (Note: activeDispute logic moved to component for simplicity, 
+    // but we can pass it here if needed)
+
+    return Math.min(score, 100);
+}
+
+export function getAreaFromAddress(address?: string | null, city?: string | null): string {
+    if (!address) return city || 'Unknown Location';
+
+    // Split by common delimiters
+    const segments = address.split(/[,,|]/);
+    
+    // Clean segments
+    const cleanedSegments = segments
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !/^\d+$/.test(s)); // Filter out standalone numbers (house numbers)
+
+    if (cleanedSegments.length === 0) return city || address;
+
+    // Return the first interesting segment if it's not just the city name again
+    const firstSegment = cleanedSegments[0];
+    if (city && firstSegment.toLowerCase() === city.toLowerCase() && cleanedSegments.length > 1) {
+        return cleanedSegments[1];
+    }
+
+    return firstSegment;
 }

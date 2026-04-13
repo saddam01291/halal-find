@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { addPlace, submitVerificationRequest, uploadImage } from '@/lib/api';
-import { X, Upload, Building2, Loader2, Info, Camera, ShieldCheck } from 'lucide-react';
+import { X, Upload, Building2, Loader2, Info, Camera, ShieldCheck, MapPin as MapPinIcon, LocateFixed } from 'lucide-react';
+import { GoogleMap } from '@/components/map/Map';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
 
 interface AddPlaceModalProps {
     isOpen: boolean;
@@ -22,8 +24,12 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
         address: '',
         halal_statuses: ['Full Halal'] as string[],
         serves_alcohol: false,
-        halal_source: ''
+        halal_source: '',
+        lat: 0,
+        lng: 0
     });
+    const [showMap, setShowMap] = useState(false);
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [certFile, setCertFile] = useState<File | null>(null);
@@ -80,8 +86,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 address: formData.address || formData.city,
                 city: formData.city,
                 image: imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80',
-                lat: 0,
-                lng: 0,
+                lat: formData.lat || 0,
+                lng: formData.lng || 0,
                 tags: ['Halal', formData.cuisine, ...formData.halal_statuses],
                 is_mixed_neighborhood: false,
                 halal_status: formData.halal_statuses.join(', '),
@@ -286,6 +292,83 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                                         className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 focus:bg-white bg-slate-50/50 transition-all outline-none text-base font-bold text-slate-900"
                                         placeholder="Full detailed address for maps"
                                     />
+                                </div>
+
+                                {/* Map Pin Selection */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <MapPinIcon className="h-4 w-4 text-emerald-600" />
+                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Pin Precision (Optional)</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowMap(!showMap);
+                                                if (!showMap && formData.lat === 0) {
+                                                    // Default to a reasonable starter if no loc
+                                                    setFormData({ ...formData, lat: 22.5726, lng: 88.3639 }); // Default Kolkata for demo, or app default
+                                                }
+                                            }}
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${showMap ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                        >
+                                            {showMap ? 'Close Map' : 'Pick on Map'}
+                                        </button>
+                                    </div>
+
+                                    {showMap && apiKey && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                            <div className="h-64 rounded-[2rem] overflow-hidden border-2 border-slate-100 shadow-inner relative">
+                                                <GoogleMap
+                                                    apiKey={apiKey}
+                                                    className="w-full h-full"
+                                                    center={{ lat: formData.lat, lng: formData.lng }}
+                                                    onCenterChanged={(e) => {
+                                                        // Update loc on drag/center change
+                                                        const newCenter = e.detail.center;
+                                                        setFormData(prev => ({ ...prev, lat: newCenter.lat, lng: newCenter.lng }));
+                                                    }}
+                                                >
+                                                    <AdvancedMarker 
+                                                        position={{ lat: formData.lat, lng: formData.lng }}
+                                                        draggable={true}
+                                                        onDragEnd={(e) => {
+                                                            if (e.latLng) {
+                                                                setFormData(prev => ({ ...prev, lat: e.latLng!.lat(), lng: e.latLng!.lng() }));
+                                                            }
+                                                        }}
+                                                    />
+                                                </GoogleMap>
+                                                <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/50 flex items-center justify-between">
+                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Drag to adjust pin position</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (navigator.geolocation) {
+                                                                navigator.geolocation.getCurrentPosition((pos) => {
+                                                                    setFormData(prev => ({ ...prev, lat: pos.coords.latitude, lng: pos.coords.longitude }));
+                                                                });
+                                                            }
+                                                        }}
+                                                        className="p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-colors"
+                                                        title="Use Current Location"
+                                                    >
+                                                        <LocateFixed className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 px-2">
+                                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Latitude</p>
+                                                    <p className="text-xs font-bold text-slate-600 font-mono">{formData.lat.toFixed(6)}</p>
+                                                </div>
+                                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Longitude</p>
+                                                    <p className="text-xs font-bold text-slate-600 font-mono">{formData.lng.toFixed(6)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

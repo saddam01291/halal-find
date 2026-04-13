@@ -14,12 +14,9 @@ import Link from 'next/link';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
 
-import { useAuth } from '@/context/AuthContext';
-import { LoginModal } from '@/components/auth/LoginModal';
-import { useRouter } from 'next/navigation';
-import { EditPlaceModal } from '@/components/admin/EditPlaceModal';
-import { deletePlace } from '@/lib/api';
 import { Pencil, Trash2, Loader2, Save } from 'lucide-react';
+import { HalalTrustScore } from '@/components/ui/HalalTrustScore';
+import { getValidImageUrl, calculateTrustScore } from '@/lib/utils';
 
 export default function PlacePage({ params }: { params: Promise<{ id: string }> }) {
     const { user } = useAuth();
@@ -170,13 +167,12 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                     </div>
                 </div>
             )}
-            {/* Hero Image / Banner */}
-            <div className="relative h-80 md:h-96 w-full">
+            <div className="relative h-80 md:h-[450px] w-full">
                 <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${place.image})` }}
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
+                    style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id)})` }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
                 </div>
                 <div className="absolute top-6 left-4 md:left-8 z-10">
                     <Link href="/search">
@@ -271,33 +267,28 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
-                            <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                About <span className="h-px bg-slate-100 flex-1"></span>
-                            </h2>
-                            <p className="text-slate-600 leading-relaxed text-lg">
-                                Experience authentic {place.cuisine} cuisine at {place.name}.
-                                Known for our delicious dishes and warm atmosphere.
-                            </p>
-
-                            <div className="mt-8">
-                                <SafetyTransparency place={place} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <HalalTrustScore 
+                                score={calculateTrustScore(place, confirmations)}
+                                confirmations={confirmations}
+                                isVerified={isOwnerVerified ?? false}
+                                isDisputed={isDisputed}
+                            />
+                            
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-center">
+                                <h2 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                                    About <span className="h-px bg-slate-100 flex-1"></span>
+                                </h2>
+                                <p className="text-slate-600 leading-relaxed">
+                                    Experience authentic {place.cuisine} cuisine at {place.name}.
+                                    Known for our delicious dishes and warm community-first atmosphere.
+                                </p>
                             </div>
+                        </div>
 
-                            {isDisputed && (
-                                <div className="mt-6 p-5 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-4">
-                                    <div className="p-3 bg-red-100 rounded-full text-red-600 ring-4 ring-red-50">
-                                        <AlertTriangle className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-red-900 text-lg leading-tight">CAUTION: Halal Status Disputed</h4>
-                                        <p className="text-sm text-red-700 mt-2 font-medium">
-                                            A member of our community has reported that this restaurant has <span className="underline">stopped</span> serving Halal meat.
-                                            Our team is currently investigating. Proceed with caution and verify with the restaurant staff personally.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                        <div className="mt-8">
+                            <SafetyTransparency place={place} />
+                        </div>
 
                             {!isDisputed && isOwnerVerified && place.certificate_url && (
                                 <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">

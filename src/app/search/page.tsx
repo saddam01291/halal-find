@@ -10,12 +10,17 @@ import { Star, MapPin, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { getValidImageUrl, getDistance } from '@/lib/utils';
+import { HalalBadge } from '@/components/ui/HalalBadge';
+import { useLocation } from '@/context/LocationContext';
 
 function SearchContent() {
+    const { userCoords, locationStatus, requestLocation } = useLocation();
     const searchParams = useSearchParams();
     const router = useRouter();
     const initialQuery = searchParams.get('q') || '';
     const [query, setQuery] = useState(initialQuery);
+    const [activeSearchTerm, setActiveSearchTerm] = useState(initialQuery);
     const [places, setPlaces] = useState<DbPlace[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -41,9 +46,10 @@ function SearchContent() {
             }, 15000);
 
             try {
-                const data = initialQuery ? await searchPlaces(initialQuery) : await getPlaces();
+                const data = initialQuery 
+                    ? await searchPlaces(initialQuery, userCoords || undefined) 
+                    : await getPlaces(userCoords || undefined);
                 clearTimeout(timeoutId);
-                console.log(`Search: Success, received ${data?.length || 0} places`);
                 setPlaces(data || []);
                 setLoading(false);
             } catch (err: any) {
@@ -60,11 +66,58 @@ function SearchContent() {
             }
         };
         fetchPlaces();
-    }, [initialQuery]);
+    }, [initialQuery, userCoords]);
+
+    // EXACT TRANSPLANT FROM PAGE.TSX
+    const getSortedPlaces = () => {
+        let filtered = [...places];
+
+        if (!userCoords || activeSearchTerm) {
+            // Default: High-weight on rating and verification
+            return filtered.sort((a, b) => {
+                const scoreA = (a.rating * 20) + (a.verified ? 100 : 0) + (a.review_count / 10);
+                const scoreB = (b.rating * 20) + (b.verified ? 100 : 0) + (b.review_count / 10);
+                return scoreB - scoreA;
+            });
+        }
+
+        const scoredPlaces = filtered.map(p => {
+            const distance = (p.lat && p.lng) 
+                ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng)
+                : 50; // Transplanted neutral distance
+
+            const distanceScore = Math.max(0, 100 - distance); 
+            const ratingScore = (p.rating || 0) * 20;
+            const verificationBonus = p.verified ? 100 : 0;
+
+            return {
+                ...p,
+                distance,
+                relevance: distanceScore + ratingScore + verificationBonus
+            };
+        });
+
+        return scoredPlaces.sort((a, b) => b.relevance - a.relevance);
+    };
+
+    const sortedPlaces = getSortedPlaces();
+
+    const getNearbyAreas = () => {
+        const areas = new Set<string>();
+        places.forEach(p => {
+            const area = getAreaFromAddress(p.address, p.city);
+            if (area && area !== p.city) areas.add(area);
+        });
+        return Array.from(areas).slice(0, 8);
+    };
+
+    const nearbyAreas = getNearbyAreas();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.push(`/search?q=${encodeURIComponent(query)}`);
+        const cleanedQuery = query.trim();
+        setActiveSearchTerm(cleanedQuery);
+        router.push(`/search?q=${encodeURIComponent(cleanedQuery)}`);
     };
 
     return (
@@ -113,33 +166,71 @@ function SearchContent() {
                             </Button>
                         </div>
                     ) : (
-                        <>
-                            {places.slice(0, 50).map((place, index) => (
+                        <div className="flex flex-col">
+                            {/* Neighborhood Chips */}
+                            {locationStatus === 'granted' && nearbyAreas.length > 0 && (
+                                <div className="p-5 border-b border-slate-100 bg-slate-50/30">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 mb-3">Nearby Neighborhoods</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {nearbyAreas.map(area => (
+                                            <button
+                                                key={area}
+                                                onClick={() => {
+                                                    setQuery(area);
+                                                    router.push(`/search?q=${encodeURIComponent(area)}`);
+                                                }}
+                                                className="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:border-emerald-200 hover:text-emerald-700 hover:bg-emerald-50 transition-all active:scale-95 shadow-sm"
+                                            >
+                                                {area}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {sortedPlaces.length > 0 && (
+                                <div className="p-5 border-b border-slate-50">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        Found {sortedPlaces.length} places {locationStatus === 'granted' ? 'near you' : ''}
+                                    </p>
+                                </div>
+                            )}
+
+                            {sortedPlaces.slice(0, 100).map((place, index) => (
                                 <Link
                                     href={`/place/${place.id}`}
                                     key={`${place.id}-${index}`}
-                                    className="flex gap-4 p-4 hover:bg-slate-50 transition-colors group"
+                                    className="flex gap-5 p-5 hover:bg-slate-50 transition-all group border-b border-slate-50 last:border-0"
                                 >
                                     <div
-                                        className="h-28 w-28 flex-shrink-0 rounded-xl bg-slate-100 bg-cover bg-center border border-slate-200 group-hover:border-emerald-500/30 transition-colors"
-                                        style={{ backgroundImage: `url(${place.image ? place.image : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&q=80'})` }}
+                                        className="h-32 w-32 flex-shrink-0 rounded-[1.5rem] bg-slate-100 bg-cover bg-center border border-slate-100 group-hover:border-emerald-500/30 transition-all duration-500 group-hover:scale-105 shadow-sm"
+                                        style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id)})` }}
                                     />
                                     <div className="flex-1 min-w-0 py-1">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="text-lg font-bold text-slate-800 truncate group-hover:text-emerald-700 transition-colors">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <h3 className="text-xl font-bold text-slate-900 truncate group-hover:text-emerald-700 transition-colors tracking-tight">
                                                 {place.name}
                                             </h3>
-                                            <span className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-xs border border-amber-100">
+                                            <span className="flex items-center gap-1.5 bg-amber-500/10 px-2 py-1 rounded-full text-[10px] font-black border border-amber-500/20 text-amber-700">
                                                 <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                                                <span className="text-amber-700 font-medium">{place.rating}</span>
+                                                {place.rating}
                                             </span>
                                         </div>
 
-                                        <p className="text-sm text-slate-500 mb-2 font-medium">{place.cuisine}</p>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <p className="text-sm text-slate-500 font-bold uppercase tracking-widest text-[10px]">{place.cuisine}</p>
+                                            <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                            <HalalBadge status={place.verification_status} className="scale-75 origin-left" />
+                                        </div>
 
-                                        <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-3">
-                                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                                            <span className="truncate">{place.address}</span>
+                                        <div className="flex flex-col gap-0.5 mb-3">
+                                            <p className="text-sm font-bold text-slate-700 truncate">
+                                                {getAreaFromAddress(place.address, place.city)}
+                                            </p>
+                                            <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                                                <MapPin className="h-3 w-3 flex-shrink-0" />
+                                                <span className="truncate uppercase tracking-wider font-medium">{place.city}</span>
+                                            </div>
                                         </div>
 
                                         <div className="flex gap-2">
@@ -181,23 +272,20 @@ function SearchContent() {
             {/* Map View */}
             <div className="hidden md:block flex-1 bg-slate-100 relative">
                 {apiKey ? (
-                    <GoogleMap
-                        apiKey={apiKey}
-                        className="w-full h-full"
-                        defaultCenter={
-                            (places[0]?.lat && places[0]?.lng)
-                                ? { lat: places[0].lat, lng: places[0].lng }
-                                : { lat: 40.7128, lng: -74.0060 }
-                        }
-                    >
-                        {places.slice(0, 50).filter(place => place.lat && place.lng).map((place, index) => (
-                            <AdvancedMarker
-                                key={`marker-${place.id}-${index}`}
-                                position={{ lat: place.lat, lng: place.lng }}
-                                title={place.name}
-                            />
-                        ))}
-                    </GoogleMap>
+                        <GoogleMap 
+                            apiKey={apiKey}
+                            className="w-full h-full"
+                            center={userCoords || (sortedPlaces[0]?.lat ? { lat: sortedPlaces[0].lat, lng: sortedPlaces[0].lng } : { lat: 40.7128, lng: -74.0060 })}
+                            zoom={locationStatus === 'granted' ? 14 : 12}
+                        >
+                            {sortedPlaces.slice(0, 100).filter(place => place.lat && place.lng).map((place, index) => (
+                                <AdvancedMarker
+                                    key={`marker-${place.id}-${index}`}
+                                    position={{ lat: place.lat, lng: place.lng }}
+                                    title={place.name}
+                                />
+                            ))}
+                        </GoogleMap>
                 ) : (
                     <div className="flex h-full items-center justify-center text-slate-500 p-4 text-center bg-slate-50">
                         <div className="max-w-md p-8 rounded-2xl bg-white border border-slate-200 shadow-sm">

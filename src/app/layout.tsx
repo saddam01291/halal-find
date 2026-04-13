@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConditionalNavbar } from "@/components/layout/ConditionalNavbar";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import { AuthProvider } from "@/context/AuthContext";
+import { LocationProvider } from "@/context/LocationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,9 +35,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <ConditionalNavbar />
-          <main className="min-h-screen">{children}</main>
-          <ConditionalFooter />
+          <LocationProvider>
+            <ConditionalNavbar />
+            <main className="min-h-screen">{children}</main>
+            <ConditionalFooter />
+          </LocationProvider>
         </AuthProvider>
       </body>
     </html>

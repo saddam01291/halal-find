@@ -13,7 +13,8 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .select(PLACE_LIST_COLUMNS);
 
     if (coords && coords.lat && coords.lng) {
-        const radiusKm = 50; 
+        // 1. Smart Radar: Look within a 200km bounding box first to prioritize local spots
+        const radiusKm = 200; 
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
 
@@ -22,25 +23,39 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
             .lte('lat', coords.lat + latDelta)
             .gte('lng', coords.lng - lngDelta)
             .lte('lng', coords.lng + lngDelta);
-    } else {
-        query = query.order('name', { ascending: true });
-    }
+    } 
 
-    const { data, error } = await query.limit(1000);
+    // Order by rating so the best ones (nearby or global) come first
+    query = query.order('rating', { ascending: false });
+
+    let { data, error } = await query.limit(1000);
+
+    // 2. Global Fallback: If nearby search returned 0 (e.g. user is in a new city), 
+    // fetch the absolute best of the platform globally.
+    if (coords && data && data.length === 0) {
+        const { data: fallbackData } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .order('rating', { ascending: false })
+            .limit(100);
+        return fallbackData || [];
+    }
 
     if (error) {
         console.error('Error fetching places:', error);
         return [];
     }
+
     return data || [];
 }
 
-export async function searchPlaces(query: string): Promise<DbPlace[]> {
+export async function searchPlaces(query: string, coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
     const { data, error } = await supabase
         .from('places')
         .select(PLACE_LIST_COLUMNS)
         .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`)
-        .order('name', { ascending: true });
+        .order('rating', { ascending: false })
+        .limit(1000);
 
     if (error) {
         console.error('Error searching places:', error);
