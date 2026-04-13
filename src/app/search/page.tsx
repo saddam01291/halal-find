@@ -28,6 +28,7 @@ function SearchContent() {
 
     useEffect(() => {
         setQuery(initialQuery);
+        setActiveSearchTerm(initialQuery);
         const fetchPlaces = async (retryCount = 0) => {
             console.log(`Search: Fetching places for query: "${initialQuery}" (retry: ${retryCount})`);
             setLoading(true);
