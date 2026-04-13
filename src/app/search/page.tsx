@@ -10,7 +10,7 @@ import { Star, MapPin, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { getValidImageUrl, getDistance } from '@/lib/utils';
+import { getValidImageUrl, getDistance, getAreaFromAddress } from '@/lib/utils';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { useLocation } from '@/context/LocationContext';
 
@@ -265,7 +265,7 @@ function SearchContent() {
                                     </Button>
                                 </div>
                             )}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
