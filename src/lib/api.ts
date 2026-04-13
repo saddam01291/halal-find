@@ -7,11 +7,26 @@ export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city,
 
 // --- Places ---
 
-export async function getPlaces(): Promise<DbPlace[]> {
-    const { data, error } = await supabase
+export async function getPlaces(coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
+    let query = supabase
         .from('places')
-        .select(PLACE_LIST_COLUMNS)
-        .order('name', { ascending: true });
+        .select(PLACE_LIST_COLUMNS);
+
+    if (coords && coords.lat && coords.lng) {
+        const radiusKm = 50; 
+        const latDelta = radiusKm / 111;
+        const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
+
+        query = query
+            .gte('lat', coords.lat - latDelta)
+            .lte('lat', coords.lat + latDelta)
+            .gte('lng', coords.lng - lngDelta)
+            .lte('lng', coords.lng + lngDelta);
+    } else {
+        query = query.order('name', { ascending: true });
+    }
+
+    const { data, error } = await query.limit(1000);
 
     if (error) {
         console.error('Error fetching places:', error);

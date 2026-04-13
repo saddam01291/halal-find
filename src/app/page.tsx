@@ -23,10 +23,15 @@ export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
 
-  const fetchPlaces = async (query?: string, retryCount = 0) => {
+  const fetchPlaces = async (query?: string, coords?: { lat: number; lng: number }, retryCount = 0) => {
     setLoading(true);
     setError(null);
+    if (!coords && !query) {
+      // If we don't have location yet, still try to fetch the initial batch 
+      // but we will prioritize them by rating in the render logic.
+    }
 
     const timeoutId = setTimeout(() => {
       setLoading((prev) => {
@@ -39,18 +44,40 @@ export default function Home() {
     }, 12000);
 
     try {
-      const data = query ? await searchPlaces(query) : await getPlaces();
+      const data = query ? await searchPlaces(query) : await getPlaces(coords);
       clearTimeout(timeoutId);
       setPlaces(data);
       setLoading(false);
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (retryCount < 2) {
-        setTimeout(() => fetchPlaces(query, retryCount + 1), 2000);
+        setTimeout(() => fetchPlaces(query, coords, retryCount + 1), 2000);
       } else {
         setError(err.message || 'Failed to load restaurants.');
         setLoading(false);
       }
+    }
+  };
+
+  const handleRefreshLocation = () => {
+    setLocationDenied(false);
+    setLoading(true);
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserCoords(coords);
+          fetchPlaces(searchQuery, coords);
+        },
+        () => { 
+          setLocationDenied(true);
+          fetchPlaces(searchQuery); 
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
     }
   };
 
@@ -61,42 +88,78 @@ export default function Home() {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserCoords({
+          const coords = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          setUserCoords(coords);
+          fetchPlaces(searchQuery, coords);
         },
-        () => { /* location denied - that's fine */ },
+        () => { 
+          // location denied - that's fine
+          setLocationDenied(true);
+          fetchPlaces(searchQuery); 
+        },
         { enableHighAccuracy: true, timeout: 5000 }
       );
+    } else {
+      fetchPlaces(searchQuery);
     }
-
-    fetchPlaces();
   }, [authLoading]);
 
-  // Proximity Filter & Sorting
-  const sortedPlaces = [...places]
-    .filter(place => {
-      // If user has coords, strictly hide restaurants > 30km UNLESS they are searching a specific place/city.
-      if (userCoords && !activeSearchTerm) {
-         if (!place.lat || !place.lng) return false;
-         const distanceToPlace = getDistance(userCoords.lat, userCoords.lng, place.lat, place.lng);
-         return distanceToPlace <= 30; // 30km radius restriction
-      }
-      return true; // Show all on search or if user denied location tracking
-    })
-    .sort((a, b) => {
-      if (!userCoords) return 0;
-      const distA = (a.lat && a.lng) ? getDistance(userCoords.lat, userCoords.lng, a.lat, a.lng) : Infinity;
-      const distB = (b.lat && b.lng) ? getDistance(userCoords.lat, userCoords.lng, b.lat, b.lng) : Infinity;
-      const diff = distA - distB;
-      return isNaN(diff) ? 0 : diff; // Strictly return valid number to prevent JS Engine sort-crashes
-    });
+  // Proximity Filter & Smart Radius Sorting
+  const getSortedPlaces = () => {
+    if (!userCoords || activeSearchTerm) {
+      // Default: Sort by rating if location is missing or searching
+      return [...places].sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.review_count || 0) - (a.review_count || 0));
+    }
+
+    const placesWithDistance = places
+      .filter(p => p.lat && p.lng)
+      .map(p => ({
+        ...p,
+        distance: getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng)
+      }));
+
+    // Start with 30km
+    let filtered = placesWithDistance.filter(p => p.distance <= 30);
+    
+    // Expand to 100km if sparse
+    if (filtered.length < 6) {
+      filtered = placesWithDistance.filter(p => p.distance <= 100);
+    }
+
+    // Expand to 500km if still sparse
+    if (filtered.length < 6) {
+      filtered = placesWithDistance.filter(p => p.distance <= 500);
+    }
+
+    // If still sparse, show all but sort by distance (don't show across the globe if possible)
+    if (filtered.length < 3) {
+      filtered = [...placesWithDistance];
+    }
+
+    return filtered.sort((a, b) => a.distance - b.distance);
+  };
+
+  const sortedPlaces = getSortedPlaces();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveSearchTerm(searchQuery);
-    fetchPlaces(searchQuery);
+    
+    // Clean up user mistakes like extra spaces
+    const cleanedQuery = searchQuery.trim().replace(/\s+/g, ' ');
+
+    if (!cleanedQuery) {
+      setActiveSearchTerm('');
+      setSearchQuery('');
+      fetchPlaces(undefined, userCoords || undefined);
+      return;
+    }
+
+    setActiveSearchTerm(cleanedQuery);
+    setSearchQuery(cleanedQuery); // Update visual input to the cleaned format
+    fetchPlaces(cleanedQuery, userCoords || undefined);
 
     // Smooth scroll to explore section
     exploreRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,6 +216,27 @@ export default function Home() {
             <div className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-600" /> <span className="text-sm font-semibold">Community Reviews</span></div>
           </div>
         </div>
+
+        {locationDenied && (
+          <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-4 bg-white/80 backdrop-blur-md border border-amber-100 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3 text-amber-700">
+                <div className="p-2 bg-amber-100 rounded-full">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-medium">Location access is disabled. Enable it for better results near you.</p>
+              </div>
+              <Button 
+                onClick={handleRefreshLocation}
+                variant="outline" 
+                size="sm" 
+                className="bg-amber-600 hover:bg-amber-700 text-white border-0 rounded-xl"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Featured Places */}
@@ -205,7 +289,7 @@ export default function Home() {
                   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 hover:-translate-y-1">
                     <div className="h-60 bg-slate-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
                       <Image
-                        src={getValidImageUrl(place.image)}
+                        src={getValidImageUrl(place.image, place.id)}
                         alt={place.name || "Restaurant"}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
