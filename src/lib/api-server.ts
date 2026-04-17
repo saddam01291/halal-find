@@ -13,7 +13,9 @@ export async function getPlacesServer(): Promise<DbPlace[]> {
     const { data, error } = await supabaseServer
         .from('places')
         .select(PLACE_LIST_COLUMNS)
-        .order('name', { ascending: true });
+        .order('verified', { ascending: false })
+        .order('rating', { ascending: false })
+        .order('review_count', { ascending: false });
 
     if (error) {
         console.error('Error fetching places on server:', error);

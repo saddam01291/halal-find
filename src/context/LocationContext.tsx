@@ -19,6 +19,19 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     const [locationStatus, setLocationStatus] = useState<LocationStatus>('prompt');
     const [cityName, setCityName] = useState<string | null>(null);
 
+    // Load from localStorage on mount
+    useEffect(() => {
+        const savedCoords = localStorage.getItem('last_user_coords');
+        if (savedCoords) {
+            try {
+                setUserCoords(JSON.parse(savedCoords));
+                setLocationStatus('granted');
+            } catch (e) {
+                console.error('Error parsing saved coords:', e);
+            }
+        }
+    }, []);
+
     const requestLocation = () => {
         if (typeof window === 'undefined' || !('geolocation' in navigator)) {
             setLocationStatus('denied');
@@ -34,12 +47,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
                 };
                 setUserCoords(coords);
                 setLocationStatus('granted');
+                localStorage.setItem('last_user_coords', JSON.stringify(coords));
                 // Optional: Reverse geocode here to get city name
             },
             () => {
                 setLocationStatus('denied');
             },
-            { enableHighAccuracy: true, timeout: 5000 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
         );
     };
 

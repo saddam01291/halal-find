@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getPlaces, searchPlaces } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
-import { getDistance, getValidImageUrl, getAreaFromAddress } from '@/lib/utils';
+import { getDistance, getValidImageUrl, getAreaFromAddress, calculateRelevance } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { HalalBadge } from '@/components/ui/HalalBadge';
@@ -70,45 +70,44 @@ export default function Home() {
   }, [authLoading, userCoords]);
 
   // Proximity Filter & Smart Radius Sorting
-  const getSortedPlaces = () => {
-    let filtered = [...places];
+    const getSortedPlaces = () => {
+        let filtered = [...places];
 
-    // Area Filtering
-    if (selectedArea) {
-      filtered = filtered.filter(p => getAreaFromAddress(p.address, p.city) === selectedArea);
-    }
+        // Area Filtering
+        if (selectedArea) {
+            filtered = filtered.filter(p => getAreaFromAddress(p.address, p.city) === selectedArea);
+        }
 
-    if (!userCoords || activeSearchTerm) {
-      // Default: High-weight on rating and verification
-      return filtered.sort((a, b) => {
-        const scoreA = (a.rating * 20) + (a.verified ? 100 : 0) + (a.review_count / 10);
-        const scoreB = (b.rating * 20) + (b.verified ? 100 : 0) + (b.review_count / 10);
-        return scoreB - scoreA;
-      });
-    }
+        const scoredPlaces = filtered.map(p => {
+            const { score, distance } = calculateRelevance(
+                p as any, 
+                userCoords || null
+            );
 
-    const scoredPlaces = filtered.map(p => {
-        const distance = (p.lat && p.lng) 
-            ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng)
-            : 50; // Neutral distance for restaurants without coords
+            return {
+                ...p,
+                distance: distance ?? (p.lat && p.lng && userCoords ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng) : 50),
+                relevance: score
+            };
+        });
 
-        // Relevance Score Calculation
-        // Bonus for proximity (up to 100 points)
-        const distanceScore = Math.max(0, 100 - distance); 
-        // Bonus for rating (up to 100 points)
-        const ratingScore = (p.rating || 0) * 20;
-        // Bonus for verification (100 points)
-        const verificationBonus = p.verified ? 100 : 0;
+        return scoredPlaces.sort((a, b) => {
+            // Level 1: Relevance Score (Proximity + Base Quality)
+            if (b.relevance !== a.relevance) return b.relevance - a.relevance;
+            
+            // Level 2: Verified First
+            if (b.verified !== a.verified) return b.verified ? 1 : -1;
+            
+            // Level 3: Rating
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            
+            // Level 4: Review Count
+            if (b.review_count !== a.review_count) return (b.review_count || 0) - (a.review_count || 0);
 
-        return {
-            ...p,
-            distance,
-            relevance: distanceScore + ratingScore + verificationBonus
-        };
-    });
-
-    return scoredPlaces.sort((a, b) => b.relevance - a.relevance);
-  };
+            // Level 5: Name Tie-breaker (matches DB sort order)
+            return (a.name || '').localeCompare(b.name || '');
+        });
+    };
 
   const sortedPlaces = getSortedPlaces();
 
@@ -317,8 +316,12 @@ export default function Home() {
                         priority={index < 3} // Prioritize first few images
                       />
                       {distance !== null && !isNaN(distance) && (
-                        <div className="absolute top-5 right-5 bg-white/40 backdrop-blur-xl px-4 py-2 rounded-2xl text-[10px] font-black text-slate-900 shadow-xl border border-white/40 uppercase tracking-widest z-10 transition-transform group-hover:scale-110">
-                          {distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km`}
+                        <div className={`absolute top-5 right-5 px-4 py-2 rounded-2xl text-[10px] font-black shadow-xl border uppercase tracking-widest z-10 transition-transform group-hover:scale-110 ${
+                            distance > 50 
+                                ? 'bg-slate-900/60 backdrop-blur-xl text-slate-300 border-white/10' 
+                                : 'bg-emerald-600 backdrop-blur-xl text-white border-emerald-400/50 shadow-emerald-500/20'
+                        }`}>
+                          {distance > 50 ? 'Global' : distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km`}
                         </div>
                       )}
                       

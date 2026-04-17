@@ -13,8 +13,8 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .select(PLACE_LIST_COLUMNS);
 
     if (coords && coords.lat && coords.lng) {
-        // 1. Smart Radar: Look within a 200km bounding box first to prioritize local spots
-        const radiusKm = 200; 
+        // 1. Smart Radar: Look within a 50km bounding box first to prioritize local spots
+        const radiusKm = 50; 
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
 
@@ -23,20 +23,30 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
             .lte('lat', coords.lat + latDelta)
             .gte('lng', coords.lng - lngDelta)
             .lte('lng', coords.lng + lngDelta);
-    } 
+    } else {
+        // No location: only show quality places (rated OR verified).
+        // This prevents thousands of zero-rated OSM imports from polluting the no-location view.
+        query = query.or('rating.gt.0,verified.eq.true');
+    }
 
-    // Order by rating so the best ones (nearby or global) come first
-    query = query.order('rating', { ascending: false });
-
-    let { data, error } = await query.limit(1000);
+    let { data, error } = await query
+        .order('verified', { ascending: false })
+        .order('rating', { ascending: false })
+        .order('review_count', { ascending: false })
+        .order('name', { ascending: true })
+        .limit(200);
 
     // 2. Global Fallback: If nearby search returned 0 (e.g. user is in a new city), 
-    // fetch the absolute best of the platform globally.
+    // fetch the absolute best of the platform globally (quality filter applied).
     if (coords && data && data.length === 0) {
         const { data: fallbackData } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
+            .or('rating.gt.0,verified.eq.true')
+            .order('verified', { ascending: false })
             .order('rating', { ascending: false })
+            .order('review_count', { ascending: false })
+            .order('name', { ascending: true })
             .limit(100);
         return fallbackData || [];
     }
@@ -50,12 +60,45 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
 }
 
 export async function searchPlaces(query: string, coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
-    const { data, error } = await supabase
+    let supabaseQuery = supabase
         .from('places')
         .select(PLACE_LIST_COLUMNS)
-        .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`)
+        .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`);
+
+    if (coords && coords.lat && coords.lng) {
+        // Apply 50km bounding box to search results as well to prioritize local matches
+        const radiusKm = 50; 
+        const latDelta = radiusKm / 111;
+        const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
+
+        supabaseQuery = supabaseQuery
+            .gte('lat', coords.lat - latDelta)
+            .lte('lat', coords.lat + latDelta)
+            .gte('lng', coords.lng - lngDelta)
+            .lte('lng', coords.lng + lngDelta);
+    }
+
+    let { data, error } = await supabaseQuery
+        .order('verified', { ascending: false })
         .order('rating', { ascending: false })
+        .order('review_count', { ascending: false })
+        .order('name', { ascending: true })
         .limit(1000);
+
+    // 2. Global Fallback: If nearby search returned 0 (e.g. user is searching for a distant city), 
+    // fetch the matches globally without the bounding box.
+    if (coords && data && data.length === 0) {
+        const { data: globalData } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`)
+            .order('verified', { ascending: false })
+            .order('rating', { ascending: false })
+            .order('review_count', { ascending: false })
+            .order('name', { ascending: true })
+            .limit(100);
+        return globalData || [];
+    }
 
     if (error) {
         console.error('Error searching places:', error);

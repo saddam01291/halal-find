@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getPlaceById, getReviewsForPlace } from '@/lib/api';
+import { getPlaceById, getReviewsForPlace, deletePlace } from '@/lib/api';
 import { DbPlace, DbReview } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { GoogleMap } from '@/components/map/Map';
@@ -17,6 +17,10 @@ import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
 import { Pencil, Trash2, Loader2, Save } from 'lucide-react';
 import { HalalTrustScore } from '@/components/ui/HalalTrustScore';
 import { getValidImageUrl, calculateTrustScore } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { LoginModal } from '@/components/auth/LoginModal';
+import { EditPlaceModal } from '@/components/admin/EditPlaceModal';
 
 export default function PlacePage({ params }: { params: Promise<{ id: string }> }) {
     const { user } = useAuth();

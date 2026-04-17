@@ -10,12 +10,12 @@ import { Star, MapPin, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { getValidImageUrl, getDistance, getAreaFromAddress } from '@/lib/utils';
+import { getValidImageUrl, getDistance, getAreaFromAddress, calculateRelevance } from '@/lib/utils';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { useLocation } from '@/context/LocationContext';
 
 function SearchContent() {
-    const { userCoords, locationStatus, requestLocation } = useLocation();
+    const { userCoords, locationStatus, requestLocation, cityName } = useLocation();
     const searchParams = useSearchParams();
     const router = useRouter();
     const initialQuery = searchParams.get('q') || '';
@@ -34,6 +34,11 @@ function SearchContent() {
             setLoading(true);
             setError(null);
 
+            // If coordinates just shifted, clear old results to prevent "ghost" data
+            if (userCoords) {
+                setPlaces([]);
+            }
+
             // Timeout to prevent stuck loading
             const timeoutId = setTimeout(() => {
                 setLoading((prevLoading) => {
@@ -47,6 +52,13 @@ function SearchContent() {
             }, 15000);
 
             try {
+                // If location is granted but we don't have coords yet, wait for them
+                // to avoid fetching global results that will be replaced in 1 second.
+                if (locationStatus === 'granted' && !userCoords) {
+                    setLoading(true);
+                    return;
+                }
+
                 const data = initialQuery 
                     ? await searchPlaces(initialQuery, userCoords || undefined) 
                     : await getPlaces(userCoords || undefined);
@@ -67,38 +79,41 @@ function SearchContent() {
             }
         };
         fetchPlaces();
-    }, [initialQuery, userCoords]);
+    }, [initialQuery, userCoords, locationStatus]);
 
     // EXACT TRANSPLANT FROM PAGE.TSX
     const getSortedPlaces = () => {
         let filtered = [...places];
 
-        if (!userCoords || activeSearchTerm) {
-            // Default: High-weight on rating and verification
-            return filtered.sort((a, b) => {
-                const scoreA = (a.rating * 20) + (a.verified ? 100 : 0) + (a.review_count / 10);
-                const scoreB = (b.rating * 20) + (b.verified ? 100 : 0) + (b.review_count / 10);
-                return scoreB - scoreA;
-            });
-        }
-
         const scoredPlaces = filtered.map(p => {
-            const distance = (p.lat && p.lng) 
-                ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng)
-                : 50; // Transplanted neutral distance
-
-            const distanceScore = Math.max(0, 100 - distance); 
-            const ratingScore = (p.rating || 0) * 20;
-            const verificationBonus = p.verified ? 100 : 0;
+            const { score, distance } = calculateRelevance(
+                p as any, 
+                userCoords || null
+            );
 
             return {
                 ...p,
-                distance,
-                relevance: distanceScore + ratingScore + verificationBonus
+                distance: distance ?? (p.lat && p.lng && userCoords ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng) : 50),
+                relevance: score
             };
         });
 
-        return scoredPlaces.sort((a, b) => b.relevance - a.relevance);
+        return scoredPlaces.sort((a, b) => {
+            // Level 1: Relevance Score (Proximity + Base Quality)
+            if (b.relevance !== a.relevance) return b.relevance - a.relevance;
+            
+            // Level 2: Verified First
+            if (b.verified !== a.verified) return b.verified ? 1 : -1;
+            
+            // Level 3: Rating
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            
+            // Level 4: Review Count
+            if (b.review_count !== a.review_count) return (b.review_count || 0) - (a.review_count || 0);
+
+            // Level 5: Name Tie-breaker (matches DB sort order)
+            return (a.name || '').localeCompare(b.name || '');
+        });
     };
 
     const sortedPlaces = getSortedPlaces();
@@ -145,9 +160,23 @@ function SearchContent() {
                             {initialQuery ? `Results: "${initialQuery}"` : 'Explore Places'}
                         </h1>
                         {!loading && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                                {places.length} found
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                    {sortedPlaces.length} found
+                                </span>
+                                {locationStatus === 'granted' && userCoords && (
+                                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-medium text-emerald-600">
+                                        <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                                        Browsing {cityName || 'Near You'}
+                                    </span>
+                                )}
+                                {locationStatus === 'loading' && (
+                                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-medium text-amber-600">
+                                        <div className="h-1 w-1 rounded-full bg-amber-500 animate-pulse" />
+                                        Locating...
+                                    </span>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -189,11 +218,23 @@ function SearchContent() {
                                 </div>
                             )}
 
-                            {sortedPlaces.length > 0 && (
-                                <div className="p-5 border-b border-slate-50">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                        Found {sortedPlaces.length} places {locationStatus === 'granted' ? 'near you' : ''}
+                            {locationStatus === 'granted' && (
+                                <div className="p-5 border-b border-slate-50 bg-emerald-50/20">
+                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        Browsing Results Near {userCoords ? 'You' : 'Selected Area'}
                                     </p>
+                                </div>
+                            )}
+
+                            {sortedPlaces.length > 0 && locationStatus !== 'granted' && (
+                                <div className="p-5 border-b border-slate-50 bg-amber-50/20">
+                                    <button 
+                                        onClick={requestLocation}
+                                        className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] hover:text-amber-700 transition-colors"
+                                    >
+                                        Tip: Turn on location to see restaurants near you first →
+                                    </button>
                                 </div>
                             )}
 
@@ -228,9 +269,24 @@ function SearchContent() {
                                             <p className="text-sm font-bold text-slate-700 truncate">
                                                 {getAreaFromAddress(place.address, place.city)}
                                             </p>
-                                            <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                                                <MapPin className="h-3 w-3 flex-shrink-0" />
-                                                <span className="truncate uppercase tracking-wider font-medium">{place.city}</span>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                                                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                                                    <span className="truncate uppercase tracking-wider font-medium">{place.city}</span>
+                                                </div>
+                                                
+                                                {/* DISTANCE INDICATOR */}
+                                                {(place as any).distance !== undefined && (place as any).distance !== null && (
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm ${
+                                                        (place as any).distance > 50 
+                                                            ? 'bg-slate-50 text-slate-300' 
+                                                            : 'bg-emerald-50 text-emerald-600'
+                                                    }`}>
+                                                        {(place as any).distance > 50 
+                                                            ? 'Global Discovery' 
+                                                            : `${(place as any).distance < 1 ? '< 1' : (place as any).distance.toFixed(1)} km`}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
