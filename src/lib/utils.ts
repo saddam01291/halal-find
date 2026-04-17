@@ -98,12 +98,16 @@ export function getValidImageUrl(url?: string | null, seed?: string): string {
 
     // Hash function: combines seed (place ID) with the url itself so that
     // restaurants sharing the same DB image URL get visually different fallbacks.
+    // Hash function: combines seed (place ID) with the url itself so that
+    // restaurants sharing the same DB image URL get visually different fallbacks.
     function hashStr(s: string): number {
-        let h = 0;
+        let hash = 0;
         for (let i = 0; i < s.length; i++) {
-            h = s.charCodeAt(i) + ((h << 5) - h);
+            const char = s.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0; // Convert to 32bit integer
         }
-        return Math.abs(h);
+        return Math.abs(hash);
     }
 
     if (!url || url === '') {
@@ -121,7 +125,8 @@ export function getValidImageUrl(url?: string | null, seed?: string): string {
 
         // For Unsplash URLs: check if this exact URL is a "shared" one that many places use.
         // Use the URL path + place seed to pick a unique image from the pool instead.
-        const combined = (seed || '') + parsed.pathname;
+        // We include the seed strongly to ensure variety.
+        const combined = (seed || '') + parsed.pathname + (seed?.split('-')[0] || '');
         return FALLBACK_IMAGES[hashStr(combined) % FALLBACK_IMAGES.length];
     } catch (e) {
         const s = seed || 'default';
@@ -174,36 +179,37 @@ export function getAreaFromAddress(address?: string | null, city?: string | null
 
 /**
  * Calculates a relevance score for a place based on proximity, rating, and verification.
- * Heavily weights proximity to ensure local results appear first.
+ * Heavily weights Quality (Verified/Rated) to ensure trusted results stay at the top.
  */
 export function calculateRelevance(
     place: { lat?: number | null; lng?: number | null; rating: number; verified: boolean; review_count: number },
     userCoords?: { lat: number; lng: number } | null
 ): { score: number; distance: number | null } {
+    // Quality Boosts (MASSIVE override for mere proximity)
+    const verificationBoost = place.verified ? 5000 : 0;
+    const ratingBoost = (place.rating > 0) ? 1000 : 0;
+
     if (!userCoords || place.lat === undefined || place.lat === null || place.lng === undefined || place.lng === null) {
-        // Fallback for search or no location: High-weight on rating and verification
-        const score = (place.rating * 20) + (place.verified ? 100 : 0) + (place.review_count / 10);
+        // Fallback for search or no location
+        const score = verificationBoost + ratingBoost + (place.rating * 50) + (place.review_count / 10);
         return { score, distance: null };
     }
 
     const distance = getDistance(userCoords.lat, userCoords.lng, place.lat, place.lng);
     
-    // EXTREMELY Aggressive Proximity Score (1000 ceiling)
-    // 0km -> 1000 pts
-    // 10km -> 800 pts
-    // 50km -> 0 pts
-    // Beyond 50km -> Huge penalty (-10000)
+    // Proximity Score (1000 ceiling, same as before)
+    // Decreases as we move away from user
     const distanceScore = distance <= 50 
         ? Math.max(0, 1000 - (distance * 20)) 
         : -10000; 
 
-    // Quality Score (Max 200 ceiling)
-    const ratingScore = (place.rating || 0) * 20; // 5 star = 100
-    const verificationBonus = place.verified ? 50 : 0;
+    // Final Score: Quality is the primary sort, Proximity is the secondary (tie-breaker)
+    // A verified place at 40km (5000 pts) will now beat an unverified place at 1km (980 pts)
+    const ratingScore = (place.rating || 0) * 20;
     const reviewBonus = Math.min(50, (place.review_count || 0) / 10);
     
     return { 
-        score: distanceScore + ratingScore + verificationBonus + reviewBonus,
+        score: verificationBoost + ratingBoost + distanceScore + ratingScore + reviewBonus,
         distance
     };
 }
