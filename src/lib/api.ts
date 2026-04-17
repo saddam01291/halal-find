@@ -83,7 +83,7 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
         .order('rating', { ascending: false })
         .order('review_count', { ascending: false })
         .order('name', { ascending: true })
-        .limit(1000);
+        .limit(200);
 
     // 2. Global Fallback: If nearby search returned 0 (e.g. user is searching for a distant city), 
     // fetch the matches globally without the bounding box.
@@ -92,6 +92,7 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
             .from('places')
             .select(PLACE_LIST_COLUMNS)
             .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`)
+            .or('rating.gt.0,verified.eq.true')
             .order('verified', { ascending: false })
             .order('rating', { ascending: false })
             .order('review_count', { ascending: false })

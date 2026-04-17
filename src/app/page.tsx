@@ -257,7 +257,10 @@ export default function Home() {
                 Reset
               </Button>
             )}
-            <Link href="/search" className="hidden sm:flex items-center text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
+            <Link 
+              href={activeSearchTerm ? `/search?q=${encodeURIComponent(activeSearchTerm)}` : "/search"} 
+              className="hidden sm:flex items-center text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+            >
               View on Map <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
