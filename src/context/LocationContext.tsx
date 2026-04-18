@@ -10,6 +10,7 @@ interface LocationContextType {
     cityName: string | null;
     requestLocation: () => void;
     setManualCity: (city: string) => void;
+    clearLocation: () => void;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -81,13 +82,20 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         checkPermissionAndRequest();
     }, []);
 
+    const clearLocation = () => {
+        setUserCoords(null);
+        setLocationStatus('prompt');
+        localStorage.removeItem('last_user_coords');
+    };
+
     return (
         <LocationContext.Provider value={{
             userCoords,
             locationStatus,
             cityName,
             requestLocation,
-            setManualCity
+            setManualCity,
+            clearLocation
         }}>
             {children}
         </LocationContext.Provider>

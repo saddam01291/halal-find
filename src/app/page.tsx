@@ -16,7 +16,7 @@ import { LoginModal } from '@/components/auth/LoginModal';
 
 export default function Home() {
   const { isLoading: authLoading } = useAuth();
-  const { userCoords, locationStatus, requestLocation } = useLocation();
+  const { userCoords, locationStatus, requestLocation, clearLocation } = useLocation();
   const exploreRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchTerm, setActiveSearchTerm] = useState('');
@@ -394,7 +394,7 @@ export default function Home() {
                     <li className="text-emerald-600 font-medium mt-2">
                       • Detected Location: {userCoords.lat.toFixed(4)}, {userCoords.lng.toFixed(4)}
                       <button
-                        onClick={() => setUserCoords(null)}
+                        onClick={clearLocation}
                         className="ml-2 underline text-slate-400 hover:text-slate-600"
                       >
                         (Clear)

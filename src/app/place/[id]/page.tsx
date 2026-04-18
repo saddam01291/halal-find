@@ -171,6 +171,7 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                     </div>
                 </div>
             )}
+
             <div className="relative h-80 md:h-[450px] w-full">
                 <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
@@ -294,37 +295,37 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                             <SafetyTransparency place={place} />
                         </div>
 
-                            {!isDisputed && isOwnerVerified && place.certificate_url && (
-                                <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
-                                    <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
-                                        <ShieldCheck className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-emerald-900">Owner Verified</h4>
-                                        <p className="text-sm text-emerald-700 mt-1">
-                                            The owner has provided a valid Halal certificate, verified by the Find Halal team. This establishment officially maintains Halal standards.
-                                        </p>
-                                    </div>
+                        {!isDisputed && isOwnerVerified && place.certificate_url && (
+                            <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
+                                <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
+                                    <ShieldCheck className="h-5 w-5" />
                                 </div>
-                            )}
-
-                            {!place.verified && isCommunityVerified && (
-                                <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
-                                    <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
-                                        <CheckCircle2 className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-emerald-900">Community Verified Halal</h4>
-                                        <p className="text-sm text-emerald-700 mt-1">
-                                            This restaurant has been confirmed as Halal by {confirmations} members of our community.
-                                            Users have reported that this establishment serves Halal food.
-                                        </p>
-                                    </div>
+                                <div>
+                                    <h4 className="font-semibold text-emerald-900">Owner Verified</h4>
+                                    <p className="text-sm text-emerald-700 mt-1">
+                                        The owner has provided a valid Halal certificate, verified by the Find Halal team. This establishment officially maintains Halal standards.
+                                    </p>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
-                        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
+                        {!place.verified && isCommunityVerified && (
+                            <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
+                                <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
+                                    <CheckCircle2 className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-emerald-900">Community Verified Halal</h4>
+                                    <p className="text-sm text-emerald-700 mt-1">
+                                        This restaurant has been confirmed as Halal by {confirmations} members of our community.
+                                        Users have reported that this establishment serves Halal food.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Reviews */}
+                        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 mt-8">
                             <div className="flex justify-between items-center mb-8">
                                 <h2 className="text-xl font-bold text-slate-900">Reviews</h2>
                                 {!isReviewing && (
@@ -342,7 +343,7 @@ export default function PlacePage({ params }: { params: Promise<{ id: string }> 
                                     <ReviewForm
                                         placeId={place.id}
                                         onCancel={() => setIsReviewing(false)}
-                                        onSubmit={() => setIsReviewing(false)} // Pass logic to update list here ideally
+                                        onSubmit={() => setIsReviewing(false)}
                                     />
                                 </div>
                             ) : (
