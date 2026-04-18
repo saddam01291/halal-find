@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Users, Building2, ShieldCheck, Activity, Check, X, Search, Filter, MoreVertical, ExternalLink, Trash2, CheckCircle, AlertTriangle, RefreshCw, Database, MessageSquare, LogOut, Pencil, Plus, Upload, Loader2, Save } from 'lucide-react';
-import { getPendingVerifications, updateVerificationStatus, getProfiles, getPlaces, getSystemStats, getAdminSettings, updateAdminSettings, getDisputedReviews, resolveDispute, updatePlace, deletePlace, addPlaceAsAdmin, uploadImage, updateVerificationRequest, updateUserRole, deleteReview } from '@/lib/api';
+import { getPendingVerifications, updateVerificationStatus, getProfiles, getPlaces, getAllPlacesAdmin, getSystemStats, getAdminSettings, updateAdminSettings, getDisputedReviews, resolveDispute, updatePlace, deletePlace, addPlaceAsAdmin, uploadImage, updateVerificationRequest, updateUserRole, deleteReview } from '@/lib/api';
 import { EditPlaceModal } from '@/components/admin/EditPlaceModal';
 import { supabase, DbVerificationRequest, DbProfile, DbPlace, DbReview } from '@/lib/supabase';
 import { formatDistanceToNow } from '@/lib/utils';
@@ -67,7 +67,7 @@ function AdminDashboardContent() {
             const [vData, pData, plData, sData, settingsData, dData] = await Promise.all([
                 getPendingVerifications(),
                 getProfiles(),
-                getPlaces(),
+                getAllPlacesAdmin(),
                 getSystemStats(),
                 getAdminSettings(),
                 getDisputedReviews()
