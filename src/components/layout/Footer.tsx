@@ -19,18 +19,26 @@ export function Footer() {
                     </div>
                     <div>
                         <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Quick Links</h4>
-                        <ul className="space-y-2 text-sm">
-                            <li><Link href="/search" className="hover:text-emerald-400 transition-colors">Explore</Link></li>
-                            <li><Link href="#" className="hover:text-emerald-400 transition-colors">About Us</Link></li>
-                            <li><Link href="#" className="hover:text-emerald-400 transition-colors">Contact</Link></li>
+                        <ul className="space-y-3 text-sm">
+                            <li><Link href="/search" className="hover:text-emerald-400 transition-colors flex items-center gap-1">Explore Places</Link></li>
+                            <li><Link href="/about" className="hover:text-emerald-400 transition-colors">About Us</Link></li>
+                            <li><Link href="/contact" className="hover:text-emerald-400 transition-colors">Contact Support</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">For Businesses</h4>
-                        <ul className="space-y-2 text-sm">
-                            <li><Link href="/for-businesses" className="hover:text-amber-400 transition-colors">List Your Restaurant</Link></li>
-                            <li><Link href="/for-businesses" className="hover:text-amber-400 transition-colors">Claim Your Business</Link></li>
-                            <li><Link href="/for-businesses" className="hover:text-amber-400 transition-colors">Partner with Us</Link></li>
+                        <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Get in Touch</h4>
+                        <ul className="space-y-3 text-sm">
+                            <li>
+                                <p className="text-[10px] uppercase font-black text-slate-500 mb-1">WhatsApp / Call</p>
+                                <a href="tel:8371962838" className="text-white font-bold hover:text-emerald-400 transition-colors">8371962838</a>
+                            </li>
+                            <li>
+                                <p className="text-[10px] uppercase font-black text-slate-500 mb-1">Email</p>
+                                <div className="flex flex-col gap-1">
+                                    <a href="mailto:halal.food@findhalalonly.com" className="hover:text-amber-400 transition-colors truncate">halal.food@findhalalonly.com</a>
+                                    <a href="mailto:saddam.entr.91@gmail.com" className="hover:text-amber-400 transition-colors truncate">saddam.entr.91@gmail.com</a>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </div>

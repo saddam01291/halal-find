@@ -73,6 +73,8 @@ export interface DbVerificationRequest {
     user_id: string;
     place_id?: string;
     type: 'new_place' | 'claim' | 'community_addition';
+    initial_review?: string;
+    initial_rating?: number;
     created_at: string;
 }
 

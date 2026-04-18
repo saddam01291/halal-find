@@ -167,6 +167,20 @@ export async function deletePlace(id: string) {
     return true;
 }
 
+export async function checkDuplicatePlace(name: string, city: string): Promise<any | null> {
+    const { data, error } = await supabase
+        .from('places')
+        .select('id, name, city')
+        .ilike('name', name)
+        .ilike('city', city)
+        .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error checking duplicates:', error);
+    }
+    return data;
+}
+
 export async function addPlaceAsAdmin(place: Omit<DbPlace, 'id' | 'created_at' | 'review_count' | 'rating'>) {
     const { data, error } = await supabase
         .from('places')
@@ -341,6 +355,39 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
                         .from('verification_requests')
                         .update({ place_id: newPlace.id })
                         .eq('id', id);
+
+                    // --- NEW: Automatic Review Migration ---
+                    if (request.initial_review || request.initial_rating) {
+                        try {
+                            const { error: reviewError } = await supabase
+                                .from('reviews')
+                                .insert({
+                                    place_id: newPlace.id,
+                                    user_id: request.user_id,
+                                    user_name: request.owner_name || 'Community Contributor',
+                                    rating: request.initial_rating || 5, // Default to 5 if only review provided
+                                    comment: request.initial_review || 'Verified Halal Restaurant.',
+                                    is_halal_confirmed: true,
+                                    is_non_halal_report: false,
+                                    is_dispute_resolved: false
+                                });
+                            
+                            if (reviewError) {
+                                console.error('Error creating automatic review:', reviewError);
+                            } else {
+                                // Update place rating/count to reflect this first review
+                                await supabase
+                                    .from('places')
+                                    .update({ 
+                                        rating: request.initial_rating || 5,
+                                        review_count: 1 
+                                    })
+                                    .eq('id', newPlace.id);
+                            }
+                        } catch (reviewErr) {
+                            console.error('Critical failure in review migration:', reviewErr);
+                        }
+                    }
                 }
             }
         }

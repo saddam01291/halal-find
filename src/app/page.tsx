@@ -70,6 +70,7 @@ export default function Home() {
   }, [authLoading, userCoords]);
 
   // Proximity Filter & Smart Radius Sorting
+  // Proximity Filter & Smart Radius Sorting
     const getSortedPlaces = () => {
         let filtered = [...places];
 
@@ -84,9 +85,12 @@ export default function Home() {
                 userCoords || null
             );
 
+            // Safety check for distance calculation
+            const rawDistance = distance ?? (p.lat && p.lng && userCoords ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng) : null);
+
             return {
                 ...p,
-                distance: distance ?? (p.lat && p.lng && userCoords ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng) : 50),
+                distance: rawDistance,
                 relevance: score
             };
         });
@@ -99,10 +103,10 @@ export default function Home() {
             if (b.verified !== a.verified) return b.verified ? 1 : -1;
             
             // Level 3: Rating
-            if (b.rating !== a.rating) return b.rating - a.rating;
+            if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
             
             // Level 4: Review Count
-            if (b.review_count !== a.review_count) return (b.review_count || 0) - (a.review_count || 0);
+            if ((b.review_count || 0) !== (a.review_count || 0)) return (b.review_count || 0) - (a.review_count || 0);
 
             // Level 5: Name Tie-breaker (matches DB sort order)
             return (a.name || '').localeCompare(b.name || '');
@@ -302,9 +306,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {sortedPlaces.slice(0, 30).map((place, index) => {
-              const distance = (userCoords && place.lat && place.lng)
-                ? getDistance(userCoords.lat, userCoords.lng, place.lat, place.lng)
-                : null;
+              const distance = place.distance;
 
               return (
                 <Link href={`/place/${place.id}`} key={`${place.id}-${index}`} className="group">
@@ -318,13 +320,13 @@ export default function Home() {
                         className="object-cover transition-transform duration-[3s] group-hover:scale-110"
                         priority={index < 3} // Prioritize first few images
                       />
-                      {distance !== null && !isNaN(distance) && (
+                      {distance !== null && !isNaN(distance as number) && (
                         <div className={`absolute top-5 right-5 px-4 py-2 rounded-2xl text-[10px] font-black shadow-xl border uppercase tracking-widest z-10 transition-transform group-hover:scale-110 ${
-                            distance > 50 
+                            (distance as number) > 50 
                                 ? 'bg-slate-900/60 backdrop-blur-xl text-slate-300 border-white/10' 
                                 : 'bg-emerald-600 backdrop-blur-xl text-white border-emerald-400/50 shadow-emerald-500/20'
                         }`}>
-                          {distance > 50 ? 'Global' : distance < 1 ? 'Under 1 km' : `${distance.toFixed(1)} km`}
+                          {(distance as number) > 50 ? 'Global' : (distance as number) < 1 ? 'Under 1 km' : `${(distance as number).toFixed(1)} km`}
                         </div>
                       )}
                       
@@ -335,17 +337,17 @@ export default function Home() {
                       <div className="flex justify-between items-start mb-4">
                         <HalalBadge status={place.verification_status} />
                         <span className="flex items-center gap-1.5 bg-amber-500/10 text-amber-700 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/20 uppercase tracking-wider">
-                          {place.rating} ★
+                          {place.rating || 0} ★
                         </span>
                       </div>
-                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2 tracking-tight">{place.name}</h3>
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2 tracking-tight">{place.name || 'Unnamed Place'}</h3>
                       <div className="flex flex-col gap-1 mb-6 min-h-[40px]">
                         <p className="text-slate-800 text-sm font-bold truncate">
                           {getAreaFromAddress(place.address, place.city)}
                         </p>
                         <div className="flex items-center gap-1.5 text-slate-400">
                           <MapPin className="h-3 w-3" />
-                          <span className="text-[11px] font-bold uppercase tracking-wider">{place.city}</span>
+                          <span className="text-[11px] font-bold uppercase tracking-wider">{place.city || 'Location Pending'}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">

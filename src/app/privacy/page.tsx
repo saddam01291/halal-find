@@ -1,5 +1,10 @@
-import { ShieldCheck, Lock, Eye, Database, Cookie } from 'lucide-react';
+import { ShieldCheck, Lock, Eye, Database, Cookie, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+
+export const metadata = {
+  title: "Privacy Policy | Find Halal",
+  description: "Our commitment to protecting your data and privacy at Find Halal.",
+};
 
 export default function PrivacyPage() {
     return (

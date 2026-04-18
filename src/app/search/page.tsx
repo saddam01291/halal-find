@@ -91,9 +91,12 @@ function SearchContent() {
                 userCoords || null
             );
 
+            // Safety check for distance calculation
+            const rawDistance = distance ?? (p.lat && p.lng && userCoords ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng) : null);
+
             return {
                 ...p,
-                distance: distance ?? (p.lat && p.lng && userCoords ? getDistance(userCoords.lat, userCoords.lng, p.lat, p.lng) : 50),
+                distance: rawDistance,
                 relevance: score
             };
         });
@@ -106,10 +109,10 @@ function SearchContent() {
             if (b.verified !== a.verified) return b.verified ? 1 : -1;
             
             // Level 3: Rating
-            if (b.rating !== a.rating) return b.rating - a.rating;
+            if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
             
             // Level 4: Review Count
-            if (b.review_count !== a.review_count) return (b.review_count || 0) - (a.review_count || 0);
+            if ((b.review_count || 0) !== (a.review_count || 0)) return (b.review_count || 0) - (a.review_count || 0);
 
             // Level 5: Name Tie-breaker (matches DB sort order)
             return (a.name || '').localeCompare(b.name || '');
@@ -251,16 +254,16 @@ function SearchContent() {
                                     <div className="flex-1 min-w-0 py-1">
                                         <div className="flex justify-between items-start mb-1">
                                             <h3 className="text-xl font-bold text-slate-900 truncate group-hover:text-emerald-700 transition-colors tracking-tight">
-                                                {place.name}
+                                                {place.name || 'Unnamed Place'}
                                             </h3>
-                                            <span className="flex items-center gap-1.5 bg-amber-500/10 px-2 py-1 rounded-full text-[10px] font-black border border-amber-500/20 text-amber-700">
+                                            <span className="flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-full text-[10px] font-black border border-amber-500/20 text-amber-700">
                                                 <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                                                {place.rating}
+                                                {place.rating || 0}
                                             </span>
                                         </div>
 
                                         <div className="flex items-center gap-2 mb-3">
-                                            <p className="text-sm text-slate-500 font-bold uppercase tracking-widest text-[10px]">{place.cuisine}</p>
+                                            <p className="text-sm text-slate-500 font-bold uppercase tracking-widest text-[10px]">{place.cuisine || 'Halal Food'}</p>
                                             <span className="h-1 w-1 rounded-full bg-slate-300" />
                                             <HalalBadge status={place.verification_status} className="scale-75 origin-left" />
                                         </div>
@@ -272,11 +275,11 @@ function SearchContent() {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1 text-[11px] text-slate-400">
                                                     <MapPin className="h-3 w-3 flex-shrink-0" />
-                                                    <span className="truncate uppercase tracking-wider font-medium">{place.city}</span>
+                                                    <span className="truncate uppercase tracking-wider font-medium">{place.city || 'Location Pending'}</span>
                                                 </div>
                                                 
                                                 {/* DISTANCE INDICATOR */}
-                                                {(place as any).distance !== undefined && (place as any).distance !== null && (
+                                                {(place as any).distance !== undefined && (place as any).distance !== null && !isNaN((place as any).distance) && (
                                                     <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm ${
                                                         (place as any).distance > 50 
                                                             ? 'bg-slate-50 text-slate-300' 
@@ -291,7 +294,7 @@ function SearchContent() {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {Array.isArray(place.tags) ? place.tags.slice(0, 2).map((tag, i) => (
+                                            {Array.isArray(place.tags) ? place.tags.slice(0, 2).filter(Boolean).map((tag, i) => (
                                                 <span key={`${tag}-${i}`} className="text-[10px] uppercase tracking-wider bg-slate-50 text-slate-500 px-2 py-0.5 rounded border border-slate-100">
                                                     {tag}
                                                 </span>
@@ -335,10 +338,10 @@ function SearchContent() {
                             center={userCoords || (sortedPlaces[0]?.lat ? { lat: sortedPlaces[0].lat, lng: sortedPlaces[0].lng } : { lat: 40.7128, lng: -74.0060 })}
                             zoom={locationStatus === 'granted' ? 14 : 12}
                         >
-                            {sortedPlaces.slice(0, 100).filter(place => place.lat && place.lng).map((place, index) => (
+                            {sortedPlaces.slice(0, 100).filter(place => typeof place.lat === 'number' && isFinite(place.lat) && typeof place.lng === 'number' && isFinite(place.lng)).map((place, index) => (
                                 <AdvancedMarker
                                     key={`marker-${place.id}-${index}`}
-                                    position={{ lat: place.lat, lng: place.lng }}
+                                    position={{ lat: place.lat!, lng: place.lng! }}
                                     title={place.name}
                                 />
                             ))}

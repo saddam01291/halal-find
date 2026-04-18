@@ -1,6 +1,11 @@
 import { ShieldAlert, Info, CheckCircle2, AlertTriangle, Scale } from 'lucide-react';
 import Link from 'next/link';
 
+export const metadata = {
+  title: "Legal Disclaimer | Find Halal",
+  description: "Important legal information and community guidelines for using the Find Halal platform.",
+};
+
 export default function DisclaimerPage() {
     return (
         <div className="min-h-screen bg-slate-50 py-16 px-4">
