@@ -167,18 +167,30 @@ export async function deletePlace(id: string) {
     return true;
 }
 
-export async function checkDuplicatePlace(name: string, city: string): Promise<any | null> {
-    const { data, error } = await supabase
+export async function checkDuplicatePlace(name: string, city: string, address?: string): Promise<any | null> {
+    const query = supabase
         .from('places')
-        .select('id, name, city')
-        .ilike('name', name)
-        .ilike('city', city)
-        .maybeSingle();
+        .select('id, name, city, address')
+        .ilike('name', name);
 
-    if (error && error.code !== 'PGRST116') {
-        console.error('Error checking duplicates:', error);
+    // Try to match by city first
+    if (city) {
+        const { data: cityData } = await query.ilike('city', city).maybeSingle();
+        if (cityData) return cityData;
     }
-    return data;
+
+    // Then try to match by exact address if provided
+    if (address) {
+        const { data: addressData } = await supabase
+            .from('places')
+            .select('id, name, city, address')
+            .ilike('name', name)
+            .ilike('address', address)
+            .maybeSingle();
+        if (addressData) return addressData;
+    }
+
+    return null;
 }
 
 export async function addPlaceAsAdmin(place: Omit<DbPlace, 'id' | 'created_at' | 'review_count' | 'rating'>) {
