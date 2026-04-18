@@ -184,7 +184,7 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                             {duplicateFound && (
                                 <div className="flex items-center gap-3 p-4 bg-amber-100 border-2 border-amber-200 rounded-2xl text-amber-900 animate-in fade-in slide-in-from-top-2">
                                     <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                                    <p className="text-xs font-black uppercase tracking-tight">This Restaurant is already listed</p>
+                                    <p className="text-sm font-bold">🚫 Restaurant is already added, please add a different restaurant.</p>
                                 </div>
                             )}
                         </div>

@@ -275,17 +275,50 @@ export async function submitVerificationRequest(request: Omit<DbVerificationRequ
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Step 1: Insert core fields (always works, even without the review columns)
+    const coreRequest = {
+        restaurant_name: request.restaurant_name,
+        owner_name: request.owner_name,
+        certificate_url: request.certificate_url,
+        place_id: request.place_id,
+        type: request.type,
+        cuisine: request.cuisine,
+        address: request.address,
+        city: request.city,
+        lat: request.lat,
+        lng: request.lng,
+        tags: request.tags,
+        halal_status: request.halal_status,
+        serves_alcohol: request.serves_alcohol,
+        halal_source: request.halal_source,
+        user_id: user.id,
+        status: 'pending' as const
+    };
+
     const { data, error } = await supabase
         .from('verification_requests')
-        .insert({
-            ...request,
-            user_id: user.id,
-            status: 'pending'
-        })
+        .insert(coreRequest)
         .select()
         .single();
 
     if (error) throw error;
+
+    // Step 2: Try to store review fields (safe fallback if columns don't exist yet)
+    if (data && (request.initial_review || request.initial_rating)) {
+        const { error: reviewUpdateError } = await supabase
+            .from('verification_requests')
+            .update({
+                initial_review: request.initial_review || '',
+                initial_rating: request.initial_rating || 5
+            })
+            .eq('id', data.id);
+
+        if (reviewUpdateError) {
+            // Columns not yet in DB — log but don't fail the submission
+            console.warn('Review fields not saved (run SQL migration):', reviewUpdateError.message);
+        }
+    }
+
     return data;
 }
 
