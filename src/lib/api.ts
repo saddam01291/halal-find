@@ -184,37 +184,48 @@ export async function deletePlace(id: string) {
 }
 
 export async function checkDuplicatePlace(name: string, city: string, address?: string): Promise<any | null> {
-    // Only check if we have enough data — need at least name + city or name + address
     const trimmedName = name.trim();
     const trimmedCity = city.trim();
-    const trimmedAddress = (address || '').trim();
+    const trimmedAddress = (address || '').trim().toLowerCase();
 
-    // Not enough info yet — don't flag as duplicate
     if (!trimmedName || trimmedName.length < 3) return null;
-    if (!trimmedCity && !trimmedAddress) return null;
 
-    // Match by EXACT full name (case-insensitive) AND city
-    if (trimmedCity && trimmedCity.length > 1) {
-        const { data: cityData, error: cityError } = await supabase
-            .from('places')
-            .select('id, name, city, address')
-            .ilike('name', trimmedName)   // exact full name match
-            .ilike('city', trimmedCity)
-            .maybeSingle();
+    // Fetch all places with exact name match
+    const { data: places, error } = await supabase
+        .from('places')
+        .select('id, name, city, address')
+        .ilike('name', trimmedName);
 
-        if (!cityError && cityData) return cityData;
-    }
+    if (error || !places || places.length === 0) return null;
 
-    // Match by EXACT full name AND address (only if address is substantial)
-    if (trimmedAddress && trimmedAddress.length > 5) {
-        const { data: addressData, error: addressError } = await supabase
-            .from('places')
-            .select('id, name, city, address')
-            .ilike('name', trimmedName)
-            .ilike('address', `%${trimmedAddress}%`)
-            .maybeSingle();
+    // Check each potential duplicate in JS for city or fuzzy address match
+    for (const place of places) {
+        // 1. Exact City Match
+        if (trimmedCity && trimmedCity.length > 1 && place.city && place.city.trim().toLowerCase() === trimmedCity.toLowerCase()) {
+            return place;
+        }
 
-        if (!addressError && addressData) return addressData;
+        // 2. Fuzzy Address Match (Same Name + Similar Address = Duplicate)
+        if (trimmedAddress && trimmedAddress.length > 5 && place.address) {
+            const existingAddress = place.address.trim().toLowerCase();
+            
+            if (trimmedAddress.includes(existingAddress) || existingAddress.includes(trimmedAddress)) {
+                return place; // Substring match
+            }
+
+            // Word overlap match for "Burdwan rail station" vs "Burdwan Station"
+            const newWords = trimmedAddress.split(/\W+/).filter((w: string) => w.length > 3);
+            const existWords = existingAddress.split(/\W+/).filter((w: string) => w.length > 3);
+            
+            let sharedWords = 0;
+            for (const word of newWords) {
+                if (existWords.includes(word)) sharedWords++;
+            }
+            // If they share at least 2 significant words, consider it a match
+            if (sharedWords >= 2) {
+                return place;
+            }
+        }
     }
 
     return null;

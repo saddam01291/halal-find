@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { getValidImageUrl } from '@/lib/utils';
 import Link from 'next/link';
+import { ReviewList } from '@/components/reviews/ReviewList';
 
 function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -125,7 +126,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-900 mb-2">About {name}</h2>
                                     <p className="text-slate-500 leading-relaxed text-lg">
-                                        Located in the heart of {city}, {name} offers an authentic {cuisine} experience. 
+                                        {city && city !== 'Unknown' ? `Located in the heart of ${city}, ` : ''}{name} offers an authentic {cuisine || 'Halal'} experience. 
                                         Dedicated to high standards, everything here is prepared with care to meet Halal requirements.
                                     </p>
                                 </div>
@@ -173,6 +174,12 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                     Verification Status: <span className="text-emerald-400 uppercase tracking-widest text-sm">{place.verification_status}</span>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Reviews Section */}
+                        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-slate-100">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6">Community Reviews</h2>
+                            <ReviewList placeId={place.id} />
                         </div>
                     </div>
 

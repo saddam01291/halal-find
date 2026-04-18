@@ -99,7 +99,7 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 type: 'community_addition',
                 cuisine: formData.cuisine || 'Global Halal',
                 address: formData.address,
-                city: formData.city || 'Kolkata', // Default or inferred
+                city: formData.city || formData.address.split(',').pop()?.trim() || 'Unknown', // Inferred from address
                 lat: formData.lat || 22.5726,
                 lng: formData.lng || 88.3639,
                 tags: ['Halal', formData.cuisine || 'Fast Food'],
