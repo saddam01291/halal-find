@@ -152,8 +152,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 {/* Minimal Header */}
                 <div className="flex justify-between items-center px-10 pt-10 pb-6">
                     <div>
-                        <h2 className="text-3xl font-black text-slate-900 leading-tight">Add New Place</h2>
-                        <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Quick submission Form</p>
+                        <h2 className="text-3xl font-black text-slate-900 leading-tight">Add Restaurant</h2>
+                        <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Share a new halal spot with the community</p>
                     </div>
                     <button onClick={onClose} className="h-14 w-14 flex items-center justify-center rounded-2xl hover:bg-slate-50 transition-all bg-slate-50 border border-slate-100 active:scale-95">
                         <X className="h-6 w-6 text-slate-400" />
