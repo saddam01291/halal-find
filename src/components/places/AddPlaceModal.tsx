@@ -91,33 +91,24 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 imageUrl = await uploadImage(imageFile) || '';
             }
 
-            // 2. Create Restaurant Entry
-            const newPlace = await addPlace({
-                name: formData.name,
+            // 2. Submit for Review (DO NOT create place yet — wait for admin approval)
+            await submitVerificationRequest({
+                restaurant_name: formData.name,
+                owner_name: user?.full_name || 'Contributor',
+                certificate_url: imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80',
+                type: 'community_addition',
                 cuisine: formData.cuisine || 'Global Halal',
                 address: formData.address,
                 city: formData.city || 'Kolkata', // Default or inferred
-                image: imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80',
                 lat: formData.lat || 22.5726,
                 lng: formData.lng || 88.3639,
                 tags: ['Halal', formData.cuisine || 'Fast Food'],
                 halal_status: formData.halal_statuses.join(', '),
                 serves_alcohol: formData.serves_alcohol,
-                halal_source: formData.halal_source
+                halal_source: formData.halal_source,
+                initial_review: formData.initial_review,
+                initial_rating: formData.initial_rating
             });
-
-            // 3. Submit for Review
-            if (newPlace) {
-                await submitVerificationRequest({
-                    restaurant_name: formData.name,
-                    owner_name: user?.full_name || 'Contributor',
-                    certificate_url: '',
-                    place_id: newPlace.id,
-                    type: 'community_addition',
-                    initial_review: formData.initial_review,
-                    initial_rating: formData.initial_rating
-                });
-            }
 
             setIsSuccess(true);
             setTimeout(() => {

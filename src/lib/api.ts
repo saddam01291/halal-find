@@ -24,9 +24,10 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
             .gte('lng', coords.lng - lngDelta)
             .lte('lng', coords.lng + lngDelta);
     } else {
-        // No location: only show quality places (rated OR verified).
-        // This prevents thousands of zero-rated OSM imports from polluting the no-location view.
-        query = query.or('rating.gt.0,verified.eq.true');
+        // No location: show quality places OR recently added (last 30 days)
+        // This ensures newly approved community restaurants always appear
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        query = query.or(`rating.gt.0,verified.eq.true,created_at.gte.${thirtyDaysAgo}`);
     }
 
     let { data, error } = await query
@@ -56,6 +57,21 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         return [];
     }
 
+    return data || [];
+}
+
+// Admin-only: fetch ALL places without quality filters so admin sees everything
+export async function getAllPlacesAdmin(): Promise<DbPlace[]> {
+    const { data, error } = await supabase
+        .from('places')
+        .select(PLACE_LIST_COLUMNS)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+    if (error) {
+        console.error('Error fetching all places for admin:', error);
+        return [];
+    }
     return data || [];
 }
 
@@ -356,96 +372,89 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
 
     // 3. If approved, update the corresponding place OR create it
     if (status === 'approved') {
-        // Build update payload based on request fields (now with more data!)
-        const placeUpdate: Record<string, any> = {
-            name: request.restaurant_name,
-            cuisine: request.cuisine,
-            address: request.address,
-            city: request.city,
-            lat: request.lat,
-            lng: request.lng,
-            tags: request.tags,
-            halal_status: request.halal_status,
-            serves_alcohol: request.serves_alcohol,
-            halal_source: request.halal_source,
-            verified: true,
-            image: request.certificate_url // Use certificate as image by default for community additions
-        };
+        let targetPlaceId = request.place_id;
 
-        if (request.type === 'claim' && request.place_id) {
+        // Build safe update payload - ONLY overwrite fields if the request actually contains data
+        const placeUpdate: Record<string, any> = { verified: true };
+        if (request.restaurant_name) placeUpdate.name = request.restaurant_name;
+        if (request.cuisine) placeUpdate.cuisine = request.cuisine;
+        if (request.address) placeUpdate.address = request.address;
+        if (request.city) placeUpdate.city = request.city;
+        if (request.lat) placeUpdate.lat = request.lat;
+        if (request.lng) placeUpdate.lng = request.lng;
+        if (request.tags) placeUpdate.tags = request.tags;
+        if (request.halal_status) placeUpdate.halal_status = request.halal_status;
+        if (request.serves_alcohol !== undefined) placeUpdate.serves_alcohol = request.serves_alcohol;
+        if (request.halal_source) placeUpdate.halal_source = request.halal_source;
+        if (request.certificate_url) placeUpdate.image = request.certificate_url;
+        
+        if (request.type === 'claim' && targetPlaceId) {
             placeUpdate.verification_status = 'owner_verified';
             placeUpdate.owner_id = request.user_id;
             
-            const { error: placeError } = await supabase
-                .from('places')
-                .update(placeUpdate)
-                .eq('id', request.place_id);
-
+            const { error: placeError } = await supabase.from('places').update(placeUpdate).eq('id', targetPlaceId);
             if (placeError) console.error('Error updating place on claim approval:', placeError);
         } else if (request.type === 'community_addition' || request.type === 'new_place') {
             placeUpdate.verification_status = 'community_verified';
             
-            if (request.place_id) {
-                // Update existing place if it was somehow linked
-                const { error: placeError } = await supabase
-                    .from('places')
-                    .update(placeUpdate)
-                    .eq('id', request.place_id);
+            if (targetPlaceId) {
+                // Place was pre-created during submission. Just update verification status 
+                // without wiping out location data (handled by truthy checks above).
+                const { error: placeError } = await supabase.from('places').update(placeUpdate).eq('id', targetPlaceId);
                 if (placeError) console.error('Error updating existing place on community approval:', placeError);
             } else {
-                // Create NEW place
-                const { data: newPlace, error: placeError } = await supabase
-                    .from('places')
-                    .insert({
-                        ...placeUpdate,
-                        review_count: 0,
-                        rating: 0
-                    })
-                    .select()
-                    .single();
+                // Fallback: Create NEW place if it didn't exist
+                const { data: newPlace, error: placeError } = await supabase.from('places').insert({
+                    ...placeUpdate, review_count: 0, rating: 0
+                }).select().single();
                 
                 if (placeError) {
                     console.error('Error creating new place on approval:', placeError);
                 } else if (newPlace) {
-                    // Link the request to the new place id
-                    await supabase
-                        .from('verification_requests')
-                        .update({ place_id: newPlace.id })
-                        .eq('id', id);
+                    targetPlaceId = newPlace.id;
+                    await supabase.from('verification_requests').update({ place_id: targetPlaceId }).eq('id', id);
+                }
+            }
+        }
 
-                    // --- NEW: Automatic Review Migration ---
-                    if (request.initial_review || request.initial_rating) {
-                        try {
-                            const { error: reviewError } = await supabase
-                                .from('reviews')
-                                .insert({
-                                    place_id: newPlace.id,
-                                    user_id: request.user_id,
-                                    user_name: request.owner_name || 'Community Contributor',
-                                    rating: request.initial_rating || 5, // Default to 5 if only review provided
-                                    comment: request.initial_review || 'Verified Halal Restaurant.',
-                                    is_halal_confirmed: true,
-                                    is_non_halal_report: false,
-                                    is_dispute_resolved: false
-                                });
-                            
-                            if (reviewError) {
-                                console.error('Error creating automatic review:', reviewError);
-                            } else {
-                                // Update place rating/count to reflect this first review
-                                await supabase
-                                    .from('places')
-                                    .update({ 
-                                        rating: request.initial_rating || 5,
-                                        review_count: 1 
-                                    })
-                                    .eq('id', newPlace.id);
-                            }
-                        } catch (reviewErr) {
-                            console.error('Critical failure in review migration:', reviewErr);
-                        }
+        // --- NEW: Automatic Review Migration ---
+        // Runs for ALL approved requests that have a target place and an initial review/rating
+        if (targetPlaceId && (request.initial_review || request.initial_rating)) {
+            try {
+                // Ensure we haven't already migrated a review for this user/place combo
+                const { data: existingReview } = await supabase.from('reviews')
+                    .select('id')
+                    .eq('place_id', targetPlaceId)
+                    .eq('user_id', request.user_id)
+                    .limit(1);
+
+                if (!existingReview || existingReview.length === 0) {
+                    const { error: reviewError } = await supabase.from('reviews').insert({
+                        place_id: targetPlaceId,
+                        user_id: request.user_id,
+                        user_name: request.owner_name || 'Community Contributor',
+                        rating: request.initial_rating || 5,
+                        comment: request.initial_review || 'Verified Halal Restaurant.',
+                        is_halal_confirmed: true,
+                        is_non_halal_report: false,
+                        is_dispute_resolved: false
+                    });
+                    
+                    if (reviewError) {
+                        console.error('Error creating automatic review:', reviewError);
+                    } else {
+                        // Update place rating/count
+                        await supabase
+                            .from('places')
+                            .update({ 
+                                rating: request.initial_rating || 5,
+                                review_count: 1 
+                            })
+                            .eq('id', targetPlaceId);
                     }
                 }
+            } catch (reviewErr) {
+                console.error('Critical failure in review migration:', reviewErr);
             }
         }
     }
