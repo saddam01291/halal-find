@@ -40,21 +40,26 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
-    // Real-time Duplicate Check
+    // Real-time Duplicate Check — only fires when name + location are meaningfully filled
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (formData.name.length > 2 && (formData.address.length > 3 || formData.city.length > 2)) {
+            const nameReady = formData.name.trim().length >= 4;
+            const cityReady = formData.city.trim().length >= 3;
+            const addressReady = formData.address.trim().length >= 8;
+
+            if (nameReady && (cityReady || addressReady)) {
                 setCheckingDuplicate(true);
                 try {
                     const existing = await checkDuplicatePlace(formData.name, formData.city, formData.address);
                     setDuplicateFound(!!existing);
                 } catch (e) {
                     console.error('Duplicate check failed', e);
+                    setDuplicateFound(false); // never block on error
                 } finally {
                     setCheckingDuplicate(false);
                 }
             } else {
-                setDuplicateFound(false);
+                setDuplicateFound(false); // reset when fields are incomplete
             }
         }, 800);
         return () => clearTimeout(timer);

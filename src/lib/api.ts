@@ -168,30 +168,42 @@ export async function deletePlace(id: string) {
 }
 
 export async function checkDuplicatePlace(name: string, city: string, address?: string): Promise<any | null> {
-    const query = supabase
-        .from('places')
-        .select('id, name, city, address')
-        .ilike('name', name);
+    // Only check if we have enough data — need at least name + city or name + address
+    const trimmedName = name.trim();
+    const trimmedCity = city.trim();
+    const trimmedAddress = (address || '').trim();
 
-    // Try to match by city first
-    if (city) {
-        const { data: cityData } = await query.ilike('city', city).maybeSingle();
-        if (cityData) return cityData;
-    }
+    // Not enough info yet — don't flag as duplicate
+    if (!trimmedName || trimmedName.length < 3) return null;
+    if (!trimmedCity && !trimmedAddress) return null;
 
-    // Then try to match by exact address if provided
-    if (address) {
-        const { data: addressData } = await supabase
+    // Match by EXACT full name (case-insensitive) AND city
+    if (trimmedCity && trimmedCity.length > 1) {
+        const { data: cityData, error: cityError } = await supabase
             .from('places')
             .select('id, name, city, address')
-            .ilike('name', name)
-            .ilike('address', address)
+            .ilike('name', trimmedName)   // exact full name match
+            .ilike('city', trimmedCity)
             .maybeSingle();
-        if (addressData) return addressData;
+
+        if (!cityError && cityData) return cityData;
+    }
+
+    // Match by EXACT full name AND address (only if address is substantial)
+    if (trimmedAddress && trimmedAddress.length > 5) {
+        const { data: addressData, error: addressError } = await supabase
+            .from('places')
+            .select('id, name, city, address')
+            .ilike('name', trimmedName)
+            .ilike('address', `%${trimmedAddress}%`)
+            .maybeSingle();
+
+        if (!addressError && addressData) return addressData;
     }
 
     return null;
 }
+
 
 export async function addPlaceAsAdmin(place: Omit<DbPlace, 'id' | 'created_at' | 'review_count' | 'rating'>) {
     const { data, error } = await supabase
