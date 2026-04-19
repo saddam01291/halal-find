@@ -61,19 +61,40 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
 }
 
 // Admin-only: fetch ALL places without quality filters so admin sees everything
+// Uses pagination to bypass Supabase's 1000-row default limit
 export async function getAllPlacesAdmin(): Promise<DbPlace[]> {
-    const { data, error } = await supabase
-        .from('places')
-        .select(PLACE_LIST_COLUMNS)
-        .order('created_at', { ascending: false })
-        .limit(1000);
+    const PAGE_SIZE = 1000;
+    let allData: DbPlace[] = [];
+    let page = 0;
+    let hasMore = true;
 
-    if (error) {
-        console.error('Error fetching all places for admin:', error);
-        return [];
+    while (hasMore) {
+        const from = page * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+
+        const { data, error } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .order('created_at', { ascending: false })
+            .range(from, to);
+
+        if (error) {
+            console.error(`Error fetching admin places (page ${page}):`, error);
+            break;
+        }
+
+        if (data && data.length > 0) {
+            allData = allData.concat(data);
+        }
+
+        // If we got fewer rows than PAGE_SIZE, we've reached the end
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        page++;
     }
-    return data || [];
+
+    return allData;
 }
+
 
 export async function searchPlaces(query: string, coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
     const formattedQuery = `%${query}%`;
