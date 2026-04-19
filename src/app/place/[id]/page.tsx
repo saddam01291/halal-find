@@ -44,7 +44,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                 setLoading(false);
             }
         };
-        fetchPlace();
+        fetchPlaceAndReviews();
     }, [id]);
 
     if (loading) {
