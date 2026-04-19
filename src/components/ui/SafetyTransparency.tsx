@@ -186,6 +186,15 @@ export function SafetyTransparency({ place }: SafetyTransparencyProps) {
                                         If a user reports that non-Halal items are served, the listing turns Orange. This alert stays active until the owner provides new proof of rectification.
                                     </p>
                                 </div>
+
+                                <div className="p-6 rounded-3xl border-2 bg-slate-50 border-slate-50">
+                                    <h4 className="font-black text-xs text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-slate-400" /> Not Yet Verified (Gray)
+                                    </h4>
+                                    <p className="text-xs text-slate-600 leading-relaxed font-bold">
+                                        New restaurants or those with insufficient community data appear in gray. This means the status is "Unknown" and you should verify personally at the counter.
+                                    </p>
+                                </div>
                             </div>
                             
                             <div className="pt-6 border-t border-slate-100 italic text-[11px] text-slate-400 font-bold text-center">

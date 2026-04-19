@@ -108,10 +108,14 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                                 {cuisine}
                             </span>
-                            <HalalBadge 
-                                status={place.verification_status} 
-                                hasActiveReports={reviews.some(r => r.is_non_halal_report && !r.is_dispute_resolved)}
-                            />
+                            <div className="flex flex-col gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Verification Status</span>
+                                <HalalBadge 
+                                    status={place.verification_status} 
+                                    hasActiveReports={reviews.some(r => r.is_non_halal_report && !r.is_dispute_resolved)}
+                                    className="scale-110 origin-left"
+                                />
+                            </div>
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight drop-shadow-2xl">
                             {name}
