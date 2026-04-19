@@ -139,8 +139,7 @@ function SearchContent() {
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
-            {/* List View */}
-            <div className="w-full md:w-1/2 lg:w-2/5 overflow-y-auto border-r border-slate-200 bg-white">
+            <div className="w-full md:w-1/2 lg:w-1/2 overflow-y-auto border-r border-slate-200 bg-white shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)] z-20">
                 <div className="p-3 sm:p-4 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                     <form onSubmit={handleSearch} className="relative mb-3 sm:mb-4 flex gap-2">
                         <div className="relative flex-1">
@@ -246,7 +245,7 @@ function SearchContent() {
                                     className="flex gap-3 sm:gap-5 p-3 sm:p-5 hover:bg-slate-50 transition-all group border-b border-slate-50 last:border-0 active:bg-slate-50"
                                 >
                                     <div
-                                        className="h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 rounded-xl sm:rounded-[1.5rem] bg-slate-100 bg-cover bg-center border border-slate-100 group-hover:border-emerald-500/30 transition-all duration-500 group-hover:scale-105 shadow-sm"
+                                        className="h-20 w-20 sm:h-28 sm:w-28 flex-shrink-0 rounded-xl sm:rounded-2xl bg-slate-100 bg-cover bg-center border border-slate-100 group-hover:border-emerald-500/30 transition-all duration-500 group-hover:scale-105 shadow-sm"
                                         style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id, place.name, place.cuisine)})` }}
                                     />
                                     <div className="flex-1 min-w-0 py-0.5 sm:py-1">
@@ -328,6 +327,7 @@ function SearchContent() {
             </div>
 
             {/* Map View */}
+            <div className="hidden md:block w-1/2 h-full z-10 relative">
                 <GoogleMap 
                     className="w-full h-full"
                     center={userCoords || (sortedPlaces[0]?.lat ? { lat: sortedPlaces[0].lat, lng: sortedPlaces[0].lng } : { lat: 22.5726, lng: 88.3639 })}
@@ -341,6 +341,7 @@ function SearchContent() {
                         }))
                     }
                 />
+            </div>
         </div>
     );
 }
