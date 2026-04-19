@@ -337,7 +337,15 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             </div>
 
                             <div className="p-5 sm:p-8 space-y-4">
-                                <Button className="w-full bg-slate-900 hover:bg-black text-white px-6 sm:px-8 h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95 text-sm sm:text-base">
+                                <Button 
+                                    onClick={() => {
+                                        const destination = (place.lat && place.lng) 
+                                            ? `${place.lat},${place.lng}` 
+                                            : encodeURIComponent(`${place.name || ''}, ${place.address || ''}, ${place.city || ''}`);
+                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank', 'noopener,noreferrer');
+                                    }}
+                                    className="w-full bg-slate-900 hover:bg-black text-white px-6 sm:px-8 h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95 text-sm sm:text-base"
+                                >
                                     Get Directions
                                     <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
                                 </Button>
