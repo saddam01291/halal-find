@@ -120,7 +120,7 @@ export function CitySelect({ value, onChange, placeholder = "Select Location..."
                         </div>
                     </div>
 
-                    <div className="max-h-[300px] overflow-y-auto p-2">
+                    <div className="max-h-[400px] overflow-y-auto p-2">
                         {/* 1. Country Step */}
                         {step === 'country' && countries.map(country => (
                             <button

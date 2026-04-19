@@ -122,7 +122,7 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300 overflow-hidden border border-white/20">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300 overflow-hidden border border-white/20">
                 
                 {/* Header */}
                 <div className="flex justify-between items-center px-10 py-8 border-b border-slate-100 bg-slate-50/50">
@@ -174,6 +174,16 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                                     />
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Location / District*</label>
+                                    <CitySelect 
+                                        value={formData.city} 
+                                        onChange={(city) => setFormData({ ...formData, city })} 
+                                        className="h-14"
+                                        placeholder="Select District"
+                                    />
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cuisine</label>
@@ -185,24 +195,14 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Location / District*</label>
-                                        <CitySelect 
-                                            value={formData.city} 
-                                            onChange={(city) => setFormData({ ...formData, city })} 
-                                            className="h-14"
-                                            placeholder="Select District"
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Street Address</label>
+                                        <input
+                                            value={formData.address}
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                            placeholder="Full address for map accuracy"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Street Address</label>
-                                    <input
-                                        value={formData.address}
-                                        onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                        className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
-                                        placeholder="Full address for map accuracy"
-                                    />
                                 </div>
                             </div>
 
@@ -322,6 +322,8 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                             </div>
                         </div>
                     </div>
+                    {/* Extra padding to help dropdowns have room to breathe */}
+                    <div className="h-60" />
                 </div>
 
                 {/* Footer */}

@@ -102,7 +102,7 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300 overflow-hidden border border-white/20">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300 overflow-hidden border border-white/20">
                 
                 {/* Header */}
                 <div className="flex justify-between items-center px-10 py-8 border-b border-slate-100 bg-slate-50/50">
@@ -135,6 +135,16 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                     />
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Location / District</label>
+                                    <CitySelect 
+                                        value={editForm.city || ''} 
+                                        onChange={(city) => setEditForm({ ...editForm, city })} 
+                                        className="h-14"
+                                        placeholder="Select District"
+                                    />
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cuisine</label>
@@ -145,23 +155,13 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Location / District</label>
-                                        <CitySelect 
-                                            value={editForm.city || ''} 
-                                            onChange={(city) => setEditForm({ ...editForm, city })} 
-                                            className="h-14"
-                                            placeholder="Select District"
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Street Address</label>
+                                        <input
+                                            value={editForm.address || ''}
+                                            onChange={e => setEditForm({ ...editForm, address: e.target.value })}
+                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-blue-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Street Address</label>
-                                    <input
-                                        value={editForm.address || ''}
-                                        onChange={e => setEditForm({ ...editForm, address: e.target.value })}
-                                        className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-blue-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
-                                    />
                                 </div>
                             </div>
 
@@ -282,6 +282,8 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                             </div>
                         </div>
                     </div>
+                    {/* Extra buffer for dropdowns */}
+                    <div className="h-60" />
                 </div>
 
                 {/* Footer */}
