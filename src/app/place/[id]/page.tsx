@@ -136,13 +136,13 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                         <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
                             <div className="flex justify-between items-start mb-8">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Transparency & Safety</h2>
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Transparency & Community Trust</h2>
                                     <p className="text-slate-500 leading-relaxed text-lg italic">
-                                        Helping you find trusted Halal dining in diverse and mixed-stay neighborhoods.
+                                        Helping you find verified Halal dining experiences through transparent community feedback.
                                     </p>
                                     <p className="text-slate-500 leading-relaxed text-md mt-4">
                                         {city && city !== 'Unknown' ? `Located in ${city}, ` : ''}{name} offers an authentic {cuisine || 'Halal'} experience. 
-                                        Verified by our community to ensure safety and peace of mind when dining in mixed environments.
+                                        Verified by our community to ensure quality and trust. Always confirm with the owner to be sure of the current Halal status.
                                     </p>
                                 </div>
                                 <div className="flex gap-2">
