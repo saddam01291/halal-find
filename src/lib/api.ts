@@ -220,35 +220,37 @@ export async function checkDuplicatePlace(name: string, city: string, address?: 
 
     if (error || !places || places.length === 0) return null;
 
-    // Check each potential duplicate in JS for city or fuzzy address match
+    // Check each potential duplicate in JS for fuzzy address match
     for (const place of places) {
-        // 1. Exact City Match
-        if (trimmedCity && trimmedCity.length > 1 && place.city && place.city.trim().toLowerCase() === trimmedCity.toLowerCase()) {
-            return place;
-        }
+        // We no longer block based ONLY on city, as same restaurants can have multiple branches in one city.
+        // We only block if the name matches AND the address is very similar.
 
-        // 2. Fuzzy Address Match (Same Name + Similar Address = Duplicate)
         if (trimmedAddress && trimmedAddress.length > 5 && place.address) {
             const existingAddress = place.address.trim().toLowerCase();
             
-            if (trimmedAddress.includes(existingAddress) || existingAddress.includes(trimmedAddress)) {
-                return place; // Substring match
+            // 1. Exact or Substring Address Match
+            if (trimmedAddress === existingAddress || trimmedAddress.includes(existingAddress) || existingAddress.includes(trimmedAddress)) {
+                return place;
             }
 
-            // Word overlap match for "Burdwan rail station" vs "Burdwan Station"
-            const newWords = trimmedAddress.split(/\W+/).filter((w: string) => w.length > 3);
-            const existWords = existingAddress.split(/\W+/).filter((w: string) => w.length > 3);
-            
-            let sharedWords = 0;
-            for (const word of newWords) {
-                if (existWords.includes(word)) sharedWords++;
-            }
-            // If they share at least 2 significant words, consider it a match
-            if (sharedWords >= 2) {
-                return place;
+            // 2. Word overlap match - only trigger if they are in the SAME city AND share significant address words
+            if (place.city && place.city.trim().toLowerCase() === trimmedCity.toLowerCase()) {
+                const newWords = trimmedAddress.split(/\W+/).filter((w: string) => w.length > 3);
+                const existWords = existingAddress.split(/\W+/).filter((w: string) => w.length > 3);
+                
+                let sharedWords = 0;
+                for (const word of newWords) {
+                    if (existWords.includes(word)) sharedWords++;
+                }
+                
+                // If they share at least 3 significant words (Street name, Landmark, Building name), consider it a same-location duplicate
+                if (sharedWords >= 3) {
+                    return place;
+                }
             }
         }
     }
+
 
     return null;
 }
