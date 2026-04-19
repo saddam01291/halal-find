@@ -95,7 +95,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
             <title>{`${name} | Halal Restaurant in ${city}`}</title>
 
             {/* Hero Image Section */}
-            <div className="relative h-[45vh] md:h-[60vh] w-full overflow-hidden bg-slate-900">
+            <div className="relative h-[35vh] sm:h-[45vh] md:h-[60vh] w-full overflow-hidden bg-slate-900">
                 <div 
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105 opacity-80"
                     style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id)})` }}
@@ -103,32 +103,32 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
                 
                 <div className="container mx-auto px-4 h-full relative">
-                    <div className="absolute bottom-12 left-4 right-4 md:left-8 md:right-8">
-                        <div className="flex flex-wrap items-center gap-3 mb-4">
-                            <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                    <div className="absolute bottom-6 sm:bottom-12 left-4 right-4 md:left-8 md:right-8">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                            <span className="bg-emerald-600 text-white px-2.5 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-lg">
                                 {cuisine}
                             </span>
-                            <div className="flex flex-col gap-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Verification Status</span>
+                            <div className="flex flex-col gap-1 sm:gap-2">
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Verification Status</span>
                                 <HalalBadge 
                                     status={place.verification_status} 
                                     hasActiveReports={reviews.some(r => r.is_non_halal_report && !r.is_dispute_resolved)}
-                                    className="scale-110 origin-left"
+                                    className="sm:scale-110 origin-left"
                                 />
                             </div>
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight drop-shadow-2xl">
+                        <h1 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-2 sm:mb-4 tracking-tight drop-shadow-2xl line-clamp-2">
                             {name}
                         </h1>
-                        <div className="flex flex-wrap items-center gap-6 text-white/90">
-                            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20">
-                                <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-                                <span className="font-bold text-lg">{place.rating || 0}</span>
-                                <span className="text-sm opacity-60">({place.review_count || 0} Reviews)</span>
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-white/90">
+                            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-white/20">
+                                <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-amber-400 text-amber-400" />
+                                <span className="font-bold text-sm sm:text-lg">{place.rating || 0}</span>
+                                <span className="text-xs sm:text-sm opacity-60">({place.review_count || 0})</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <MapPin className="h-5 w-5 text-emerald-400" />
-                                <span className="font-bold">{city}</span>
+                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
+                                <span className="font-bold text-sm sm:text-base">{city}</span>
                             </div>
                         </div>
                     </div>
@@ -136,29 +136,29 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
 
             {/* Main Content Grid */}
-            <div className="container mx-auto px-4 -mt-8 relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="container mx-auto px-4 -mt-4 sm:-mt-8 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                     
                     {/* LEFT COLUMN: Main Details */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
-                            <div className="flex justify-between items-start mb-8">
+                    <div className="lg:col-span-2 space-y-5 sm:space-y-8">
+                        <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 sm:mb-8">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Transparency & Community Trust</h2>
-                                    <p className="text-slate-500 leading-relaxed text-lg italic">
+                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">Transparency & Community Trust</h2>
+                                    <p className="text-slate-500 leading-relaxed text-sm sm:text-lg italic">
                                         Helping you find verified Halal dining experiences through transparent community feedback.
                                     </p>
-                                    <p className="text-slate-500 leading-relaxed text-md mt-4">
+                                    <p className="text-slate-500 leading-relaxed text-xs sm:text-md mt-3 sm:mt-4">
                                         {city && city !== 'Unknown' ? `Located in ${city}, ` : ''}{name} offers an authentic {cuisine || 'Halal'} experience. 
                                         Verified by our community to ensure quality and trust. Always confirm with the owner to be sure of the current Halal status.
                                     </p>
                                 </div>
                                 <div className="flex gap-2">
-                                    <Button variant="outline" size="icon" className="rounded-full h-11 w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                                        <Share2 className="h-5 w-5" />
+                                    <Button variant="outline" size="icon" className="rounded-full h-9 w-9 sm:h-11 sm:w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                                        <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </Button>
-                                    <Button variant="outline" size="icon" className="rounded-full h-11 w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                                        <Heart className="h-5 w-5" />
+                                    <Button variant="outline" size="icon" className="rounded-full h-9 w-9 sm:h-11 sm:w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                                        <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </Button>
                                 </div>
                             </div>
@@ -191,9 +191,9 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                         <SafetyTransparency place={place} />
 
                         {/* Reviews Section */}
-                        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-slate-100">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-slate-900">Community Reviews</h2>
+                        <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-slate-100">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Community Reviews</h2>
                                 <Button 
                                     onClick={() => setShowReviewForm(!showReviewForm)}
                                     className={cn(
@@ -232,14 +232,14 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                     </div>
 
                     {/* RIGHT COLUMN: Map & Action */}
-                    <div className="space-y-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden sticky top-24">
-                            <div className="p-6 border-b border-slate-50 bg-white">
-                                <h3 className="font-bold text-slate-900 mb-1">Locate on Map</h3>
-                                <p className="text-sm text-slate-500 font-medium truncate">{place.address}</p>
+                    <div className="space-y-5 sm:space-y-8">
+                        <div className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden lg:sticky lg:top-24">
+                            <div className="p-4 sm:p-6 border-b border-slate-50 bg-white">
+                                <h3 className="font-bold text-slate-900 mb-1 text-sm sm:text-base">Locate on Map</h3>
+                                <p className="text-xs sm:text-sm text-slate-500 font-medium truncate">{place.address}</p>
                             </div>
                             
-                            <div className="h-80 w-full relative bg-slate-100">
+                            <div className="h-52 sm:h-80 w-full relative bg-slate-100">
                                 {apiKey && hasValidCoords ? (
                                     <GoogleMap 
                                         apiKey={apiKey}
@@ -267,12 +267,12 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                 )}
                             </div>
 
-                            <div className="p-8 space-y-4">
-                                <Button className="w-full bg-slate-900 hover:bg-black text-white px-8 h-14 rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95">
+                            <div className="p-5 sm:p-8 space-y-4">
+                                <Button className="w-full bg-slate-900 hover:bg-black text-white px-6 sm:px-8 h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95 text-sm sm:text-base">
                                     Get Directions
-                                    <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
                                 </Button>
-                                <p className="text-center text-[10px] uppercase font-black tracking-widest text-slate-400">
+                                <p className="text-center text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400">
                                     Recommended by FindHalal Community
                                 </p>
                             </div>

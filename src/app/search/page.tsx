@@ -143,23 +143,23 @@ function SearchContent() {
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
             {/* List View */}
             <div className="w-full md:w-1/2 lg:w-2/5 overflow-y-auto border-r border-slate-200 bg-white">
-                <div className="p-4 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
-                    <form onSubmit={handleSearch} className="relative mb-4 flex gap-2">
+                <div className="p-3 sm:p-4 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+                    <form onSubmit={handleSearch} className="relative mb-3 sm:mb-4 flex gap-2">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                             <Input
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Search cuisine, city, or name..."
-                                className="pl-9 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500 rounded-lg"
+                                className="pl-9 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500 rounded-lg text-sm"
                             />
                         </div>
-                        <Button size="icon" variant="outline" className="border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50">
+                        <Button size="icon" variant="outline" className="border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex-shrink-0">
                             <Filter className="h-4 w-4" />
                         </Button>
                     </form>
                     <div className="flex justify-between items-baseline px-1">
-                        <h1 className="text-lg font-semibold text-slate-800">
+                        <h1 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
                             {initialQuery ? `Results: "${initialQuery}"` : 'Explore Places'}
                         </h1>
                         {!loading && (
@@ -245,57 +245,57 @@ function SearchContent() {
                                 <Link
                                     href={`/place/${place.id}`}
                                     key={`${place.id}-${index}`}
-                                    className="flex gap-5 p-5 hover:bg-slate-50 transition-all group border-b border-slate-50 last:border-0"
+                                    className="flex gap-3 sm:gap-5 p-3 sm:p-5 hover:bg-slate-50 transition-all group border-b border-slate-50 last:border-0 active:bg-slate-50"
                                 >
                                     <div
-                                        className="h-32 w-32 flex-shrink-0 rounded-[1.5rem] bg-slate-100 bg-cover bg-center border border-slate-100 group-hover:border-emerald-500/30 transition-all duration-500 group-hover:scale-105 shadow-sm"
+                                        className="h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 rounded-xl sm:rounded-[1.5rem] bg-slate-100 bg-cover bg-center border border-slate-100 group-hover:border-emerald-500/30 transition-all duration-500 group-hover:scale-105 shadow-sm"
                                         style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id)})` }}
                                     />
-                                    <div className="flex-1 min-w-0 py-1">
+                                    <div className="flex-1 min-w-0 py-0.5 sm:py-1">
                                         <div className="flex justify-between items-start mb-1">
-                                            <h3 className="text-xl font-bold text-slate-900 truncate group-hover:text-emerald-700 transition-colors tracking-tight">
+                                            <h3 className="text-base sm:text-xl font-bold text-slate-900 truncate group-hover:text-emerald-700 transition-colors tracking-tight">
                                                 {place.name || 'Unnamed Place'}
                                             </h3>
-                                            <span className="flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-full text-[10px] font-black border border-amber-500/20 text-amber-700">
+                                            <span className="flex items-center gap-1 sm:gap-1.5 bg-amber-500/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black border border-amber-500/20 text-amber-700 ml-2 flex-shrink-0">
                                                 <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                                                 {place.rating || 0}
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <p className="text-sm text-slate-500 font-bold uppercase tracking-widest text-[10px]">{place.cuisine || 'Halal Food'}</p>
+                                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                            <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px] sm:text-[10px]">{place.cuisine || 'Halal Food'}</p>
                                             <span className="h-1 w-1 rounded-full bg-slate-300" />
-                                            <HalalBadge status={place.verification_status} className="scale-75 origin-left" />
+                                            <HalalBadge status={place.verification_status} className="scale-[0.65] sm:scale-75 origin-left" />
                                         </div>
 
-                                        <div className="flex flex-col gap-0.5 mb-3">
-                                            <p className="text-sm font-bold text-slate-700 truncate">
+                                        <div className="flex flex-col gap-0.5 mb-2 sm:mb-3">
+                                            <p className="text-xs sm:text-sm font-bold text-slate-700 truncate">
                                                 {getAreaFromAddress(place.address, place.city)}
                                             </p>
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                                                <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-400">
                                                     <MapPin className="h-3 w-3 flex-shrink-0" />
                                                     <span className="truncate uppercase tracking-wider font-medium">{place.city || 'Location Pending'}</span>
                                                 </div>
                                                 
                                                 {/* DISTANCE INDICATOR */}
                                                 {(place as any).distance !== undefined && (place as any).distance !== null && !isNaN((place as any).distance) && (
-                                                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm ${
+                                                    <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-1.5 sm:px-2 py-0.5 rounded-sm flex-shrink-0 ${
                                                         (place as any).distance > 50 
                                                             ? 'bg-slate-50 text-slate-300' 
                                                             : 'bg-emerald-50 text-emerald-600'
                                                     }`}>
                                                         {(place as any).distance > 50 
-                                                            ? 'Global Discovery' 
-                                                            : `${(place as any).distance < 1 ? '< 1' : (place as any).distance.toFixed(1)} km`}
+                                                            ? 'Global' 
+                                                            : `${(place as any).distance < 1 ? '<1' : (place as any).distance.toFixed(1)} km`}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-1.5 sm:gap-2 hidden sm:flex">
                                             {Array.isArray(place.tags) ? place.tags.slice(0, 2).filter(Boolean).map((tag, i) => (
-                                                <span key={`${tag}-${i}`} className="text-[10px] uppercase tracking-wider bg-slate-50 text-slate-500 px-2 py-0.5 rounded border border-slate-100">
+                                                <span key={`${tag}-${i}`} className="text-[9px] sm:text-[10px] uppercase tracking-wider bg-slate-50 text-slate-500 px-1.5 sm:px-2 py-0.5 rounded border border-slate-100">
                                                     {tag}
                                                 </span>
                                             )) : null}
