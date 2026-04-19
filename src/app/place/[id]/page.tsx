@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, use } from 'react';
 import { getPlaceById } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
 import { GoogleMap } from '@/components/map/Map';
-import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { getValidImageUrl, cn } from '@/lib/utils';
@@ -25,6 +25,8 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const [error, setError] = useState<string | null>(null);
     const [showContact, setShowContact] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
+    const [isLoved, setIsLoved] = useState(false);
     const { user } = useAuth();
 
     const [displayCoords, setDisplayCoords] = useState<{lat: number, lng: number} | null>(null);
@@ -66,7 +68,55 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
             }
         };
         fetchPlaceAndReviews();
+        
+        // Initialize loved state from local storage
+        try {
+            const savedPlaces = JSON.parse(localStorage.getItem('findhalal_saved_places') || '[]');
+            if (savedPlaces.includes(id)) {
+                setIsLoved(true);
+            }
+        } catch (e) {
+            // ignore JSON parse errors
+        }
     }, [id]);
+
+    const handleShare = async () => {
+        const url = window.location.href;
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `${place?.name || 'Restaurant'} on FindHalal`,
+                    text: `Check out ${place?.name || 'this halal restaurant'}!`,
+                    url: url
+                });
+            } catch (err) {
+                // fallback if user cancels
+            }
+        } else {
+            await navigator.clipboard.writeText(url);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        }
+    };
+
+    const handleToggleLove = () => {
+        try {
+            const savedPlaces = JSON.parse(localStorage.getItem('findhalal_saved_places') || '[]');
+            if (isLoved) {
+                const newPlaces = savedPlaces.filter((p: string) => p !== id);
+                localStorage.setItem('findhalal_saved_places', JSON.stringify(newPlaces));
+                setIsLoved(false);
+            } else {
+                if (!savedPlaces.includes(id)) {
+                    savedPlaces.push(id);
+                    localStorage.setItem('findhalal_saved_places', JSON.stringify(savedPlaces));
+                }
+                setIsLoved(true);
+            }
+        } catch(e) {
+            // handle
+        }
+    };
 
     if (loading) {
         return (
@@ -169,12 +219,22 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                         Verified by our community to ensure quality and trust. Always confirm with the owner to be sure of the current Halal status.
                                     </p>
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="icon" className="rounded-full h-9 w-9 sm:h-11 sm:w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                                        <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                                <div className="flex gap-2 relative">
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        onClick={handleShare}
+                                        className="rounded-full h-9 w-9 sm:h-11 sm:w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                                    >
+                                        {isCopied ? <Check className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" /> : <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />}
                                     </Button>
-                                    <Button variant="outline" size="icon" className="rounded-full h-9 w-9 sm:h-11 sm:w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                                        <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        onClick={handleToggleLove}
+                                        className={`rounded-full h-9 w-9 sm:h-11 sm:w-11 transition-all ${isLoved ? 'bg-red-50 text-red-500 border-red-200' : 'hover:bg-red-50 hover:text-red-500'}`}
+                                    >
+                                        <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isLoved ? 'fill-current' : ''}`} />
                                     </Button>
                                 </div>
                             </div>
