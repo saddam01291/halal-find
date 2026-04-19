@@ -748,60 +748,6 @@ function AdminDashboardContent() {
             </div>
         )}
 
-        {/* Edit Restaurant Modal */}
-        {editingPlace && (
-            <EditPlaceModal
-                isOpen={isEditModalOpen}
-                onClose={() => {
-                    setIsEditModalOpen(false);
-                    setEditingPlace(null);
-                    setEditingRequest(null);
-                }}
-                place={editingPlace}
-                onSave={async () => {
-                    // Logic handled by onUpdate if provided, or just reload data
-                    loadData();
-                }}
-                onUpdate={editingRequest ? async (updates: Partial<DbPlace>) => {
-                    try {
-                        // 1. Update the request itself with ALL edited fields
-                        await updateVerificationRequest(editingRequest.id, {
-                            restaurant_name: updates.name,
-                            cuisine: updates.cuisine,
-                            address: updates.address,
-                            city: updates.city,
-                            lat: updates.lat,
-                            lng: updates.lng,
-                            tags: updates.tags,
-                            halal_status: updates.halal_status,
-                            serves_alcohol: updates.serves_alcohol,
-                            halal_source: updates.halal_source,
-                            certificate_url: updates.image || editingRequest.certificate_url
-                        });
-                        
-                        // 2. If it's a claim, update the linked place too
-                        if (editingRequest.place_id) {
-                            await updatePlace(editingRequest.place_id, updates);
-                        }
-                        
-                        loadData();
-                    } catch (error) {
-                        console.error('Error updating request:', error);
-                        throw error; // Re-throw to be caught by modal's handler
-                    }
-                } : undefined}
-            />
-        )}
-
-        {/* ===== ADD MODAL (NEW) ===== */}
-        <AdminAddPlaceModal 
-            isOpen={isAddModalOpen} 
-            onClose={() => setIsAddModalOpen(false)} 
-            onSave={() => {
-                loadData();
-                setIsAddModalOpen(false);
-            }} 
-        />
         </>
     );
 
@@ -1019,6 +965,43 @@ function AdminDashboardContent() {
                     {activeTab === 'settings' && renderSettings()}
                 </div>
             )}
+        {/* GLOBAL ADMIN MODALS */}
+        <AdminAddPlaceModal 
+            isOpen={isAddModalOpen} 
+            onClose={() => setIsAddModalOpen(false)} 
+            onSave={() => {
+                loadData();
+                setIsAddModalOpen(false);
+            }} 
+        />
+
+        {editingPlace && (
+            <EditPlaceModal 
+                isOpen={isEditModalOpen} 
+                onClose={() => setIsEditModalOpen(false)} 
+                place={editingPlace} 
+                onSave={loadData}
+                onUpdate={editingRequest ? async (updates) => {
+                    try {
+                        await updateVerificationRequest(editingRequest.id, {
+                            restaurant_name: updates.name,
+                            cuisine: updates.cuisine,
+                            city: updates.city,
+                            address: updates.address,
+                            lat: updates.lat,
+                            lng: updates.lng
+                        });
+                        if (editingRequest.place_id) {
+                            await updatePlace(editingRequest.place_id, updates);
+                        }
+                        loadData();
+                    } catch (error) {
+                        console.error('Error updating request:', error);
+                        throw error;
+                    }
+                } : undefined}
+            />
+        )}
         </div>
     );
 }
