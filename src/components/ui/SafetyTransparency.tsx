@@ -68,7 +68,7 @@ export function SafetyTransparency({ place }: SafetyTransparencyProps) {
                         <h4 className="font-bold text-sm">Mixed Area Safety: {riskLabels[place.contamination_risk || 'low']}</h4>
                         <p className="text-xs mt-1 leading-relaxed opacity-90">
                             In mixed neighborhoods, we verify kitchen protocols.
-                            {place.contamination_risk === 'none' ? ' This kitchen is 100% Halal dedicated.' :
+                            {place.contamination_risk === 'none' ? ' This kitchen is dedicated to serving Halal food only.' :
                                 place.contamination_risk === 'low' ? ' Separate prep areas and utensils are used for Halal items.' :
                                     ' Proceed with caution and verify with staff.'}
                         </p>

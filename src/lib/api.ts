@@ -76,10 +76,11 @@ export async function getAllPlacesAdmin(): Promise<DbPlace[]> {
 }
 
 export async function searchPlaces(query: string, coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
+    const formattedQuery = `%${query}%`;
     let supabaseQuery = supabase
         .from('places')
         .select(PLACE_LIST_COLUMNS)
-        .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`);
+        .or(`name.ilike.${formattedQuery},cuisine.ilike.${formattedQuery},city.ilike.${formattedQuery},address.ilike.${formattedQuery},tags.cs.{${query}}`);
 
     if (coords && coords.lat && coords.lng) {
         // Apply 50km bounding box to search results as well to prioritize local matches

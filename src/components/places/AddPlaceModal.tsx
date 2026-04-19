@@ -7,6 +7,7 @@ import { addPlace, submitVerificationRequest, uploadImage, checkDuplicatePlace }
 import { X, Upload, Building2, Loader2, Info, Camera, ShieldCheck, MapPin as MapPinIcon, LocateFixed, Star, MessageSquareQuote, CheckCircle2, AlertCircle } from 'lucide-react';
 import { GoogleMap } from '@/components/map/Map';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { CitySelect } from '@/components/ui/CitySelect';
 
 interface AddPlaceModalProps {
     isOpen: boolean;
@@ -26,8 +27,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
         halal_statuses: ['Full Halal'] as string[],
         serves_alcohol: false,
         halal_source: '',
-        lat: 0,
-        lng: 0,
+        lat: null as number | null,
+        lng: null as number | null,
         initial_review: '',
         initial_rating: 5
     });
@@ -99,10 +100,10 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 type: 'community_addition',
                 cuisine: formData.cuisine || 'Global Halal',
                 address: formData.address,
-                city: formData.city || formData.address.split(',').pop()?.trim() || 'Unknown', // Inferred from address
-                lat: formData.lat || 22.5726,
+                city: formData.city || 'Unknown', 
+                lat: formData.lat || 22.5726, // Fallback purely for schema stability, but UI will prioritize search
                 lng: formData.lng || 88.3639,
-                tags: ['Halal', formData.cuisine || 'Fast Food'],
+                tags: ['Halal', formData.cuisine || 'Fast Food', formData.city].filter(Boolean) as string[],
                 halal_status: formData.halal_statuses.join(', '),
                 serves_alcohol: formData.serves_alcohol,
                 halal_source: formData.halal_source,
@@ -186,6 +187,15 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">City*</label>
+                            <CitySelect 
+                                value={formData.city} 
+                                onChange={(city) => setFormData({ ...formData, city })} 
+                                placeholder="Select City (West Bengal prioritized)"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Address*</label>
                             <div className="relative">
                                 <MapPinIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
@@ -194,7 +204,7 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                                     value={formData.address}
                                     onChange={e => setFormData({ ...formData, address: e.target.value })}
                                     className="w-full h-16 pl-14 pr-6 rounded-3xl border-3 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white transition-all outline-none text-lg font-bold text-slate-900"
-                                    placeholder="Street, Landmark, City"
+                                    placeholder="Street, Landmark"
                                 />
                             </div>
                         </div>

@@ -62,7 +62,7 @@ export default function ForBusinesses() {
                             {
                                 icon: <ShieldCheck className="h-8 w-8 text-amber-600" />,
                                 title: "Build Unmatched Trust",
-                                desc: "Our 'Verified' badge tells customers your Halal status is 100% authentic and owner-confirmed."
+                                desc: "Our 'Owner Verified' badge signals to customers that you have provided official documentation for your Halal status."
                             },
                             {
                                 icon: <TrendingUp className="h-8 w-8 text-blue-600" />,

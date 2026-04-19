@@ -11,22 +11,31 @@ import { HalalBadge } from '@/components/ui/HalalBadge';
 import { getValidImageUrl } from '@/lib/utils';
 import Link from 'next/link';
 import { ReviewList } from '@/components/reviews/ReviewList';
+import { getReviewsForPlace } from '@/lib/api';
+import { DbReview } from '@/lib/supabase';
+import { HalalTrustScore } from '@/components/ui/HalalTrustScore';
+import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
 
 function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const [place, setPlace] = useState<DbPlace | null>(null);
+    const [reviews, setReviews] = useState<DbReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showContact, setShowContact] = useState(false);
 
     useEffect(() => {
-        const fetchPlace = async () => {
+        const fetchPlaceAndReviews = async () => {
             try {
-                const data = await getPlaceById(id);
-                if (!data) {
+                const [placeData, reviewsData] = await Promise.all([
+                    getPlaceById(id),
+                    getReviewsForPlace(id)
+                ]);
+                if (!placeData) {
                     setError('Restaurant not found');
                 } else {
-                    setPlace(data);
+                    setPlace(placeData);
+                    setReviews(reviewsData);
                 }
             } catch (err: any) {
                 console.error('Error fetching place:', err);
@@ -95,7 +104,10 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                                 {cuisine}
                             </span>
-                            <HalalBadge status={place.verification_status} />
+                            <HalalBadge 
+                                status={place.verification_status} 
+                                hasActiveReports={reviews.some(r => r.is_non_halal_report && !r.is_dispute_resolved)}
+                            />
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight drop-shadow-2xl">
                             {name}
@@ -124,10 +136,13 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                         <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
                             <div className="flex justify-between items-start mb-8">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">About {name}</h2>
-                                    <p className="text-slate-500 leading-relaxed text-lg">
-                                        {city && city !== 'Unknown' ? `Located in the heart of ${city}, ` : ''}{name} offers an authentic {cuisine || 'Halal'} experience. 
-                                        Dedicated to high standards, everything here is prepared with care to meet Halal requirements.
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Transparency & Safety</h2>
+                                    <p className="text-slate-500 leading-relaxed text-lg italic">
+                                        Helping you find trusted Halal dining in diverse and mixed-stay neighborhoods.
+                                    </p>
+                                    <p className="text-slate-500 leading-relaxed text-md mt-4">
+                                        {city && city !== 'Unknown' ? `Located in ${city}, ` : ''}{name} offers an authentic {cuisine || 'Halal'} experience. 
+                                        Verified by our community to ensure safety and peace of mind when dining in mixed environments.
                                     </p>
                                 </div>
                                 <div className="flex gap-2">
@@ -157,24 +172,15 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                         </div>
 
                         {/* Verification Info */}
-                        <div className="bg-emerald-900 p-8 md:p-10 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                                <ShieldCheck className="h-24 w-24" />
-                            </div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <ShieldCheck className="h-6 w-6 text-emerald-400" />
-                                    <h3 className="text-xl font-bold">Halal Assurance</h3>
-                                </div>
-                                <p className="text-emerald-50/80 mb-6 text-lg leading-relaxed max-w-2xl">
-                                    This restaurant has been verified through our multi-step trust process. 
-                                    We check both official certification and community feedback to ensure your peace of mind.
-                                </p>
-                                <div className="inline-block bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 font-bold">
-                                    Verification Status: <span className="text-emerald-400 uppercase tracking-widest text-sm">{place.verification_status}</span>
-                                </div>
-                            </div>
-                        </div>
+                        <HalalTrustScore 
+                            status={place.verification_status}
+                            halalVotes={reviews.filter(r => r.is_halal_confirmed).length}
+                            reportCount={reviews.filter(r => r.is_non_halal_report && !r.is_dispute_resolved).length}
+                            isDisputed={reviews.some(r => r.is_non_halal_report && r.is_dispute_resolved)}
+                        />
+
+                        {/* Transparency Details */}
+                        <SafetyTransparency place={place} />
 
                         {/* Reviews Section */}
                         <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-slate-100">

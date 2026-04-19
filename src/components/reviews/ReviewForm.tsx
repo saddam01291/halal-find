@@ -85,22 +85,22 @@ export function ReviewForm({ placeId, onCancel, onSubmit }: { placeId: string; o
                         onChange={(e) => setIsHalalConfirmed(e.target.checked)}
                     />
                     <label htmlFor="confirm-halal" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
-                        Help the community: <span className="text-emerald-700">I confirm this place is 100% Halal</span> ✅
+                        Help the community: <span className="text-emerald-700">I confirm this place serves Halal food</span> ✅
                     </label>
                 </div>
 
-                <div className={`flex items-center gap-3 p-3 border rounded-xl transition-all shadow-sm ${isNonHalalReport ? 'bg-red-50 border-red-400' : 'bg-white border-slate-200'
+                <div className={`flex items-center gap-3 p-3 border rounded-xl transition-all shadow-sm ${isNonHalalReport ? 'bg-amber-50 border-amber-400' : 'bg-white border-slate-200'
                     } ${isHalalConfirmed ? 'opacity-40' : ''}`}>
                     <input
                         type="checkbox"
                         id="report-non-halal"
                         disabled={isHalalConfirmed}
-                        className="h-5 w-5 rounded-full border-slate-300 text-red-600 focus:ring-red-500 disabled:opacity-50 transition-transform hover:scale-110"
+                        className="h-5 w-5 rounded-full border-slate-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50 transition-transform hover:scale-110"
                         checked={isNonHalalReport}
                         onChange={(e) => setIsNonHalalReport(e.target.checked)}
                     />
-                    <label htmlFor="report-non-halal" className="text-sm font-semibold text-red-700 cursor-pointer select-none">
-                        Urgent Warning: <span className="underline">This place no longer serves Halal meat</span> ⚠️
+                    <label htmlFor="report-non-halal" className="text-sm font-semibold text-amber-700 cursor-pointer select-none">
+                        Report Issue: <span className="underline">This place reported to serve non-Halal items</span> ⚠️
                     </label>
                 </div>
             </div>

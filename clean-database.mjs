@@ -1,28 +1,43 @@
 import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
-const env = fs.readFileSync('.env.local', 'utf8');
-const urlMatch = env.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/);
-const keyMatch = env.match(/NEXT_PUBLIC_SUPABASE_ANON_KEY=(.*)/);
-
-const supabaseUrl = urlMatch ? urlMatch[1].trim() : '';
-const supabaseKey = keyMatch ? keyMatch[1].trim() : '';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 async function clean() {
+    console.log('--- STARTING CLEAN SLATE RESET ---');
+
     console.log('Cleaning database: Deleting all reviews...');
-    const { error } = await supabase
+    const { error: reviewError } = await supabase
         .from('reviews')
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete everything
 
-    if (error) {
-        console.error('Error cleaning reviews:', error.message);
+    if (reviewError) {
+        console.error('Error cleaning reviews:', reviewError.message);
         process.exit(1);
     }
+    console.log('✅ Success! All reviews have been removed.');
 
-    console.log('Success! All test reviews have been removed.');
+    console.log('Resetting places counts and ratings...');
+    const { error: placeError } = await supabase
+        .from('places')
+        .update({
+            review_count: 0,
+            rating: 0
+        })
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+    if (placeError) {
+        console.error('Error resetting places:', placeError.message);
+        process.exit(1);
+    }
+    console.log('✅ Places metadata reset.');
+
+    console.log('--- CLEAN SLATE COMPLETE ---');
     process.exit(0);
 }
 

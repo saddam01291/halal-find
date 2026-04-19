@@ -423,26 +423,26 @@ export default function Home() {
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Your Contribution Helps <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-amber-600">Thousands</span>
+              Building the World's Most <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-amber-600">Trusted</span> Halal Database
             </h2>
 
             <p className="text-lg text-slate-600 leading-relaxed mb-8">
-              Every review, rating, and restaurant you add helps Muslim families find trusted Halal options.
-              Together, we're building the world's most comprehensive Halal food database—one contribution at a time.
+              Every review and restaurant you add helps Muslim families find authentic Halal options.
+              Together, we're building a community-driven platform based on transparency and verified trust.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
               <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <div className="text-3xl font-bold text-emerald-600 mb-2">5,000+</div>
-                <div className="text-sm text-slate-600">Verified Restaurants</div>
+                <div className="text-3xl font-bold text-emerald-600 mb-2">Verified</div>
+                <div className="text-sm text-slate-600">Owner Documentation</div>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <div className="text-3xl font-bold text-amber-600 mb-2">50K+</div>
-                <div className="text-sm text-slate-600">Community Reviews</div>
+                <div className="text-3xl font-bold text-amber-600 mb-2">Caution</div>
+                <div className="text-sm text-slate-600">Community Evidence</div>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <div className="text-3xl font-bold text-emerald-600 mb-2">100+</div>
-                <div className="text-sm text-slate-600">Cities Worldwide</div>
+                <div className="text-3xl font-bold text-emerald-600 mb-2">Global</div>
+                <div className="text-sm text-slate-600">Growing Neighborhoods</div>
               </div>
             </div>
           </div>
