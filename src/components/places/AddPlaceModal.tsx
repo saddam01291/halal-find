@@ -101,8 +101,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 cuisine: formData.cuisine || 'Global Halal',
                 address: formData.address,
                 city: formData.city || 'Unknown', 
-                lat: formData.lat || 22.5726, // Fallback purely for schema stability, but UI will prioritize search
-                lng: formData.lng || 88.3639,
+                lat: formData.lat, 
+                lng: formData.lng,
                 tags: ['Halal', formData.cuisine || 'Fast Food', formData.city].filter(Boolean) as string[],
                 halal_status: formData.halal_statuses.join(', '),
                 serves_alcohol: formData.serves_alcohol,
