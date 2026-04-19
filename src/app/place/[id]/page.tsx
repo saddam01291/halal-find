@@ -8,13 +8,15 @@ import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
-import { getValidImageUrl } from '@/lib/utils';
+import { getValidImageUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import { getReviewsForPlace } from '@/lib/api';
 import { DbReview } from '@/lib/supabase';
 import { HalalTrustScore } from '@/components/ui/HalalTrustScore';
 import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
+import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { useAuth } from '@/context/AuthContext';
 
 function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -23,6 +25,8 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showContact, setShowContact] = useState(false);
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchPlaceAndReviews = async () => {
@@ -184,7 +188,41 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
 
                         {/* Reviews Section */}
                         <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-slate-100">
-                            <h2 className="text-2xl font-bold text-slate-900 mb-6">Community Reviews</h2>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-slate-900">Community Reviews</h2>
+                                <Button 
+                                    onClick={() => setShowReviewForm(!showReviewForm)}
+                                    className={cn(
+                                        "rounded-xl font-bold transition-all",
+                                        showReviewForm ? "bg-slate-100 text-slate-600 hover:bg-slate-200" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-100"
+                                    )}
+                                >
+                                    {showReviewForm ? 'Cancel Review' : 'Write a Review'}
+                                </Button>
+                            </div>
+
+                            {showReviewForm && (
+                                <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 animate-in fade-in slide-in-from-top-4">
+                                    {user ? (
+                                        <ReviewForm 
+                                            placeId={place.id} 
+                                            onCancel={() => setShowReviewForm(false)} 
+                                            onSubmit={() => {
+                                                setShowReviewForm(false);
+                                                window.location.reload(); 
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="text-center py-6">
+                                            <p className="text-slate-500 font-bold mb-4">Please sign in to share your experience with the community.</p>
+                                            <Link href="/auth">
+                                                <Button className="bg-slate-900 text-white px-8 rounded-xl h-11">Sign In</Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <ReviewList placeId={place.id} />
                         </div>
                     </div>

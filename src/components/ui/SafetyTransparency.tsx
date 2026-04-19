@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Beer, Drumstick, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { DbPlace } from '@/lib/supabase';
 
@@ -7,6 +7,7 @@ interface SafetyTransparencyProps {
 }
 
 export function SafetyTransparency({ place }: SafetyTransparencyProps) {
+    const [showStandards, setShowStandards] = useState(false);
     const riskColors = {
         none: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         low: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -76,10 +77,46 @@ export function SafetyTransparency({ place }: SafetyTransparencyProps) {
                 </div>
             )}
 
+            {showStandards && (
+                <div className="pt-4 border-t border-slate-50 mt-4 space-y-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-slate-50 p-4 rounded-xl space-y-3">
+                        <div className="flex gap-3">
+                            <div className="h-6 w-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">1</div>
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                                <strong className="text-slate-900 block mb-1">Owner Verification (Green Badge)</strong>
+                                If a restaurant owner uploads an official certificate, the listing is marked as Green. This is our highest level of trust.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">2</div>
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                                <strong className="text-slate-900 block mb-1">Community Consensus (Blue Badge)</strong>
+                                If multiple community members vote "Halal" and there are no disputes, the place is considered Community Verified.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="h-6 w-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">3</div>
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                                <strong className="text-slate-900 block mb-1">Non-Halal Reports (Orange Warning)</strong>
+                                If a user reports that a place serves non-Halal items, the status immediately turns Orange as a warning to the community.
+                            </p>
+                        </div>
+                        <div className="pt-2 border-t border-slate-200">
+                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">
+                                Caution: Always ask the owner to be 100% sure.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex justify-center pt-2">
-                <button className="text-xs text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+                <button 
+                    onClick={() => setShowStandards(!showStandards)}
+                    className="text-xs text-emerald-600 font-semibold hover:underline flex items-center gap-1"
+                >
                     <Info className="h-3 w-3" />
-                    Learn about our safety standards
+                    {showStandards ? 'Hide safety standards' : 'Learn about our safety standards'}
                 </button>
             </div>
         </div>
