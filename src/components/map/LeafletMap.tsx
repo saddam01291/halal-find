@@ -19,7 +19,7 @@ declare global {
     }
 }
 
-export default function LeafletMap({ center, zoom = 13, className, isStatic = false, markers = [] }: LeafletMapProps) {
+export default function LeafletMap({ center, zoom = 13, className, isStatic = false, markers = [], onLocationSelect }: LeafletMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
     const [isLibLoaded, setIsLibLoaded] = useState(false);
