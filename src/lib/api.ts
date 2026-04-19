@@ -552,7 +552,21 @@ export async function updateUserRole(id: string, role: 'admin' | 'user') {
     return data;
 }
 
-// --- Reviews (Admin) ---
+// --- Reviews (User Edit + Admin Delete) ---
+
+export async function updateReview(id: string, updates: { rating?: number; comment?: string; is_halal_confirmed?: boolean; is_non_halal_report?: boolean }) {
+    const { data, error } = await supabase
+        .from('reviews')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+
 
 export async function deleteReview(id: string) {
     const { error } = await supabase
