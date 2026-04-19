@@ -27,8 +27,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
         halal_statuses: ['Full Halal'] as string[],
         serves_alcohol: false,
         halal_source: '',
-        lat: null as number | null,
-        lng: null as number | null,
+        lat: undefined as number | undefined,
+        lng: undefined as number | undefined,
         initial_review: '',
         initial_rating: 5
     });

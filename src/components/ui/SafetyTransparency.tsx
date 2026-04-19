@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Beer, Drumstick, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Beer, Drumstick, AlertCircle, CheckCircle2, Info, X, ShieldCheck } from 'lucide-react';
 import { DbPlace } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 
 interface SafetyTransparencyProps {
     place: DbPlace;
