@@ -215,11 +215,27 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                         <Button 
                             type="button" 
                             variant="ghost" 
-                            onClick={() => setShowMap(!showMap)}
+                            onClick={async () => {
+                                if (!showMap) {
+                                    setShowMap(true);
+                                    // Try to auto-locate when opening map
+                                    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition((pos) => {
+                                            setFormData(prev => ({ 
+                                                ...prev, 
+                                                lat: pos.coords.latitude, 
+                                                lng: pos.coords.longitude 
+                                            }));
+                                        });
+                                    }
+                                } else {
+                                    setShowMap(false);
+                                }
+                            }}
                             className={`h-16 rounded-3xl border-2 font-black uppercase tracking-widest text-[10px] gap-2 ${showMap ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-slate-50 border-slate-100 text-slate-500'}`}
                         >
                             <LocateFixed className="h-4 w-4" />
-                            {showMap ? 'Pin Set' : 'Set Pin on Map (Optional)'}
+                            {showMap ? 'Pin Set' : 'Set Pin on Map (Recommended)'}
                         </Button>
                         <label className={`h-16 rounded-3xl border-2 flex items-center justify-center font-black uppercase tracking-widest text-[10px] gap-2 cursor-pointer transition-all ${imageFile ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
                             <Camera className="h-4 w-4" />
@@ -236,10 +252,22 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                                 center={{ lat: formData.lat || 22.5726, lng: formData.lng || 88.3639 }}
                                 onCenterChanged={(e) => {
                                     const newCenter = e.detail.center;
-                                    setFormData(prev => ({ ...prev, lat: newCenter.lat, lng: newCenter.lng }));
+                                    // Update center so marker stays visible if they pan
                                 }}
                             >
-                                <AdvancedMarker position={{ lat: formData.lat || 22.5726, lng: formData.lng || 88.3639 }} draggable={true} />
+                                <AdvancedMarker 
+                                    position={{ lat: formData.lat || 22.5726, lng: formData.lng || 88.3639 }} 
+                                    draggable={true} 
+                                    onDragEnd={(e) => {
+                                        if (e.latLng) {
+                                            setFormData(prev => ({ 
+                                                ...prev, 
+                                                lat: e.latLng?.lat() || prev.lat, 
+                                                lng: e.latLng?.lng() || prev.lng 
+                                            }));
+                                        }
+                                    }}
+                                />
                             </GoogleMap>
                             <div className="absolute top-4 left-4 right-4 bg-white/90 backdrop-blur-md p-2 rounded-xl text-[9px] font-black uppercase text-center text-slate-500 shadow-sm">Drag marker to set exact location</div>
                         </div>
