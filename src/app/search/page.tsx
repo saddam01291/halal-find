@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { GoogleMap } from '@/components/map/Map';
 import { searchPlaces, getPlaces } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Star, MapPin, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
@@ -24,7 +23,6 @@ function SearchContent() {
     const [places, setPlaces] = useState<DbPlace[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     useEffect(() => {
         setQuery(initialQuery);
@@ -330,32 +328,19 @@ function SearchContent() {
             </div>
 
             {/* Map View */}
-            <div className="hidden md:block flex-1 bg-slate-100 relative">
-                {apiKey ? (
-                        <GoogleMap 
-                            apiKey={apiKey}
-                            className="w-full h-full"
-                            center={userCoords || (sortedPlaces[0]?.lat ? { lat: sortedPlaces[0].lat, lng: sortedPlaces[0].lng } : { lat: 40.7128, lng: -74.0060 })}
-                            zoom={locationStatus === 'granted' ? 14 : 12}
-                        >
-                            {sortedPlaces.slice(0, 100).filter(place => typeof place.lat === 'number' && isFinite(place.lat) && typeof place.lng === 'number' && isFinite(place.lng)).map((place, index) => (
-                                <AdvancedMarker
-                                    key={`marker-${place.id}-${index}`}
-                                    position={{ lat: place.lat!, lng: place.lng! }}
-                                    title={place.name}
-                                />
-                            ))}
-                        </GoogleMap>
-                ) : (
-                    <div className="flex h-full items-center justify-center text-slate-500 p-4 text-center bg-slate-50">
-                        <div className="max-w-md p-8 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                            <MapPin className="h-10 w-10 text-slate-400 mx-auto mb-4" />
-                            <p className="mb-2 font-semibold text-slate-700">Interactive Map</p>
-                            <p className="text-sm">Please add <code className="bg-slate-100 px-1 py-0.5 rounded text-emerald-600">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to .env.local to view the map.</p>
-                        </div>
-                    </div>
-                )}
-            </div>
+                <GoogleMap 
+                    className="w-full h-full"
+                    center={userCoords || (sortedPlaces[0]?.lat ? { lat: sortedPlaces[0].lat, lng: sortedPlaces[0].lng } : { lat: 22.5726, lng: 88.3639 })}
+                    zoom={locationStatus === 'granted' ? 14 : 12}
+                    markers={sortedPlaces
+                        .filter(place => typeof place.lat === 'number' && isFinite(place.lat) && typeof place.lng === 'number' && isFinite(place.lng))
+                        .map(place => ({
+                            lat: place.lat!,
+                            lng: place.lng!,
+                            title: place.name
+                        }))
+                    }
+                />
         </div>
     );
 }

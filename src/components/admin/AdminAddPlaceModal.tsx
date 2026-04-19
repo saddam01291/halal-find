@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Upload, Loader2, MapPin, ShieldCheck, Search, Info } from 'lucide-react';
 import { GoogleMap } from '@/components/map/Map';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Button } from '@/components/ui/Button';
 import { CitySelect } from '@/components/ui/CitySelect';
 import { addPlaceAsAdmin, checkDuplicatePlace, uploadImage } from '@/lib/api';
@@ -262,30 +261,14 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                                 </label>
                                 <div className="h-64 w-full rounded-3xl border-3 border-slate-100 overflow-hidden relative group">
                                     <GoogleMap
-                                        apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+                                        className="w-full h-full grayscale-[0.2] group-hover:grayscale-0 transition-all"
                                         center={mapCenter}
                                         zoom={14}
-                                        className="h-full w-full grayscale-[0.2] group-hover:grayscale-0 transition-all"
-                                        onClick={(e) => {
-                                             if (e.detail.latLng) {
-                                                setFormData({ ...formData, lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
-                                                setManualPin(true);
-                                            }
+                                        onLocationSelect={(lat, lng) => {
+                                            setFormData({ ...formData, lat, lng });
+                                            setManualPin(true);
                                         }}
-                                    >
-                                        {formData.lat && (
-                                            <AdvancedMarker
-                                                position={{ lat: formData.lat, lng: formData.lng! }}
-                                                draggable={true}
-                                                onDragEnd={(e) => {
-                                                    if (e.latLng) {
-                                                        setFormData({ ...formData, lat: e.latLng.lat(), lng: e.latLng.lng() });
-                                                        setManualPin(true);
-                                                    }
-                                                }}
-                                            />
-                                        )}
-                                    </GoogleMap>
+                                    />
                                     <div className="absolute bottom-4 left-4 right-4 p-3 bg-white/90 backdrop-blur-md rounded-2xl border border-white/50 shadow-lg text-[9px] font-bold text-slate-500 flex items-center gap-2">
                                         <MapPin className="h-3 w-3 text-emerald-500" />
                                         Click or Drag to set the exact restaurant location.

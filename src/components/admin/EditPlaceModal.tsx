@@ -6,7 +6,6 @@ import { DbPlace } from '@/lib/supabase';
 import { updatePlace, uploadImage } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { GoogleMap } from '@/components/map/Map';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { CitySelect } from '@/components/ui/CitySelect';
 import { cn } from '@/lib/utils';
 
@@ -107,12 +106,12 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                 {/* Header */}
                 <div className="flex justify-between items-center px-10 py-8 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 ring-4 ring-blue-50">
+                        <div className="h-12 w-12 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 ring-4 ring-emerald-50">
                             <Building2 className="text-white h-6 w-6" />
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Admin: Edit Restaurant</h2>
-                            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1">Live Update • {place.name}</p>
+                            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-[0.2em] mt-1">Live Update • {place.name}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="h-12 w-12 flex items-center justify-center rounded-2xl hover:bg-white hover:shadow-md transition-all text-slate-400 hover:text-slate-600">
@@ -131,7 +130,7 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                     <input
                                         value={editForm.name || ''}
                                         onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                        className="w-full h-14 px-6 rounded-2xl border-3 border-slate-100 focus:border-blue-500 bg-slate-50 focus:bg-white transition-all outline-none font-bold text-slate-900"
+                                        className="w-full h-14 px-6 rounded-2xl border-3 border-slate-100 focus:border-emerald-500 bg-slate-50 focus:bg-white transition-all outline-none font-bold text-slate-900"
                                     />
                                 </div>
 
@@ -151,7 +150,7 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                         <input
                                             value={editForm.cuisine || ''}
                                             onChange={e => setEditForm({ ...editForm, cuisine: e.target.value })}
-                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-blue-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -159,7 +158,7 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                         <input
                                             value={editForm.address || ''}
                                             onChange={e => setEditForm({ ...editForm, address: e.target.value })}
-                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-blue-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
                                         />
                                     </div>
                                 </div>
@@ -196,7 +195,7 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                         <select
                                             value={editForm.verification_status || 'unverified'}
                                             onChange={e => setEditForm({ ...editForm, verification_status: e.target.value as any })}
-                                            className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-blue-500 bg-white outline-none text-xs font-bold"
+                                            className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white outline-none text-xs font-bold"
                                         >
                                             <option value="unverified">Unverified (Pending)</option>
                                             <option value="community_verified">Community Verified</option>
@@ -220,36 +219,20 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
                                     Adjust Pin on Map
-                                    {editForm.lat && <span className="text-blue-500 font-bold lowercase">pos: {editForm.lat.toFixed(4)}, {editForm.lng?.toFixed(4)}</span>}
+                                    {editForm.lat && <span className="text-emerald-500 font-bold lowercase">pos: {editForm.lat.toFixed(4)}, {editForm.lng?.toFixed(4)}</span>}
                                 </label>
                                 <div className="h-64 w-full rounded-3xl border-3 border-slate-100 overflow-hidden relative group">
                                     <GoogleMap
-                                        apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+                                        className="w-full h-full grayscale-[0.2] group-hover:grayscale-0 transition-all"
                                         center={mapCenter}
                                         zoom={15}
-                                        className="h-full w-full grayscale-[0.2] group-hover:grayscale-0 transition-all"
-                                        onClick={(e) => {
-                                             if (e.detail.latLng) {
-                                                setEditForm({ ...editForm, lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
-                                                setManualPin(true);
-                                            }
+                                        onLocationSelect={(lat, lng) => {
+                                            setEditForm({ ...editForm, lat, lng });
+                                            setManualPin(true);
                                         }}
-                                    >
-                                        {(editForm.lat !== undefined && editForm.lng !== undefined) && (
-                                            <AdvancedMarker
-                                                position={{ lat: editForm.lat || 0, lng: editForm.lng || 0 }}
-                                                draggable={true}
-                                                onDragEnd={(e) => {
-                                                    if (e.latLng) {
-                                                        setEditForm({ ...editForm, lat: e.latLng.lat(), lng: e.latLng.lng() });
-                                                        setManualPin(true);
-                                                    }
-                                                }}
-                                            />
-                                        )}
-                                    </GoogleMap>
+                                    />
                                     <div className="absolute bottom-4 left-4 right-4 p-3 bg-white/90 backdrop-blur-md rounded-2xl border border-white/50 shadow-lg text-[9px] font-bold text-slate-500 flex items-center gap-2">
-                                        <MapPin className="h-3 w-3 text-blue-500" />
+                                        <MapPin className="h-3 w-3 text-emerald-500" />
                                         Drag the pin to adjust restaurant location globally.
                                     </div>
                                 </div>
@@ -272,10 +255,10 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                     </div>
                                     <label className={cn(
                                         "flex-1 flex flex-col items-center justify-center h-48 border-3 border-dashed rounded-3xl transition-all cursor-pointer group",
-                                        editImageFile ? "border-blue-500 bg-blue-50/20" : "border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-300"
+                                        editImageFile ? "border-emerald-500 bg-emerald-50/20" : "border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-300"
                                     )}>
                                         <input type="file" accept="image/*" className="hidden" onChange={e => setEditImageFile(e.target.files?.[0] || null)} />
-                                        <Upload className={cn("h-6 w-6 mb-2", editImageFile ? "text-blue-600" : "text-slate-300")} />
+                                        <Upload className={cn("h-6 w-6 mb-2", editImageFile ? "text-emerald-600" : "text-slate-300")} />
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Update Photo</p>
                                     </label>
                                 </div>
@@ -294,7 +277,7 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                     <Button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="h-14 px-12 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-blue-200 transition-all active:scale-95 disabled:opacity-50"
+                        className="h-14 px-12 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...</> : <><Save className="h-4 w-4 mr-2" /> Save Changes</>}
                     </Button>

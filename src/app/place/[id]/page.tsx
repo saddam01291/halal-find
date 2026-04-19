@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState, use } from 'react';
 import { getPlaceById } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
 import { GoogleMap } from '@/components/map/Map';
-import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
@@ -28,6 +27,8 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const [showReviewForm, setShowReviewForm] = useState(false);
     const { user } = useAuth();
 
+    const [displayCoords, setDisplayCoords] = useState<{lat: number, lng: number} | null>(null);
+
     useEffect(() => {
         const fetchPlaceAndReviews = async () => {
             try {
@@ -40,6 +41,22 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                 } else {
                     setPlace(placeData);
                     setReviews(reviewsData);
+                    
+                    // Set display coordinates (with fallback to city)
+                    if (placeData.lat && placeData.lng) {
+                        setDisplayCoords({ lat: placeData.lat, lng: placeData.lng });
+                    } else if (placeData.city) {
+                        // Fallback: Geocode the city
+                        try {
+                            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeData.city)}&limit=1`);
+                            const data = await res.json();
+                            if (data && data[0]) {
+                                setDisplayCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+                            }
+                        } catch (e) {
+                            console.error("City fallback geocoding failed", e);
+                        }
+                    }
                 }
             } catch (err: any) {
                 console.error('Error fetching place:', err);
@@ -81,7 +98,6 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
         );
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     const name = place.name || 'Unnamed Place';
     const city = place.city || 'Location Pending';
     const cuisine = place.cuisine || 'Halal Food';
@@ -240,27 +256,20 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             </div>
                             
                             <div className="h-52 sm:h-80 w-full relative bg-slate-100">
-                                {apiKey && hasValidCoords ? (
-                                    <GoogleMap 
-                                        apiKey={apiKey}
-                                        center={{ lat: place.lat!, lng: place.lng! }}
-                                        zoom={15}
-                                        className="h-full w-full"
-                                    >
-                                        <AdvancedMarker 
-                                            position={{ lat: place.lat!, lng: place.lng! }}
-                                            title={name}
+                                {displayCoords ? (
+                                        <GoogleMap 
+                                            center={displayCoords}
+                                            zoom={place.lat ? 16 : 12} // Zoom in more if we have exact pin
+                                            className="h-full w-full"
+                                            isStatic={true} 
                                         />
-                                    </GoogleMap>
                                 ) : (
                                     <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center space-y-4 bg-slate-50">
                                         <div className="h-12 w-12 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-slate-100 italic font-bold text-emerald-600">?</div>
                                         <div>
                                             <p className="font-bold text-slate-700">Location Pending</p>
                                             <p className="text-xs text-slate-400 mt-1 px-4 leading-relaxed">
-                                                {!apiKey 
-                                                    ? "Google Maps configuration is pending." 
-                                                    : "Exact coordinates for this restaurant are being verified."}
+                                                Exact coordinates for this restaurant are being verified.
                                             </p>
                                         </div>
                                     </div>

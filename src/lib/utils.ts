@@ -114,11 +114,16 @@ export function getValidImageUrl(url?: string | null, seed?: string, name?: stri
         if (text.includes('veg') || text.includes('salad')) {
             return IMAGE_POOL.VEG[hashStr(seed || '1') % IMAGE_POOL.VEG.length];
         }
+        if (text.includes('momo') || text.includes('chinese') || text.includes('asian') || text.includes('chow') || text.includes('darjeeling')) {
+            // General appetizing food for Asian/Himalayan places
+            return IMAGE_POOL.GENERAL[hashStr(seed || '1') % IMAGE_POOL.GENERAL.length];
+        }
         
-        return ALL_IMAGES[hashStr(seed || '1') % ALL_IMAGES.length];
+        // Default to safe, appetizing GENERAL food instead of picking randomly from ALL images (which might be raw veggies)
+        return IMAGE_POOL.GENERAL[hashStr(seed || '1') % IMAGE_POOL.GENERAL.length];
     };
 
-    if (!url || url === '' || url.includes('unsplash.com')) {
+    if (!url || url === '' || url.includes('unsplash.com') || url.includes('maps.googleapis.com')) {
         return selectByKeyword();
     }
 

@@ -1,44 +1,52 @@
 'use client';
 
-import { APIProvider, Map } from '@vis.gl/react-google-maps';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Leaflet with no SSR to avoid 'window is not defined' errors
+const LeafletMap = dynamic(() => import('./LeafletMap'), { 
+    ssr: false,
+    loading: () => (
+        <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+            <div className="h-8 w-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    )
+});
+
+interface MapProps {
+    apiKey?: string; // Kept for compatibility but not used by Leaflet
+    className?: string;
+    center?: { lat: number; lng: number };
+    zoom?: number;
+    children?: React.ReactNode;
+    isStatic?: boolean;
+    onLocationSelect?: (lat: number, lng: number) => void;
+    markers?: { lat: number; lng: number; title?: string }[];
+}
 
 export const GoogleMap = ({
-    apiKey,
     className,
-    children,
     center,
-    ...props
-}: {
-    apiKey: string;
-    className?: string;
-    children?: React.ReactNode;
-} & React.ComponentProps<typeof Map>) => {
+    zoom = 15,
+    isStatic = false,
+    onLocationSelect,
+    markers,
+}: MapProps) => {
     // Total Stability Guard: Validate coordinates
     const isValidCoord = (val: any) => typeof val === 'number' && isFinite(val);
     
-    // If explicit center is provided, validate it. 
-    // If invalid, we fallback to a safe default or prevent rendering the crashing Map.
+    // Default to a safe center if invalid
     const safeCenter = center && isValidCoord(center.lat) && isValidCoord(center.lng) 
         ? center 
-        : undefined;
-
-    const safeDefaultCenter = props.defaultCenter && isValidCoord(props.defaultCenter.lat) && isValidCoord(props.defaultCenter.lng)
-        ? props.defaultCenter
-        : { lat: 40.7128, lng: -74.0060 }; // NYC Default
+        : { lat: 23.8103, lng: 90.4125 }; // Default to region center
 
     return (
-        <APIProvider apiKey={apiKey}>
-            <Map
-                mapId="bf51a910020fa25a"
-                {...props}
-                center={safeCenter}
-                defaultCenter={safeDefaultCenter}
-                gestureHandling={'greedy'}
-                disableDefaultUI={true}
-                className={className}
-            >
-                {children}
-            </Map>
-        </APIProvider>
+        <LeafletMap 
+            center={safeCenter}
+            zoom={zoom}
+            className={className}
+            isStatic={isStatic}
+            onLocationSelect={onLocationSelect}
+            markers={markers}
+        />
     );
 };

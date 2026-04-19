@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 import { addPlace, submitVerificationRequest, uploadImage, checkDuplicatePlace } from '@/lib/api';
 import { X, Upload, Building2, Loader2, Info, Camera, ShieldCheck, MapPin as MapPinIcon, LocateFixed, Star, MessageSquareQuote, CheckCircle2, AlertCircle } from 'lucide-react';
 import { GoogleMap } from '@/components/map/Map';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { CitySelect } from '@/components/ui/CitySelect';
 
 interface AddPlaceModalProps {
@@ -39,7 +38,6 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
     const [showMap, setShowMap] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     // Real-time Duplicate Check — only fires when name + location are meaningfully filled
     useEffect(() => {
@@ -244,31 +242,13 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                         </label>
                     </div>
 
-                    {showMap && apiKey && (
+                    {showMap && (
                         <div className="h-64 rounded-[2.5rem] overflow-hidden border-3 border-emerald-100 shadow-xl relative animate-in zoom-in-95 duration-300">
                              <GoogleMap
-                                apiKey={apiKey}
                                 className="w-full h-full"
                                 center={{ lat: formData.lat || 22.5726, lng: formData.lng || 88.3639 }}
-                                onCenterChanged={(e) => {
-                                    const newCenter = e.detail.center;
-                                    // Update center so marker stays visible if they pan
-                                }}
-                            >
-                                <AdvancedMarker 
-                                    position={{ lat: formData.lat || 22.5726, lng: formData.lng || 88.3639 }} 
-                                    draggable={true} 
-                                    onDragEnd={(e) => {
-                                        if (e.latLng) {
-                                            setFormData(prev => ({ 
-                                                ...prev, 
-                                                lat: e.latLng?.lat() || prev.lat, 
-                                                lng: e.latLng?.lng() || prev.lng 
-                                            }));
-                                        }
-                                    }}
-                                />
-                            </GoogleMap>
+                                onLocationSelect={(lat, lng) => setFormData({ ...formData, lat, lng })}
+                            />
                             <div className="absolute top-4 left-4 right-4 bg-white/90 backdrop-blur-md p-2 rounded-xl text-[9px] font-black uppercase text-center text-slate-500 shadow-sm">Drag marker to set exact location</div>
                         </div>
                     )}

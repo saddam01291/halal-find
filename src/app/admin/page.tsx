@@ -858,6 +858,30 @@ function AdminDashboardContent() {
                         </div>
                     </div>
 
+                    {/* Map System Status (NEW SECTION) */}
+                    <div className="space-y-4 border-t border-slate-100 pt-6">
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                             <MapPin className="h-3 w-3" /> Map System Status
+                        </h3>
+                        <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-6">
+                            <div className="flex items-start gap-4">
+                                <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 flex-shrink-0">
+                                    <ShieldCheck className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-emerald-900">Zero-Cost Mapping Active</p>
+                                    <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+                                        The platform is now running on <strong>OpenStreetMap (Leaflet)</strong>. No Google Billing or API payments are required for maps to function.
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-4">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">System Healthy & Free</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="pt-4 flex justify-end">
                         <Button
                             className="bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] h-12 px-8 rounded-xl shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all"

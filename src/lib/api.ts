@@ -106,14 +106,29 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
 
     if (error) {
         console.error('Error searching places via RPC:', error);
-        // Fallback to legacy search if RPC fails (e.g. migration not run yet)
-        const formattedQuery = `%${query}%`;
-        const { data: legacyData } = await supabase
+        // Guaranteed Universal Fallback: Fetch broadly and filter in memory to completely ignore spaces and casing
+        const { data: allData } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
-            .or(`name.ilike.${formattedQuery},cuisine.ilike.${formattedQuery},city.ilike.${formattedQuery},address.ilike.${formattedQuery}`)
-            .limit(50);
-        return legacyData || [];
+            .limit(500); // Small dataset allows extremely robust JS filtering
+            
+        if (!allData) return [];
+        
+        const cleansedSearch = query.replace(/\s+/g, '').toLowerCase();
+        
+        const fuzzyFiltered = allData.filter(p => {
+            const nameStr = (p.name || '').replace(/\s+/g, '').toLowerCase();
+            const cityStr = (p.city || '').replace(/\s+/g, '').toLowerCase();
+            const addrStr = (p.address || '').replace(/\s+/g, '').toLowerCase();
+            const cuisineStr = (p.cuisine || '').replace(/\s+/g, '').toLowerCase();
+            
+            return nameStr.includes(cleansedSearch) || 
+                   cityStr.includes(cleansedSearch) || 
+                   addrStr.includes(cleansedSearch) ||
+                   cuisineStr.includes(cleansedSearch);
+        });
+        
+        return fuzzyFiltered.slice(0, 50);
     }
 
     return data || [];
