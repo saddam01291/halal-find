@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Users, Building2, ShieldCheck, Activity, Check, X, Search, Filter, MoreVertical, ExternalLink, Trash2, CheckCircle, AlertTriangle, RefreshCw, Database, MessageSquare, LogOut, Pencil, Plus, Upload, Loader2, Save } from 'lucide-react';
 import { getPendingVerifications, updateVerificationStatus, getProfiles, getPlaces, getAllPlacesAdmin, getSystemStats, getAdminSettings, updateAdminSettings, getDisputedReviews, resolveDispute, updatePlace, deletePlace, addPlaceAsAdmin, uploadImage, updateVerificationRequest, updateUserRole, deleteReview } from '@/lib/api';
 import { EditPlaceModal } from '@/components/admin/EditPlaceModal';
+import { AdminAddPlaceModal } from '@/components/admin/AdminAddPlaceModal';
 import { supabase, DbVerificationRequest, DbProfile, DbPlace, DbReview } from '@/lib/supabase';
 import { formatDistanceToNow } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -42,14 +43,6 @@ function AdminDashboardContent() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isSavingPlace, setIsSavingPlace] = useState(false);
     const [deletingPlaceId, setDeletingPlaceId] = useState<string | null>(null);
-    const [addForm, setAddForm] = useState({
-        name: '', cuisine: '', city: '', address: '',
-        halal_status: 'Full Halal', serves_alcohol: false,
-        halal_source: '', image: '',
-        lat: 22.5726, lng: 88.3639, // Default to Kolkata as a placeholder
-        tags: '',
-    });
-    const [addImageFile, setAddImageFile] = useState<File | null>(null);
 
     const setActiveTab = (tab: TabType) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -244,49 +237,6 @@ function AdminDashboardContent() {
         }
     };
 
-    const handleAdminAddPlace = async () => {
-        if (!addForm.name || !addForm.cuisine || !addForm.city) {
-            alert('Please fill Name, Cuisine, and City.');
-            return;
-        }
-        setIsSavingPlace(true);
-        try {
-            let imageUrl = addForm.image;
-            if (addImageFile) {
-                imageUrl = await uploadImage(addImageFile);
-            }
-            await addPlaceAsAdmin({
-                name: addForm.name,
-                cuisine: addForm.cuisine,
-                city: addForm.city,
-                address: addForm.address || addForm.city,
-                image: imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80',
-                lat: Number(addForm.lat),
-                lng: Number(addForm.lng),
-                tags: addForm.tags.split(',').map(t => t.trim()).filter(t => t),
-                verified: true,
-                verification_status: 'owner_verified',
-                halal_status: addForm.halal_status,
-                serves_alcohol: addForm.serves_alcohol,
-                halal_source: addForm.halal_source,
-            });
-            setIsAddModalOpen(false);
-            setAddForm({
-                name: '', cuisine: '', city: '', address: '',
-                halal_status: 'Full Halal', serves_alcohol: false,
-                halal_source: '', image: '',
-                lat: 22.5726, lng: 88.3639,
-                tags: ''
-            });
-            setAddImageFile(null);
-            loadData();
-        } catch (error: any) {
-            console.error('Error adding place:', error);
-            alert(`Failed to add: ${error.message || JSON.stringify(error)}`);
-        } finally {
-            setIsSavingPlace(false);
-        }
-    };
 
     const filteredPlaces = places.filter(p => {
         if (!restaurantSearch) return true;
@@ -673,17 +623,7 @@ function AdminDashboardContent() {
                         />
                     </div>
                     <Button
-                        onClick={() => {
-                            setAddForm({
-                                name: '', cuisine: '', city: '', address: '',
-                                halal_status: 'Full Halal', serves_alcohol: false,
-                                halal_source: '', image: '',
-                                lat: 22.5726, lng: 88.3639,
-                                tags: ''
-                            });
-                            setAddImageFile(null);
-                            setIsAddModalOpen(true);
-                        }}
+                        onClick={() => setIsAddModalOpen(true)}
                         size="sm"
                         className="gap-2 h-10 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest px-4 shadow-lg shadow-emerald-500/20"
                     >
@@ -853,184 +793,15 @@ function AdminDashboardContent() {
             />
         )}
 
-        {/* ===== ADD MODAL ===== */}
-        {isAddModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300">
-                    {/* Add Modal Header */}
-                    <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
-                                <Plus className="text-white h-5 w-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Admin Add Restaurant</h2>
-                                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Auto-verified • Instant Publish</p>
-                            </div>
-                        </div>
-                        <button onClick={() => setIsAddModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
-                            <X className="h-5 w-5 text-slate-400" />
-                        </button>
-                    </div>
-
-                    {/* Add Modal Body */}
-                    <div className="flex-1 overflow-y-auto p-8 space-y-6">
-                        {/* Image Upload */}
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Restaurant Photo</label>
-                            <label className="flex items-center justify-center h-32 border-2 border-dashed border-slate-200 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50/30 transition-all cursor-pointer group">
-                                <input type="file" accept="image/*" className="hidden" onChange={e => setAddImageFile(e.target.files?.[0] || null)} />
-                                <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-600 transition-colors">
-                                    {addImageFile ? (
-                                        <><Upload className="h-6 w-6" /><span className="text-xs font-black uppercase tracking-widest">{addImageFile.name}</span></>
-                                    ) : (
-                                        <><Upload className="h-6 w-6" /><span className="text-xs font-black uppercase tracking-widest">Upload Photo</span><span className="text-[10px] font-bold">(Optional)</span></>
-                                    )}
-                                </div>
-                            </label>
-                        </div>
-
-                        {/* Name */}
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Restaurant Name *</label>
-                            <input
-                                value={addForm.name}
-                                onChange={e => setAddForm({ ...addForm, name: e.target.value })}
-                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                placeholder="Full restaurant name"
-                            />
-                        </div>
-
-                        {/* Cuisine & City */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Cuisine *</label>
-                                <input
-                                    value={addForm.cuisine}
-                                    onChange={e => setAddForm({ ...addForm, cuisine: e.target.value })}
-                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                    placeholder="e.g. Indian, Turkish"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">City *</label>
-                                <input
-                                    value={addForm.city}
-                                    onChange={e => setAddForm({ ...addForm, city: e.target.value })}
-                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                    placeholder="City name"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Address */}
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Full Address</label>
-                            <input
-                                value={addForm.address}
-                                onChange={e => setAddForm({ ...addForm, address: e.target.value })}
-                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                placeholder="Full address for maps"
-                            />
-                        </div>
-
-                        {/* Lat & Lng */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Latitude *</label>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={addForm.lat}
-                                    onChange={e => setAddForm({ ...addForm, lat: parseFloat(e.target.value) })}
-                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Longitude *</label>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    value={addForm.lng}
-                                    onChange={e => setAddForm({ ...addForm, lng: parseFloat(e.target.value) })}
-                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Tags */}
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Tags (Comma Separated)</label>
-                            <input
-                                value={addForm.tags}
-                                onChange={e => setAddForm({ ...addForm, tags: e.target.value })}
-                                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                placeholder="e.g. Halal, Indian, Family Friendly"
-                            />
-                        </div>
-
-                        <hr className="border-slate-100" />
-
-                        {/* Halal Status */}
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                <ShieldCheck className="h-4 w-4 text-emerald-600" /> Halal Classification
-                            </label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {['Full Halal', 'Pork Free', 'Not Halal'].map(s => (
-                                    <button
-                                        key={s}
-                                        type="button"
-                                        onClick={() => setAddForm({ ...addForm, halal_status: s })}
-                                        className={`h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${
-                                            addForm.halal_status === s
-                                                ? s === 'Not Halal'
-                                                    ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-500/20'
-                                                    : 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                                                : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'
-                                        }`}
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Halal Source & Alcohol */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Halal Source</label>
-                                <input
-                                    value={addForm.halal_source}
-                                    onChange={e => setAddForm({ ...addForm, halal_source: e.target.value })}
-                                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none text-sm font-bold text-slate-900"
-                                    placeholder="e.g. HMC, MUIS"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Serves Alcohol?</label>
-                                <div className="flex gap-2 h-12 p-1 bg-slate-50 rounded-xl border border-slate-100">
-                                    <button type="button" onClick={() => setAddForm({ ...addForm, serves_alcohol: true })} className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${addForm.serves_alcohol ? 'bg-red-50 text-red-600 border border-red-200 shadow-sm' : 'text-slate-400'}`}>Yes</button>
-                                    <button type="button" onClick={() => setAddForm({ ...addForm, serves_alcohol: false })} className={`flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${!addForm.serves_alcohol ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm' : 'text-slate-400'}`}>No</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Add Modal Footer */}
-                    <div className="px-8 py-6 border-t border-slate-100 bg-white rounded-b-[2rem] flex justify-between items-center">
-                        <Button variant="ghost" className="h-12 px-6 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-                        <Button
-                            onClick={handleAdminAddPlace}
-                            disabled={isSavingPlace}
-                            className="h-12 px-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/20 flex items-center gap-2 disabled:opacity-50"
-                        >
-                            {isSavingPlace ? <><Loader2 className="h-4 w-4 animate-spin" /> Adding...</> : <><Plus className="h-4 w-4" /> Add &amp; Publish</>}
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        )}
+        {/* ===== ADD MODAL (NEW) ===== */}
+        <AdminAddPlaceModal 
+            isOpen={isAddModalOpen} 
+            onClose={() => setIsAddModalOpen(false)} 
+            onSave={() => {
+                loadData();
+                setIsAddModalOpen(false);
+            }} 
+        />
         </>
     );
 
