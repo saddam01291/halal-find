@@ -315,7 +315,7 @@ export default function Home() {
                   <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 sm:hover:-translate-y-2 active:scale-[0.98] sm:active:scale-100">
                     <div className="h-44 sm:h-64 bg-slate-100 relative overflow-hidden">
                       <Image
-                        src={getValidImageUrl(place.image, place.id)}
+                        src={getValidImageUrl(place.image, place.id, place.name, place.cuisine)}
                         alt={place.name || "Restaurant"}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"

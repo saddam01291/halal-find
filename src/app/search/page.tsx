@@ -249,7 +249,7 @@ function SearchContent() {
                                 >
                                     <div
                                         className="h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 rounded-xl sm:rounded-[1.5rem] bg-slate-100 bg-cover bg-center border border-slate-100 group-hover:border-emerald-500/30 transition-all duration-500 group-hover:scale-105 shadow-sm"
-                                        style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id)})` }}
+                                        style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id, place.name, place.cuisine)})` }}
                                     />
                                     <div className="flex-1 min-w-0 py-0.5 sm:py-1">
                                         <div className="flex justify-between items-start mb-1">

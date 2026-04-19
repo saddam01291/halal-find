@@ -51,88 +51,81 @@ function deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
 }
 
-export function getValidImageUrl(url?: string | null, seed?: string): string {
-    // Large, diverse pool of unique food photography
-    const FALLBACK_IMAGES = [
-        'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', // Grilled Steak
-        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', // Pizza
-        'https://images.unsplash.com/photo-1567306301408-9b74779a11af?w=800&q=80', // Salad
-        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80', // Bowl
-        'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800&q=80', // Dessert
-        'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=800&q=80', // Sandwich
-        'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80', // Gourmet Plate
-        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80', // Food Platter
-        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80', // Breakfast
-        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80', // Fresh Salad
-        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', // Veg Bowl
-        'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80', // City Restaurant
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80', // Fine Dining
-        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80', // BBQ Kebab
-        'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80', // Biryani
-        'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&q=80', // Curry
-        'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=800&q=80', // Noodles
-        'https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80', // Rice Dish
-        'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?w=800&q=80', // Indian Food
-        'https://images.unsplash.com/photo-1574484284002-952d92456975?w=800&q=80', // Shawarma
-        'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=800&q=80', // Burger
-        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80', // Gourmet Burger
-        'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=800&q=80', // Fried Chicken
-        'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800&q=80', // Tacos
-        'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800&q=80', // Pasta
-        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80', // Restaurant Interior
-        'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&q=80', // Café
-        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80', // Restaurant
-        'https://images.unsplash.com/photo-1590595906931-81f04f0ccebb?w=800&q=80', // Rolls
-        'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=800&q=80', // Soup
-        'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800&q=80', // Street Food
-        'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&q=80', // Steak
-        'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80', // Indian Curry
-        'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80', // Samosa
-        'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&q=80', // Biryani 2
-        'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&q=80', // Halal Meat
-        'https://images.unsplash.com/photo-1625398407796-82650a8c14ab?w=800&q=80', // Kebab Wrap
-        'https://images.unsplash.com/photo-1504544750208-dc0358ad5f72?w=800&q=80', // Hummus
-        'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=800&q=80', // Turkish Food
-        'https://images.unsplash.com/photo-1622973536968-3ead9e780960?w=800&q=80', // Middle Eastern
-    ];
+export function getValidImageUrl(url?: string | null, seed?: string, name?: string, cuisine?: string): string {
+    // Categorized diverse pool of unique food photography
+    const IMAGE_POOL = {
+        FAST_FOOD: [
+            'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80', // Gourmet Burger
+            'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=800&q=80', // Burger
+            'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=800&q=80', // Fried Chicken
+            'https://images.unsplash.com/photo-1590595906931-81f04f0ccebb?w=800&q=80', // Rolls
+            'https://images.unsplash.com/photo-1574484284002-952d92456975?w=800&q=80', // Shawarma
+        ],
+        INDIAN: [
+            'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&q=80', // Biryani
+            'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&q=80', // Curry
+            'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?w=800&q=80', // Indian Food
+            'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80', // Indian Curry
+            'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80', // Samosa
+            'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&q=80', // Biryani 2
+        ],
+        MEAT: [
+            'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80', // BBQ Kebab
+            'https://images.unsplash.com/photo-1625398407796-82650a8c14ab?w=800&q=80', // Kebab Wrap
+            'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', // Grilled Steak
+            'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&q=80', // Steak
+        ],
+        VEG: [
+            'https://images.unsplash.com/photo-1567306301408-9b74779a11af?w=800&q=80', // Salad
+            'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', // Veg Bowl
+            'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80', // Fresh Salad
+        ],
+        GENERAL: [
+            'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80', // Platter
+            'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80', // Gourmet
+            'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800&q=80', // Street Food
+        ]
+    };
 
-    // Hash function: combines seed (place ID) with the url itself so that
-    // restaurants sharing the same DB image URL get visually different fallbacks.
-    // Hash function: combines seed (place ID) with the url itself so that
-    // restaurants sharing the same DB image URL get visually different fallbacks.
+    const ALL_IMAGES = [...IMAGE_POOL.FAST_FOOD, ...IMAGE_POOL.INDIAN, ...IMAGE_POOL.MEAT, ...IMAGE_POOL.VEG, ...IMAGE_POOL.GENERAL];
+
     function hashStr(s: string): number {
         let hash = 0;
         for (let i = 0; i < s.length; i++) {
             const char = s.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash |= 0; // Convert to 32bit integer
+            hash |= 0;
         }
         return Math.abs(hash);
     }
 
-    if (!url || url === '') {
-        // No image at all — use place ID as seed
-        const s = seed || 'default';
-        return FALLBACK_IMAGES[hashStr(s) % FALLBACK_IMAGES.length];
+    const selectByKeyword = () => {
+        const text = ((name || '') + ' ' + (cuisine || '')).toLowerCase();
+        
+        if (text.includes('biryani') || text.includes('indian') || text.includes('mughlai') || text.includes('rice')) {
+            return IMAGE_POOL.INDIAN[hashStr(seed || '1') % IMAGE_POOL.INDIAN.length];
+        }
+        if (text.includes('fast food') || text.includes('burger') || text.includes('chicken') || text.includes('roll') || text.includes('pizza') || text.includes('shawarma')) {
+            return IMAGE_POOL.FAST_FOOD[hashStr(seed || '1') % IMAGE_POOL.FAST_FOOD.length];
+        }
+        if (text.includes('kebab') || text.includes('steak') || text.includes('meat') || text.includes('grill')) {
+            return IMAGE_POOL.MEAT[hashStr(seed || '1') % IMAGE_POOL.MEAT.length];
+        }
+        if (text.includes('veg') || text.includes('salad')) {
+            return IMAGE_POOL.VEG[hashStr(seed || '1') % IMAGE_POOL.VEG.length];
+        }
+        
+        return ALL_IMAGES[hashStr(seed || '1') % ALL_IMAGES.length];
+    };
+
+    if (!url || url === '' || url.includes('unsplash.com')) {
+        return selectByKeyword();
     }
 
     if (url.startsWith('/')) return url;
-
-    try {
-        const parsed = new URL(url);
-        // If it's a real custom URL (not a generic Unsplash photo), use it directly
-        if (!url.includes('unsplash.com')) return url;
-
-        // For Unsplash URLs: check if this exact URL is a "shared" one that many places use.
-        // Use the URL path + place seed to pick a unique image from the pool instead.
-        // We include the seed strongly to ensure variety.
-        const combined = (seed || '') + parsed.pathname + (seed?.split('-')[0] || '');
-        return FALLBACK_IMAGES[hashStr(combined) % FALLBACK_IMAGES.length];
-    } catch (e) {
-        const s = seed || 'default';
-        return FALLBACK_IMAGES[hashStr(s) % FALLBACK_IMAGES.length];
-    }
+    return url;
 }
+
 
 export function calculateTrustScore(place: any, confirmations: number = 0): number {
     let score = 30; // Base score for being listed

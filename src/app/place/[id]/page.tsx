@@ -98,7 +98,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
             <div className="relative h-[35vh] sm:h-[45vh] md:h-[60vh] w-full overflow-hidden bg-slate-900">
                 <div 
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105 opacity-80"
-                    style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id)})` }}
+                    style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id, name, cuisine)})` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
                 

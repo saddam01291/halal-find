@@ -97,54 +97,28 @@ export async function getAllPlacesAdmin(): Promise<DbPlace[]> {
 
 
 export async function searchPlaces(query: string, coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
-    const formattedQuery = `%${query}%`;
-    let supabaseQuery = supabase
-        .from('places')
-        .select(PLACE_LIST_COLUMNS)
-        .or(`name.ilike.${formattedQuery},cuisine.ilike.${formattedQuery},city.ilike.${formattedQuery},address.ilike.${formattedQuery},tags.cs.{${query}}`);
-
-    if (coords && coords.lat && coords.lng) {
-        // Apply 50km bounding box to search results as well to prioritize local matches
-        const radiusKm = 50; 
-        const latDelta = radiusKm / 111;
-        const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
-
-        supabaseQuery = supabaseQuery
-            .gte('lat', coords.lat - latDelta)
-            .lte('lat', coords.lat + latDelta)
-            .gte('lng', coords.lng - lngDelta)
-            .lte('lng', coords.lng + lngDelta);
-    }
-
-    let { data, error } = await supabaseQuery
-        .order('verified', { ascending: false })
-        .order('rating', { ascending: false })
-        .order('review_count', { ascending: false })
-        .order('name', { ascending: true })
-        .limit(200);
-
-    // 2. Global Fallback: If nearby search returned 0 (e.g. user is searching for a distant city), 
-    // fetch the matches globally without the bounding box.
-    if (coords && data && data.length === 0) {
-        const { data: globalData } = await supabase
-            .from('places')
-            .select(PLACE_LIST_COLUMNS)
-            .or(`name.ilike.%${query}%,cuisine.ilike.%${query}%,city.ilike.%${query}%`)
-            .or('rating.gt.0,verified.eq.true')
-            .order('verified', { ascending: false })
-            .order('rating', { ascending: false })
-            .order('review_count', { ascending: false })
-            .order('name', { ascending: true })
-            .limit(100);
-        return globalData || [];
-    }
+    const { data, error } = await supabase.rpc('search_places_v2', {
+        search_query: query,
+        user_lat: coords?.lat || null,
+        user_lng: coords?.lng || null,
+        radius_km: 50.0 // Prioritize local, but RPC returns global if none near
+    });
 
     if (error) {
-        console.error('Error searching places:', error);
-        return [];
+        console.error('Error searching places via RPC:', error);
+        // Fallback to legacy search if RPC fails (e.g. migration not run yet)
+        const formattedQuery = `%${query}%`;
+        const { data: legacyData } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .or(`name.ilike.${formattedQuery},cuisine.ilike.${formattedQuery},city.ilike.${formattedQuery},address.ilike.${formattedQuery}`)
+            .limit(50);
+        return legacyData || [];
     }
+
     return data || [];
 }
+
 
 export async function getPlaceById(id: string): Promise<DbPlace | null> {
     const { data, error } = await supabase
