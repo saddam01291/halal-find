@@ -191,7 +191,7 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                             <CitySelect 
                                 value={formData.city} 
                                 onChange={(city) => setFormData({ ...formData, city })} 
-                                placeholder="Select City (West Bengal prioritized)"
+                                placeholder="Select Location (City/District)"
                             />
                         </div>
 
