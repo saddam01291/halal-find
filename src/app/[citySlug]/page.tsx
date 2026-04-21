@@ -8,8 +8,15 @@ import { getValidImageUrl } from '@/lib/utils';
 export const dynamic = 'force-static';
 export const revalidate = 86400; // Revalidate every 24 hours
 
-export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
+export default async function CityPage({ params }: { params: Promise<{ citySlug: string }> }) {
+    const { citySlug } = await params;
+
+    // Only handle slugs that start with 'halal-restaurants-'
+    if (!citySlug.startsWith('halal-restaurants-')) {
+        notFound();
+    }
+
+    const slug = citySlug.replace('halal-restaurants-', '');
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {
@@ -241,21 +248,24 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
                             <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-100">
                                 <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Also Explore</h3>
                                 <div className="space-y-3">
-                                    {cityPage.nearby_cities.map((nc: { name: string; slug: string; count: number }) => (
-                                        <Link
-                                            key={nc.slug}
-                                            href={`/halal-restaurants-${nc.slug}`}
-                                            className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors group"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-8 w-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                                                    <MapPin className="h-4 w-4 text-emerald-600" />
+                                    {cityPage.nearby_cities.map((nc: { name: string; slug: string; count: number }) => {
+                                        const cityLink = `/halal-restaurants-${nc.slug}`;
+                                        return (
+                                            <Link
+                                                key={nc.slug}
+                                                href={cityLink}
+                                                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-8 w-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                                                        <MapPin className="h-4 w-4 text-emerald-600" />
+                                                    </div>
+                                                    <span className="font-bold text-slate-700 text-sm group-hover:text-emerald-600 transition-colors">{nc.name}</span>
                                                 </div>
-                                                <span className="font-bold text-slate-700 text-sm group-hover:text-emerald-600 transition-colors">{nc.name}</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{nc.count}</span>
-                                        </Link>
-                                    ))}
+                                                <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{nc.count}</span>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

@@ -2,8 +2,15 @@ import { Metadata } from 'next';
 import { getCityPageBySlug, getPlacesByCity } from '@/lib/api-server';
 import { notFound } from 'next/navigation';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-    const { slug } = await params;
+export async function generateMetadata({ params }: { params: Promise<{ citySlug: string }> }): Promise<Metadata> {
+    const { citySlug } = await params;
+    
+    // Only handle slugs that start with 'halal-restaurants-'
+    if (!citySlug.startsWith('halal-restaurants-')) {
+        return {};
+    }
+
+    const slug = citySlug.replace('halal-restaurants-', '');
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {
@@ -36,13 +43,20 @@ export default async function CityLayout({
     params,
 }: {
     children: React.ReactNode;
-    params: Promise<{ slug: string }>;
+    params: Promise<{ citySlug: string }>;
 }) {
-    const { slug } = await params;
+    const { citySlug } = await params;
+
+    // Fast reject if prefix doesn't match, allowing Next.js to check other routes
+    if (!citySlug.startsWith('halal-restaurants-')) {
+        notFound();
+    }
+
+    const slug = citySlug.replace('halal-restaurants-', '');
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {
-        return <>{children}</>;
+        notFound();
     }
 
     // JSON-LD: ItemList schema for city page

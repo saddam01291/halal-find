@@ -50,7 +50,17 @@ const CITY_META = {
 
 // ─── SLUG HELPER ──────────────────────
 function cityToSlug(name) {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    // Keep Latin characters, numbers, and Arabic script
+    let slug = name.toLowerCase()
+        .replace(/[^a-z0-9\u0600-\u06FF]+/gu, '-')
+        .replace(/--+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    
+    // If slug is still empty (e.g. only symbols), use hex fallback
+    if (!slug) {
+        slug = 'city-' + Math.random().toString(36).substring(2, 7);
+    }
+    return slug;
 }
 
 // ─── CONTENT GENERATION (Data-Driven, Zero AI) ──────────────────────
@@ -296,6 +306,11 @@ async function main() {
         const nearbyCities = findNearbyCities(city.name, allCityInfo);
 
         // 5. Upsert into seo_city_pages
+        if (!slug || slug === '-') {
+            console.warn(`   ⚠️ Skipping ${city.name}: invalid slug`);
+            continue;
+        }
+
         const { error: upsertError } = await supabase
             .from('seo_city_pages')
             .upsert({
