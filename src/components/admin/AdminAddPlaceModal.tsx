@@ -31,6 +31,8 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
         halal_status: 'Full Halal',
         serves_alcohol: false,
         halal_source: '',
+        phone: '',
+        email: '',
         tags: '',
         image: ''
     });
@@ -42,7 +44,7 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                 name: '', cuisine: '', city: '', address: '',
                 lat: null, lng: null,
                 halal_status: 'Full Halal', serves_alcohol: false,
-                halal_source: '', tags: '', image: ''
+                halal_source: '', phone: '', email: '', tags: '', image: ''
             });
             setImageFile(null);
             setDuplicatePlace(null);
@@ -102,6 +104,8 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                 halal_status: formData.halal_status,
                 serves_alcohol: formData.serves_alcohol,
                 halal_source: formData.halal_source,
+                phone: formData.phone || undefined,
+                email: formData.email || undefined,
                 tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
                 verified: true,
                 verification_status: 'owner_verified'
@@ -247,6 +251,30 @@ export function AdminAddPlaceModal({ isOpen, onClose, onSave }: AdminAddPlaceMod
                                             <button type="button" onClick={() => setFormData({ ...formData, serves_alcohol: false })} className={cn("flex-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all", !formData.serves_alcohol ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400")}>No</button>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            {/* Contact Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number (Optional)</label>
+                                    <input
+                                        value={formData.phone}
+                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                        className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                        placeholder="e.g. +91 98765 43210"
+                                        type="tel"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email (Optional)</label>
+                                    <input
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                        placeholder="e.g. contact@restaurant.com"
+                                        type="email"
+                                    />
                                 </div>
                             </div>
                         </div>

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, use } from 'react';
 import { getPlaceById } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
 import { GoogleMap } from '@/components/map/Map';
-import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle, Check } from 'lucide-react';
+import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { getValidImageUrl, cn } from '@/lib/utils';
@@ -158,7 +158,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     return (
         <div className="min-h-screen bg-slate-50/50 pb-20">
             {/* SEO & Title Protection */}
-            <title>{`${name} | Halal Restaurant in ${city}`}</title>
+            <title>{`${name} | Halal Hotel, Place, Food & Restaurant Near ${city}`}</title>
 
             {/* Hero Image Section */}
             <div className="relative h-[35vh] sm:h-[45vh] md:h-[60vh] w-full overflow-hidden bg-slate-900">
@@ -242,14 +242,40 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             <div className="pt-8 border-t border-slate-50">
                                 <div className="space-y-4">
                                     <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Business Details</h4>
-                                    <div className="flex items-center gap-3 text-slate-700">
-                                        <div className="h-10 w-10 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center">
-                                            <Clock className="h-4 w-4" />
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-3 text-slate-700">
+                                            <div className="h-10 w-10 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center">
+                                                <Clock className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <span className="font-bold block">Halal Verification</span>
+                                                <span className="text-xs text-slate-400">Regularly audited by FindHalal community</span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <span className="font-bold block">Halal Verification</span>
-                                            <span className="text-xs text-slate-400">Regularly audited by FindHalal community</span>
-                                        </div>
+                                        
+                                        {place.phone && (
+                                            <div className="flex items-center gap-3 text-slate-700">
+                                                <div className="h-10 w-10 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center">
+                                                    <Phone className="h-4 w-4 text-emerald-600" />
+                                                </div>
+                                                <div>
+                                                    <span className="font-bold block">Phone</span>
+                                                    <a href={`tel:${place.phone}`} className="text-xs text-emerald-600 hover:underline font-medium">{place.phone}</a>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {place.email && (
+                                            <div className="flex items-center gap-3 text-slate-700">
+                                                <div className="h-10 w-10 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center">
+                                                    <Mail className="h-4 w-4 text-emerald-600" />
+                                                </div>
+                                                <div>
+                                                    <span className="font-bold block">Email</span>
+                                                    <a href={`mailto:${place.email}`} className="text-xs text-emerald-600 hover:underline font-medium">{place.email}</a>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -339,9 +365,11 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             <div className="p-5 sm:p-8 space-y-4">
                                 <Button 
                                     onClick={() => {
-                                        const destination = (place.lat && place.lng) 
-                                            ? `${place.lat},${place.lng}` 
-                                            : encodeURIComponent(`${place.name || ''}, ${place.address || ''}, ${place.city || ''}`);
+                                        const destination = encodeURIComponent(
+                                            [place.name, place.address, place.city]
+                                                .filter(Boolean)
+                                                .join(', ')
+                                        ) || (place.lat && place.lng ? `${place.lat},${place.lng}` : '');
                                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank', 'noopener,noreferrer');
                                     }}
                                     className="w-full bg-slate-900 hover:bg-black text-white px-6 sm:px-8 h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95 text-sm sm:text-base"

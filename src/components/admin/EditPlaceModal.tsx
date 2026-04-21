@@ -78,6 +78,8 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                 image: imageUrl,
                 lat: editForm.lat ? Number(editForm.lat) : undefined,
                 lng: editForm.lng ? Number(editForm.lng) : undefined,
+                phone: editForm.phone || undefined,
+                email: editForm.email || undefined,
                 tags: typeof editForm.tags === 'string' 
                     ? (editForm.tags as string).split(',').map(t => t.trim()).filter(t => t) 
                     : editForm.tags,
@@ -159,6 +161,28 @@ export function EditPlaceModal({ isOpen, onClose, place, onSave, onUpdate }: Edi
                                             value={editForm.address || ''}
                                             onChange={e => setEditForm({ ...editForm, address: e.target.value })}
                                             className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number (Optional)</label>
+                                        <input
+                                            value={editForm.phone || ''}
+                                            onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                            placeholder="e.g. +91 98765 43210"
+                                            type="tel"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email (Optional)</label>
+                                        <input
+                                            value={editForm.email || ''}
+                                            onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 bg-white transition-all outline-none font-bold text-slate-900 text-sm"
+                                            placeholder="e.g. contact@restaurant.com"
+                                            type="email"
                                         />
                                     </div>
                                 </div>

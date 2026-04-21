@@ -20,6 +20,8 @@ create table if not exists places (
   added_by text default 'community' check (added_by in ('owner', 'community')),
   owner_id uuid references auth.users(id),
   certificate_url text,
+  phone text,
+  email text,
   created_at timestamptz default now()
 );
 
@@ -42,6 +44,8 @@ create table if not exists verification_requests (
   owner_name text not null,
   restaurant_name text not null,
   certificate_url text,
+  phone text,
+  email text,
   status text default 'pending' check (status in ('pending', 'approved', 'rejected')),
   created_at timestamptz default now()
 );

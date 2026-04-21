@@ -37,3 +37,18 @@ export async function getPlaceByIdServer(id: string): Promise<DbPlace | null> {
     }
     return data || null;
 }
+
+export async function getAllPlaceIdsForSitemap(): Promise<{ id: string, created_at: string | null }[]> {
+    // Select minimal data to avoid bandwidth bloat on large datasets
+    const { data, error } = await supabaseServer
+        .from('places')
+        .select('id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50000); // Set an explicit high limit to bypass the 1000 default
+
+    if (error) {
+        console.error('Error fetching place IDs for sitemap:', error);
+        return [];
+    }
+    return data || [];
+}

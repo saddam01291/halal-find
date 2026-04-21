@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next';
-import { getPlacesServer } from '@/lib/api-server';
+import { getAllPlaceIdsForSitemap } from '@/lib/api-server';
 
 const baseUrl = 'https://findhalalonly.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const places = await getPlacesServer();
+    const places = await getAllPlaceIdsForSitemap();
 
     const placeUrls: MetadataRoute.Sitemap = places.map((place) => ({
         url: `${baseUrl}/place/${place.id}`,

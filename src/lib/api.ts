@@ -3,7 +3,7 @@
 import { supabase } from './supabase';
 import { DbPlace, DbProfile, DbVerificationRequest, DbReview } from './supabase';
 
-export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol';
+export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol, phone, email';
 
 // --- Places ---
 
@@ -343,6 +343,8 @@ export async function submitVerificationRequest(request: Omit<DbVerificationRequ
         halal_status: request.halal_status,
         serves_alcohol: request.serves_alcohol,
         halal_source: request.halal_source,
+        phone: request.phone,
+        email: request.email,
         user_id: user.id,
         status: 'pending' as const
     };
@@ -410,6 +412,8 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
         if (request.halal_status) placeUpdate.halal_status = request.halal_status;
         if (request.serves_alcohol !== undefined) placeUpdate.serves_alcohol = request.serves_alcohol;
         if (request.halal_source) placeUpdate.halal_source = request.halal_source;
+        if (request.phone) placeUpdate.phone = request.phone;
+        if (request.email) placeUpdate.email = request.email;
         if (request.certificate_url) placeUpdate.image = request.certificate_url;
         
         if (request.type === 'claim' && targetPlaceId) {

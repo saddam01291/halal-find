@@ -22,6 +22,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
         name: '',
         address: '',
         city: '',
+        phone: '',
+        email: '',
         cuisine: '',
         halal_statuses: ['Full Halal'] as string[],
         serves_alcohol: false,
@@ -101,6 +103,8 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                 city: formData.city || 'Unknown', 
                 lat: formData.lat, 
                 lng: formData.lng,
+                phone: formData.phone || undefined,
+                email: formData.email || undefined,
                 tags: ['Halal', formData.cuisine || 'Fast Food', formData.city].filter(Boolean) as string[],
                 halal_status: formData.halal_statuses.join(', '),
                 serves_alcohol: formData.serves_alcohol,
@@ -203,6 +207,29 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
                                     onChange={e => setFormData({ ...formData, address: e.target.value })}
                                     className="w-full h-16 pl-14 pr-6 rounded-3xl border-3 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white transition-all outline-none text-lg font-bold text-slate-900"
                                     placeholder="Street, Landmark"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number (Optional)</label>
+                                <input
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                    className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                    placeholder="e.g. +91 98765 43210"
+                                    type="tel"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address (Optional)</label>
+                                <input
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:border-emerald-500 focus:bg-white transition-all outline-none text-sm font-bold text-slate-900"
+                                    placeholder="e.g. contact@restaurant.com"
+                                    type="email"
                                 />
                             </div>
                         </div>

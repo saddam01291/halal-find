@@ -9,19 +9,21 @@ import { LocationProvider } from "@/context/LocationContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Find Halal | Halal Restaurants Near Me | Verified Halal Food",
-  description: "Find trusted Halal restaurants and food near you instantly. Verified by owners and community reviews. The most accurate Halal food guide.",
+  title: "Find Halal | Halal Hotel, Place, Food & Restaurant Near Me",
+  description: "Find trusted Halal hotels, places, food, and restaurants near you instantly. Verified by owners and community reviews. Discover the most accurate Halal guide near your location.",
   keywords: [
-    "halal restaurants near me",
+    "halal hotel near me",
+    "halal place near me",
     "halal food near me",
+    "halal restaurant near me",
     "find halal food",
-    "halal biryani kolkata",
+    "halal biryani",
     "certified halal restaurants",
-    "muslim friendly food"
+    "muslim friendly hotel"
   ],
   openGraph: {
-    title: "Find Halal - Discover Halal Food Near You",
-    description: "Discover the best Halal restaurants and food near you. Instant lookup of location, reviews, and Halal status.",
+    title: "Find Halal - Discover Halal Hotels, Places, Food & Restaurants Near You",
+    description: "Discover the best Halal hotels, places, food, and restaurants near you. Instant lookup of location, reviews, and Halal status.",
     type: "website",
   },
 };

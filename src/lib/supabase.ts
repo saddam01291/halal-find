@@ -37,6 +37,8 @@ export interface DbPlace {
     halal_source?: string;
     contamination_risk?: 'none' | 'low' | 'moderate' | 'high';
     is_mixed_neighborhood?: boolean;
+    phone?: string;
+    email?: string;
     created_at: string;
 }
 
@@ -75,6 +77,8 @@ export interface DbVerificationRequest {
     type: 'new_place' | 'claim' | 'community_addition';
     initial_review?: string;
     initial_rating?: number;
+    phone?: string;
+    email?: string;
     created_at: string;
 }
 
