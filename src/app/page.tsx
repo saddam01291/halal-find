@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getPlaces, searchPlaces } from '@/lib/api';
+import { getPlaces, searchPlaces, getPopularCities } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
 import { getDistance, getValidImageUrl, getAreaFromAddress, calculateRelevance } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -24,6 +24,7 @@ export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [popularCities, setPopularCities] = useState<{city_name: string, city_slug: string, restaurant_count: number}[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
   const fetchPlaces = async (query?: string, coords?: { lat: number; lng: number }, retryCount = 0) => {
@@ -65,6 +66,12 @@ export default function Home() {
   )).filter(Boolean).slice(0, 8);
 
   useEffect(() => {
+    const fetchCities = async () => {
+      const cities = await getPopularCities();
+      setPopularCities(cities);
+    };
+    fetchCities();
+
     if (authLoading) return;
     fetchPlaces(searchQuery, userCoords || undefined);
   }, [authLoading, userCoords]);
@@ -411,6 +418,72 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Popular Cities Section - SEO & Internal Linking */}
+      {popularCities.length > 0 && (
+        <section className="py-12 sm:py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4">
+              <div className="max-w-2xl px-2">
+                <div className="text-emerald-600 font-bold text-xs sm:text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" /> Discover Your Local Halal Hub
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  Explore Halal Food by <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-amber-600">Popular Cities</span>
+                </h2>
+                <p className="text-slate-500 mt-4 text-sm sm:text-lg leading-relaxed">
+                  Join thousands of diners in exploring verified Halal destinations across global culinary hubs.
+                  Each city page is curated with community-rated restaurants and authentic local guides.
+                </p>
+              </div>
+              <Link href="/search" className="inline-flex items-center gap-2 text-emerald-600 font-bold hover:gap-3 transition-all duration-300 group">
+                World Map View <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {popularCities.map((city) => (
+                <Link
+                  key={city.city_slug}
+                  href={`/halal-restaurants-${city.city_slug}`}
+                  className="group relative h-32 sm:h-40 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1.5"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-emerald-50" />
+                  
+                  {/* Subtle pattern background */}
+                  <div className="absolute inset-0 opacity-5 pointer-events-none">
+                    <svg className="h-full w-full" viewBox="0 0 100 100">
+                      <pattern id={`pattern-${city.city_slug}`} width="20" height="20" patternUnits="userSpaceOnUse">
+                        <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+                      </pattern>
+                      <rect width="100%" height="100%" fill={`url(#pattern-${city.city_slug})`} />
+                    </svg>
+                  </div>
+
+                  <div className="relative h-full p-4 sm:p-6 flex flex-col justify-between z-10">
+                    <div className="flex justify-between items-start">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                        <Store className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
+                      </div>
+                      <div className="bg-emerald-600/10 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        {city.restaurant_count}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-slate-800 text-sm sm:text-base group-hover:text-emerald-700 transition-colors truncate">
+                        {city.city_name}
+                      </h3>
+                      <p className="text-[10px] sm:text-xs font-bold text-slate-400 group-hover:text-emerald-600/60 transition-colors uppercase tracking-widest mt-1">
+                        Verified Spots
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Community Impact Section */}
       <section className="py-10 sm:py-16 bg-gradient-to-br from-emerald-50 to-amber-50 border-y border-emerald-100">

@@ -692,3 +692,18 @@ export async function uploadImage(file: File) {
 
     return data.publicUrl;
 }
+
+
+export async function getPopularCities(): Promise<{city_name: string, city_slug: string, restaurant_count: number}[]> {
+    const { data, error } = await supabase
+        .from('seo_city_pages')
+        .select('city_name, city_slug, restaurant_count')
+        .order('restaurant_count', { ascending: false })
+        .limit(12);
+
+    if (error) {
+        console.error('Error fetching popular cities:', error);
+        return [];
+    }
+    return data || [];
+}
