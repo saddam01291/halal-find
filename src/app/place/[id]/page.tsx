@@ -380,6 +380,14 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                 <p className="text-center text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400">
                                     Recommended by FindHalal Community
                                 </p>
+                                {place.city && place.city !== 'Unknown' && (
+                                    <Link
+                                        href={`/halal-restaurants-${place.city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}
+                                        className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-6 h-11 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs border border-emerald-100"
+                                    >
+                                        More Halal in {place.city} <ChevronRight className="h-4 w-4" />
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>
