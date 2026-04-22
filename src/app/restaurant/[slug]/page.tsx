@@ -1,142 +1,92 @@
-'use client';
-
-import { Suspense, useEffect, useState, use } from 'react';
-import { getPlaceById } from '@/lib/api';
-import { DbPlace } from '@/lib/supabase';
-import { GoogleMap } from '@/components/map/Map';
-import { Star, MapPin, Phone, Globe, Clock, ChevronRight, Share2, Heart, ShieldCheck, AlertCircle, Check, Mail } from 'lucide-react';
+import { Metadata, ResolvingMetadata } from 'next';
+import { getPlaceByIdServer, getReviewsForPlaceServer } from '@/lib/api-server';
+import { Star, MapPin, Phone, Clock, ChevronRight, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
-import { getValidImageUrl, cn } from '@/lib/utils';
+import { getValidImageUrl } from '@/lib/utils';
 import Link from 'next/link';
-import { ReviewList } from '@/components/reviews/ReviewList';
-import { getReviewsForPlace } from '@/lib/api';
-import { DbReview } from '@/lib/supabase';
 import { HalalTrustScore } from '@/components/ui/HalalTrustScore';
 import { SafetyTransparency } from '@/components/ui/SafetyTransparency';
-import { ReviewForm } from '@/components/reviews/ReviewForm';
-import { useAuth } from '@/context/AuthContext';
+import { PlaceActions } from '@/components/place/PlaceActions';
+import { PlaceReviews } from '@/components/place/PlaceReviews';
+import { GoogleMap } from '@/components/map/Map';
+import { notFound } from 'next/navigation';
 
-function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
-    const [place, setPlace] = useState<DbPlace | null>(null);
-    const [reviews, setReviews] = useState<DbReview[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [showContact, setShowContact] = useState(false);
-    const [showReviewForm, setShowReviewForm] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
-    const [isLoved, setIsLoved] = useState(false);
-    const { user } = useAuth();
+function extractIdFromSlug(slug: string): string | null {
+    const match = slug.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/i);
+    return match ? match[1] : slug;
+}
 
-    const [displayCoords, setDisplayCoords] = useState<{lat: number, lng: number} | null>(null);
-
-    useEffect(() => {
-        const fetchPlaceAndReviews = async () => {
-            try {
-                const [placeData, reviewsData] = await Promise.all([
-                    getPlaceById(id),
-                    getReviewsForPlace(id)
-                ]);
-                if (!placeData) {
-                    setError('Restaurant not found');
-                } else {
-                    setPlace(placeData);
-                    setReviews(reviewsData);
-                    
-                    // Set display coordinates (with fallback to city)
-                    if (placeData.lat && placeData.lng) {
-                        setDisplayCoords({ lat: placeData.lat, lng: placeData.lng });
-                    } else if (placeData.city) {
-                        // Fallback: Geocode the city
-                        try {
-                            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeData.city)}&limit=1`);
-                            const data = await res.json();
-                            if (data && data[0]) {
-                                setDisplayCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
-                            }
-                        } catch (e) {
-                            console.error("City fallback geocoding failed", e);
-                        }
-                    }
-                }
-            } catch (err: any) {
-                console.error('Error fetching place:', err);
-                setError(err.message || 'Failed to load restaurant details');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPlaceAndReviews();
-        
-        // Initialize loved state from local storage
-        try {
-            const savedPlaces = JSON.parse(localStorage.getItem('findhalal_saved_places') || '[]');
-            if (savedPlaces.includes(id)) {
-                setIsLoved(true);
-            }
-        } catch (e) {
-            // ignore JSON parse errors
-        }
-    }, [id]);
-
-    const handleShare = async () => {
-        const url = window.location.href;
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: `${place?.name || 'Restaurant'} on FindHalal`,
-                    text: `Check out ${place?.name || 'this halal restaurant'}!`,
-                    url: url
-                });
-            } catch (err) {
-                // fallback if user cancels
-            }
-        } else {
-            await navigator.clipboard.writeText(url);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
-        }
-    };
-
-    const handleToggleLove = () => {
-        try {
-            const savedPlaces = JSON.parse(localStorage.getItem('findhalal_saved_places') || '[]');
-            if (isLoved) {
-                const newPlaces = savedPlaces.filter((p: string) => p !== id);
-                localStorage.setItem('findhalal_saved_places', JSON.stringify(newPlaces));
-                setIsLoved(false);
-            } else {
-                if (!savedPlaces.includes(id)) {
-                    savedPlaces.push(id);
-                    localStorage.setItem('findhalal_saved_places', JSON.stringify(savedPlaces));
-                }
-                setIsLoved(true);
-            }
-        } catch(e) {
-            // handle
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-white">
-                <div className="text-center">
-                    <div className="h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-500 font-medium">Loading restaurant data...</p>
-                </div>
-            </div>
-        );
+export async function generateMetadata(
+    { params }: { params: Promise<{ slug: string }> },
+    parent: ResolvingMetadata
+): Promise<Metadata> {
+    const { slug } = await params;
+    const id = extractIdFromSlug(slug);
+    
+    if (!id) {
+        return { title: 'Place Not Found | FindHalal' };
     }
 
-    if (error || !place) {
+    const place = await getPlaceByIdServer(id);
+    
+    if (!place) {
+        return { title: 'Place Not Found | FindHalal' };
+    }
+    
+    const name = place.name || 'Unnamed Place';
+    const city = place.city || 'Location Pending';
+    const title = `${name} | Halal Hotel, Place, Food & Restaurant Near ${city}`;
+    const description = `Find verified information, community reviews, and halal status for ${name} in ${city}.`;
+    
+    return {
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            url: `https://findhalalonly.com/restaurant/${slug}`,
+            siteName: 'Find Halal',
+            images: [
+                {
+                    url: getValidImageUrl(place.image, place.id, name, place.cuisine || 'Halal Food'),
+                    width: 1200,
+                    height: 630,
+                    alt: `${name} preview`,
+                }
+            ],
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [getValidImageUrl(place.image, place.id, name, place.cuisine || 'Halal Food')],
+        }
+    };
+}
+
+export default async function RestaurantPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const id = extractIdFromSlug(slug);
+
+    if (!id) {
+        return notFound();
+    }
+
+    const [place, reviews] = await Promise.all([
+        getPlaceByIdServer(id),
+        getReviewsForPlaceServer(id)
+    ]);
+
+    if (!place) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 text-center max-w-md">
                     <div className="h-16 w-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
                         <AlertCircle className="h-8 w-8" />
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900 mb-2">{error || 'Something went wrong'}</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 mb-2">Something went wrong</h1>
                     <p className="text-slate-500 mb-8">We couldn't find the restaurant you're looking for. It might have been moved or removed.</p>
                     <Link href="/search">
                         <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 rounded-xl h-12 font-bold shadow-lg shadow-emerald-200">
@@ -151,14 +101,49 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
     const name = place.name || 'Unnamed Place';
     const city = place.city || 'Location Pending';
     const cuisine = place.cuisine || 'Halal Food';
-    
-    // Total Stability Guard: Check coordinates
-    const hasValidCoords = typeof place.lat === 'number' && typeof place.lng === 'number' && isFinite(place.lat) && isFinite(place.lng);
+
+    // JSON-LD Schema
+    const schema = {
+        '@context': 'https://schema.org',
+        '@type': 'Restaurant',
+        name: name,
+        image: getValidImageUrl(place.image, place.id, name, cuisine),
+        url: `https://findhalalonly.com/restaurant/${slug}`,
+        servesCuisine: ['Halal', cuisine].filter(Boolean),
+        address: {
+            '@type': 'PostalAddress',
+            streetAddress: place.address || '',
+            addressLocality: place.city || '',
+            addressRegion: place.city || '',
+            addressCountry: 'IN'
+        },
+        geo: (place.lat && place.lng) ? {
+            '@type': 'GeoCoordinates',
+            latitude: place.lat,
+            longitude: place.lng,
+        } : undefined,
+        ...(place.phone ? { telephone: place.phone } : {}),
+        ...(place.email ? { email: place.email } : {}),
+        priceRange: '$$',
+        ...(place.rating > 0 && place.review_count > 0 ? {
+            aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: place.rating,
+                reviewCount: place.review_count,
+                bestRating: '5',
+                worstRating: '1',
+            }
+        } : {})
+    };
+
+    const displayCoords = (place.lat && place.lng) ? { lat: place.lat, lng: place.lng } : null;
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-20">
-            {/* SEO & Title Protection */}
-            <title>{`${name} | Halal Hotel, Place, Food & Restaurant Near ${city}`}</title>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+            />
 
             {/* Hero Image Section */}
             <div className="relative h-[35vh] sm:h-[45vh] md:h-[60vh] w-full overflow-hidden bg-slate-900">
@@ -219,24 +204,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                         Verified by our community to ensure quality and trust. Always confirm with the owner to be sure of the current Halal status.
                                     </p>
                                 </div>
-                                <div className="flex gap-2 relative">
-                                    <Button 
-                                        variant="outline" 
-                                        size="icon" 
-                                        onClick={handleShare}
-                                        className="rounded-full h-9 w-9 sm:h-11 sm:w-11 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                                    >
-                                        {isCopied ? <Check className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" /> : <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />}
-                                    </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        size="icon" 
-                                        onClick={handleToggleLove}
-                                        className={`rounded-full h-9 w-9 sm:h-11 sm:w-11 transition-all ${isLoved ? 'bg-red-50 text-red-500 border-red-200' : 'hover:bg-red-50 hover:text-red-500'}`}
-                                    >
-                                        <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isLoved ? 'fill-current' : ''}`} />
-                                    </Button>
-                                </div>
+                                <PlaceActions placeId={place.id} placeName={place.name} />
                             </div>
                             
                             <div className="pt-8 border-t border-slate-50">
@@ -290,47 +258,11 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                         />
 
                         {/* Transparency Details */}
-                        <SafetyTransparency place={place} />
+                        <SafetyTransparency place={place as any} />
 
-                        {/* Reviews Section */}
-                        <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-slate-100">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Community Reviews</h2>
-                                <Button 
-                                    onClick={() => setShowReviewForm(!showReviewForm)}
-                                    className={cn(
-                                        "rounded-xl font-bold transition-all",
-                                        showReviewForm ? "bg-slate-100 text-slate-600 hover:bg-slate-200" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-100"
-                                    )}
-                                >
-                                    {showReviewForm ? 'Cancel Review' : 'Write a Review'}
-                                </Button>
-                            </div>
-
-                            {showReviewForm && (
-                                <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 animate-in fade-in slide-in-from-top-4">
-                                    {user ? (
-                                        <ReviewForm 
-                                            placeId={place.id} 
-                                            onCancel={() => setShowReviewForm(false)} 
-                                            onSubmit={() => {
-                                                setShowReviewForm(false);
-                                                window.location.reload(); 
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="text-center py-6">
-                                            <p className="text-slate-500 font-bold mb-4">Please sign in to share your experience with the community.</p>
-                                            <Link href="/auth">
-                                                <Button className="bg-slate-900 text-white px-8 rounded-xl h-11">Sign In</Button>
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            <ReviewList placeId={place.id} />
-                        </div>
+                        {/* Reviews Section isolated as Client Component */}
+                        <PlaceReviews placeId={place.id} />
+                        
                     </div>
 
                     {/* RIGHT COLUMN: Map & Action */}
@@ -345,7 +277,7 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                                 {displayCoords ? (
                                         <GoogleMap 
                                             center={displayCoords}
-                                            zoom={place.lat ? 16 : 12} // Zoom in more if we have exact pin
+                                            zoom={place.lat ? 16 : 12} 
                                             className="h-full w-full"
                                             isStatic={true} 
                                         />
@@ -363,20 +295,19 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                             </div>
 
                             <div className="p-5 sm:p-8 space-y-4">
-                                <Button 
-                                    onClick={() => {
-                                        const destination = encodeURIComponent(
-                                            [place.name, place.address, place.city]
-                                                .filter(Boolean)
-                                                .join(', ')
-                                        ) || (place.lat && place.lng ? `${place.lat},${place.lng}` : '');
-                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank', 'noopener,noreferrer');
-                                    }}
+                                <a 
                                     className="w-full bg-slate-900 hover:bg-black text-white px-6 sm:px-8 h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95 text-sm sm:text-base"
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                        [place.name, place.address, place.city]
+                                            .filter(Boolean)
+                                            .join(', ')
+                                    ) || (place.lat && place.lng ? `${place.lat},${place.lng}` : '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                 >
                                     Get Directions
                                     <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
-                                </Button>
+                                </a>
                                 <p className="text-center text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400">
                                     Recommended by FindHalal Community
                                 </p>
@@ -395,17 +326,5 @@ function PlaceContent({ params }: { params: Promise<{ id: string }> }) {
                 </div>
             </div>
         </div>
-    );
-}
-
-export default function PlacePage({ params }: { params: Promise<{ id: string }> }) {
-    return (
-        <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center bg-white">
-                <div className="h-8 w-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-        }>
-            <PlaceContent params={params} />
-        </Suspense>
     );
 }

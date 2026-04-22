@@ -38,10 +38,59 @@ export async function getPlaceByIdServer(id: string): Promise<DbPlace | null> {
     return data || null;
 }
 
-export async function getAllPlaceIdsForSitemap(): Promise<{ id: string, created_at: string | null }[]> {
+export async function getReviewsForPlaceServer(placeId: string): Promise<any[]> {
+    const { data, error } = await supabaseServer
+        .from('reviews')
+        .select('*')
+        .eq('place_id', placeId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching reviews on server:', error);
+        return [];
+    }
+    return data || [];
+}
+
+export async function searchPlacesServer(query: string, coords?: { lat: number; lng: number }): Promise<DbPlace[]> {
+    const cleansedSearch = query?.replace(/\s+/g, '').toLowerCase() || '';
+    
+    // Fallback fetching mechanism as RPC might fail on the server if not setup consistently
+    const { data: allData, error } = await supabaseServer
+        .from('places')
+        .select(PLACE_LIST_COLUMNS)
+        .limit(1000); // Higher limit on server since it's pre-rendered
+
+    if (error || !allData) {
+        console.error('Error fetching places for search on server:', error);
+        return [];
+    }
+    
+    if (!cleansedSearch) {
+        // Return top places if no query
+        return allData
+            .sort((a, b) => b.rating - a.rating || b.review_count - a.review_count)
+            .slice(0, 100);
+    }
+
+    const fuzzyFiltered = allData.filter(p => {
+        const nameStr = (p.name || '').replace(/\s+/g, '').toLowerCase();
+        const cityStr = (p.city || '').replace(/\s+/g, '').toLowerCase();
+        const addrStr = (p.address || '').replace(/\s+/g, '').toLowerCase();
+        const cuisineStr = (p.cuisine || '').replace(/\s+/g, '').toLowerCase();
+        
+        return nameStr.includes(cleansedSearch) || 
+               cityStr.includes(cleansedSearch) || 
+               addrStr.includes(cleansedSearch) ||
+               cuisineStr.includes(cleansedSearch);
+    });
+    
+    return fuzzyFiltered.slice(0, 100);
+}
+export async function getAllPlaceIdsForSitemap(): Promise<{ id: string, name: string | null, city: string | null, created_at: string | null }[]> {
     const { data, error } = await supabaseServer
         .from('places')
-        .select('id, created_at')
+        .select('id, name, city, created_at')
         .order('created_at', { ascending: false })
         .limit(50000);
 

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Beer, Drumstick, AlertCircle, CheckCircle2, Info, X, ShieldCheck } from 'lucide-react';
 import { DbPlace } from '@/lib/supabase';

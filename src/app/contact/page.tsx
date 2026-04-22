@@ -110,20 +110,7 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* Map or Global Presence Placeholder */}
-      <section className="py-24 bg-white border-t border-slate-100 overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Global Network</h2>
-            <p className="text-slate-500">Connecting Halal foodies across 12+ countries and counting.</p>
-          </div>
-          <div className="aspect-[21/9] bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 flex items-center justify-center relative group">
-            <MapPin className="h-12 w-12 text-slate-200 group-hover:text-emerald-400 group-hover:scale-110 transition-all duration-500" />
-            <div className="absolute inset-0 bg-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="absolute bottom-8 text-slate-300 font-bold uppercase tracking-widest text-xs">Interactive Map Under Construction</span>
-          </div>
-        </div>
-      </section>
+
     </div>
   );
 }

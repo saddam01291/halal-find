@@ -42,12 +42,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }));
 
     // Individual restaurant pages
-    const placeUrls: MetadataRoute.Sitemap = places.map((place) => ({
-        url: `${baseUrl}/place/${place.id}`,
-        lastModified: place.created_at ? new Date(place.created_at) : new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.8,
-    }));
+    const placeUrls: MetadataRoute.Sitemap = places.map((place) => {
+        const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const slug = `${slugBase}-${place.id}`;
+
+        return {
+            url: `${baseUrl}/restaurant/${slug}`,
+            lastModified: place.created_at ? new Date(place.created_at) : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        };
+    });
 
     return [...staticPages, ...cityUrls, ...placeUrls];
 }
