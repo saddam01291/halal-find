@@ -9,8 +9,8 @@ import { LocationProvider } from "@/context/LocationContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Find Halal | Halal Hotel, Place, Food & Restaurant Near Me",
-  description: "Find trusted Halal hotels, places, food, and restaurants near you instantly. Verified by owners and community reviews. Discover the most accurate Halal guide near your location.",
+  title: "Find Halal Restaurants Near You — Verified by the Community",
+  description: "Find halal-certified restaurants, hotels and food near you. Verified by owners and confirmed by the community. 5,000+ trusted halal listings across India and beyond.",
   keywords: [
     "halal hotel near me",
     "halal place near me",

@@ -190,7 +190,7 @@ export function SearchClient({ initialPlaces, initialQuery }: SearchClientProps)
                 </div>
 
                 <div className="divide-y divide-slate-100">
-                    {loading ? (
+                    {loading && places.length === 0 ? (
                         <div className="p-10 text-center text-slate-500">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4"></div>
                             Loading results...

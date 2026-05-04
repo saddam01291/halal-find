@@ -155,38 +155,35 @@ export default function Home() {
         </div>
 
         <div className="max-w-4xl space-y-5 sm:space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs sm:text-sm font-medium shadow-sm mb-2 sm:mb-4">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            The #1 Platform for Halal Dining
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight text-slate-900 drop-shadow-sm leading-[1.1]">
-            {locationStatus === 'prompt' ? (
-              <>Halal Discovery from your <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-emerald-600">Current Device</span></>
-            ) : (
-              <>Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-emerald-600">Exquisite</span><br className="hidden sm:block" /> Halal Cuisine</>
-            )}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 drop-shadow-sm leading-[1.2] mb-4">
+            SEARCHING FOR <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">HALAL FOOD NEAR ME</span>
           </h1>
 
-          <p className="text-sm sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-2">
-            {locationStatus === 'prompt' 
-              ? 'Turn on your device location to see Halal restaurants near you.'
-              : 'Your contributions help thousands of Muslim families find trusted Halal dining.'}
+          <p className="text-sm sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed px-2">
+            Discover verified halal restaurants with trusted reviews. Find halal food easily and eat with confidence.
           </p>
 
           <div className="flex flex-col items-center gap-4 sm:gap-6 mt-4 sm:mt-8">
             {locationStatus === 'prompt' && (
-              <Button 
-                onClick={requestLocation}
-                size="lg" 
-                className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 text-sm sm:text-lg font-bold flex items-center gap-2 sm:gap-3 animate-in zoom-in duration-500"
-              >
-                <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />
-                Turn On Location
-              </Button>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Button 
+                  onClick={requestLocation}
+                  size="lg" 
+                  className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 text-sm sm:text-lg font-bold flex items-center gap-2 sm:gap-3 animate-in zoom-in duration-500"
+                >
+                  <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />
+                  Find Halal Food Near Me
+                </Button>
+                <Link href="/halal-restaurants-mumbai" className="inline-block">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl bg-white text-emerald-600 border border-emerald-600 hover:bg-emerald-50"
+                  >
+                    Browse by City →
+                  </Button>
+                </Link>
+              </div>
             )}
 
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 w-full max-w-xl p-1.5 sm:p-2 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50">
@@ -244,14 +241,14 @@ export default function Home() {
                   ? `Results for "${activeSearchTerm}"`
                   : userCoords
                     ? 'Restaurants Near You'
-                    : 'Featured Collections'}
+                    : 'Top-rated halal spots this week'}
               </h2>
               <p className="text-sm sm:text-base text-slate-500">
                 {activeSearchTerm
                   ? `Found ${places.length} matching places`
                   : userCoords
                     ? 'Showing the closest verified Halal spots'
-                    : 'Hand-picked favorites for you'}
+                    : 'Top-rated halal spots this week'}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -502,8 +499,7 @@ export default function Home() {
             </h2>
 
             <p className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-6 sm:mb-8 px-2">
-              Every review and restaurant you add helps Muslim families find authentic Halal options.
-              Together, we're building a community-driven platform based on transparency and verified trust.
+              Every listing is either owner-certified or confirmed by 5+ community members. No guessing. No compromise.
             </p>
 
             <div className="grid grid-cols-3 gap-3 sm:gap-6 mt-6 sm:mt-10">
@@ -525,30 +521,15 @@ export default function Home() {
       </section>
 
       {/* Registration CTA */}
-      <section className="py-12 sm:py-20 bg-slate-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-emerald-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-        <div className="container mx-auto px-4 relative z-10 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">Own a Halal Restaurant?</h2>
-          <p className="text-slate-300 max-w-2xl mx-auto mb-6 sm:mb-10 text-sm sm:text-lg px-2">
-            Join our network of over 5,000+ verified Halal businesses.
-            Reach more customers and grow your presence.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
-            <Button
-              size="lg"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-12 sm:h-auto text-sm sm:text-base"
-              onClick={() => setIsLoginModalOpen(true)}
-            >
-              Register Your Restaurant
-            </Button>
-            <Link href="/for-businesses">
-              <Button size="lg" variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white h-12 sm:h-auto text-sm sm:text-base w-full">
-                Learn More
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <section className="py-12 sm:py-20 bg-white text-center">
+  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Not sure if a place is halal?</h2>
+  <p className="text-slate-600 max-w-2xl mx-auto mb-6">Search it. Report it. Help the community.</p>
+  <form className="flex justify-center gap-2" onSubmit={(e) => { e.preventDefault(); /* handle search */ }}>
+    <Input placeholder="Search restaurant..." className="w-64" />
+    <Button type="submit" size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white">Search</Button>
+  </form>
+  <p className="mt-4"><Link href="/add-missing-restaurant"><span className="text-emerald-600 underline">Add a missing restaurant</span></Link></p>
+</section>
 
       <LoginModal
         isOpen={isLoginModalOpen}
