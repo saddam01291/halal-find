@@ -1,4 +1,4 @@
-import { getCityPageBySlug, getPlacesByCity } from '@/lib/api-server';
+import { getCityPageBySlug, getPlacesByCity, getAllCitySlugsForSitemap } from '@/lib/api-server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,15 +8,17 @@ import { getValidImageUrl } from '@/lib/utils';
 export const dynamic = 'force-static';
 export const revalidate = 86400; // Revalidate every 24 hours
 
-export default async function CityPage({ params }: { params: Promise<{ citySlug: string }> }) {
-    const { citySlug } = await params;
+export async function generateStaticParams() {
+    const citySlugs = await getAllCitySlugsForSitemap();
+    return citySlugs
+        .filter(city => city.city_slug && city.city_slug.length > 0 && city.city_slug !== '-')
+        .map((city) => ({
+            slug: city.city_slug,
+        }));
+}
 
-    // Only handle slugs that start with 'halal-restaurants-'
-    if (!citySlug.startsWith('halal-restaurants-')) {
-        notFound();
-    }
-
-    const slug = citySlug.replace('halal-restaurants-', '');
+export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {

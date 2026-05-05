@@ -174,13 +174,13 @@ export default function Home() {
                   <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />
                   Find Halal Food Near Me
                 </Button>
-                <Link href="/halal-restaurants-mumbai" className="inline-block">
+                <Link href="/search" className="inline-block">
                   <Button
                     size="lg"
                     variant="outline"
                     className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl bg-white text-emerald-600 border border-emerald-600 hover:bg-emerald-50"
                   >
-                    Browse by City →
+                    Explore All Cities →
                   </Button>
                 </Link>
               </div>
@@ -200,6 +200,27 @@ export default function Home() {
                 Search
               </Button>
             </form>
+
+            <div className="flex items-center gap-3 mt-4 text-xs font-bold text-slate-400">
+              <span className="uppercase tracking-widest text-[10px]">Trending:</span>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                {[
+                  { name: 'Dubai', slug: 'dubai' },
+                  { name: 'London', slug: 'london' },
+                  { name: 'Delhi', slug: 'delhi' },
+                  { name: 'Hyderabad', slug: 'hyderabad' },
+                  { name: 'Mumbai', slug: 'mumbai' }
+                ].map(city => (
+                  <Link 
+                    key={city.slug} 
+                    href={`/halal-restaurants-${city.slug}`}
+                    className="px-3 py-1 bg-white border border-slate-100 rounded-full text-slate-600 hover:border-emerald-200 hover:text-emerald-600 transition-all shadow-sm whitespace-nowrap"
+                  >
+                    {city.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-center gap-4 sm:gap-8 pt-4 sm:pt-8 text-slate-600 flex-wrap">
