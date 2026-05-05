@@ -13,12 +13,19 @@ export async function generateStaticParams() {
     return citySlugs
         .filter(city => city.city_slug && city.city_slug.length > 0 && city.city_slug !== '-')
         .map((city) => ({
-            slug: city.city_slug,
+            citySlug: `halal-restaurants-${city.city_slug}`,
         }));
 }
 
-export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
+export default async function CityPage({ params }: { params: Promise<{ citySlug: string }> }) {
+    const { citySlug } = await params;
+
+    // Only handle slugs that start with 'halal-restaurants-'
+    if (!citySlug.startsWith('halal-restaurants-')) {
+        notFound();
+    }
+
+    const slug = citySlug.replace('halal-restaurants-', '');
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {
