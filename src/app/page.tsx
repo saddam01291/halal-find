@@ -155,7 +155,7 @@ export default function Home() {
         </div>
 
         <div className="max-w-4xl space-y-5 sm:space-y-8 relative z-10">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 drop-shadow-sm leading-[1.2] mb-4">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 drop-shadow-sm leading-tight sm:leading-[1.2] mb-4 pb-1">
             SEARCHING FOR <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">HALAL FOOD NEAR ME</span>
           </h1>
 
@@ -201,9 +201,9 @@ export default function Home() {
               </Button>
             </form>
 
-            <div className="flex items-center gap-3 mt-4 text-xs font-bold text-slate-400">
-              <span className="uppercase tracking-widest text-[10px]">Trending:</span>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 text-xs font-bold text-slate-400 w-full px-4">
+              <span className="uppercase tracking-widest text-[10px] text-slate-500 whitespace-nowrap">Trending Cities:</span>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 w-full justify-center sm:justify-start">
                 {[
                   { name: 'Dubai', slug: 'dubai' },
                   { name: 'London', slug: 'london' },
