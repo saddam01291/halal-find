@@ -22,12 +22,11 @@ export default function AboutPage() {
             Driven by Purpose
           </div>
           <h1 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">
-            Our Mission is to<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-400">Simplify Halal Living</span>
+            Our Mission:<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-400">Making Halal Food Easy to Find</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-            Find Halal started with a simple belief: finding trusted Halal food should be effortless. 
-            We are building the definitive bridge between honest Halal businesses and conscious consumers.
+            Find Halal helps you discover verified halal restaurants near you. We bridge the gap between trusted halal businesses and people seeking reliable, authentic halal food—so you can choose with confidence.
           </p>
         </div>
       </section>
