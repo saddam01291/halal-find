@@ -165,3 +165,17 @@ export async function getAllCitySlugsForSitemap(): Promise<{ city_slug: string; 
     }
     return data || [];
 }
+
+export async function getPopularCitiesServer(): Promise<{ city_name: string, city_slug: string, restaurant_count: number }[]> {
+    const { data, error } = await supabaseServer
+        .from('seo_city_pages')
+        .select('city_name, city_slug, restaurant_count')
+        .order('restaurant_count', { ascending: false })
+        .limit(12);
+
+    if (error) {
+        console.error('Error fetching popular cities on server:', error);
+        return [];
+    }
+    return data || [];
+}
