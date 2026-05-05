@@ -34,8 +34,32 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
 
     const restaurants = await getPlacesByCity(cityPage.city_name);
 
+    // Breadcrumb Schema
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://findhalalonly.com'
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: `Halal Restaurants in ${cityPage.city_name}`,
+                item: `https://findhalalonly.com/halal-restaurants-${slug}`
+            }
+        ]
+    };
+
     return (
         <div className="min-h-screen bg-slate-50">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
             {/* Hero Section */}
             <section className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-slate-900 text-white overflow-hidden">
                 <div className="absolute inset-0 opacity-10">

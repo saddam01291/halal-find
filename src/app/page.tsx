@@ -14,10 +14,45 @@ export default async function Home() {
     getPopularCitiesServer()
   ]);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Find Halal',
+    url: 'https://findhalalonly.com',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://findhalalonly.com/search?q={search_term_string}',
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
+  const orgJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Find Halal',
+    url: 'https://findhalalonly.com',
+    logo: 'https://findhalalonly.com/favicon.ico',
+    contactPoint: {
+      '@type': 'ContactPoint',
+      telephone: '+91-8371962838',
+      contactType: 'customer service'
+    }
+  };
+
   return (
-    <HomeClient 
-      initialPlaces={initialPlaces} 
-      initialPopularCities={initialPopularCities} 
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
+      <HomeClient 
+        initialPlaces={initialPlaces} 
+        initialPopularCities={initialPopularCities} 
+      />
+    </>
   );
 }

@@ -9,6 +9,7 @@ import { LocationProvider } from "@/context/LocationContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://findhalalonly.com'),
   title: "Find Halal Restaurants Near You — Verified by the Community",
   description: "Find halal-certified restaurants, hotels and food near you. Verified by owners and confirmed by the community. 5,000+ trusted halal listings across India and beyond.",
   keywords: [
@@ -25,7 +26,14 @@ export const metadata: Metadata = {
     title: "Find Halal - Discover Halal Hotels, Places, Food & Restaurants Near You",
     description: "Discover the best Halal hotels, places, food, and restaurants near you. Instant lookup of location, reviews, and Halal status.",
     type: "website",
+    siteName: "Find Halal",
+    locale: "en_US",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Find Halal - Discover Halal Hotels, Places, Food & Restaurants Near You",
+    description: "Discover the best Halal hotels, places, food, and restaurants near you.",
+  }
 };
 
 export default function RootLayout({

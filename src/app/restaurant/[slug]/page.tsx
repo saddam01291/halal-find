@@ -11,6 +11,7 @@ import { PlaceActions } from '@/components/place/PlaceActions';
 import { PlaceReviews } from '@/components/place/PlaceReviews';
 import { GoogleMap } from '@/components/map/Map';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 
 function extractIdFromSlug(slug: string): string | null {
     const match = slug.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/i);
@@ -36,7 +37,7 @@ export async function generateMetadata(
     
     const name = place.name || 'Unnamed Place';
     const city = place.city || 'Location Pending';
-    const title = `${name} | Halal Hotel, Place, Food & Restaurant Near ${city}`;
+    const title = `${name} | Halal Hotel, Place, Food & Restaurant Near ${city} | Find Halal`;
     const description = `Find verified information, community reviews, and halal status for ${name} in ${city}.`;
     
     return {
@@ -136,6 +137,32 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
         } : {})
     };
 
+    // Breadcrumb Schema
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://findhalalonly.com'
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: city,
+                item: `https://findhalalonly.com/halal-restaurants-${city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+            },
+            {
+                '@type': 'ListItem',
+                position: 3,
+                name: name,
+                item: `https://findhalalonly.com/restaurant/${slug}`
+            }
+        ]
+    };
+
     const displayCoords = (place.lat && place.lng) ? { lat: place.lat, lng: place.lng } : null;
 
     return (
@@ -144,12 +171,19 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
             />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
 
             {/* Hero Image Section */}
             <div className="relative h-[35vh] sm:h-[45vh] md:h-[60vh] w-full overflow-hidden bg-slate-900">
-                <div 
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105 opacity-80"
-                    style={{ backgroundImage: `url(${getValidImageUrl(place.image, place.id, name, cuisine)})` }}
+                <Image
+                    src={getValidImageUrl(place.image, place.id, name, cuisine)}
+                    alt={`Halal restaurant ${name} in ${city} - Interior/Food`}
+                    fill
+                    priority
+                    className="object-cover transition-transform duration-1000 hover:scale-105 opacity-80"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
                 
@@ -261,7 +295,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                         <SafetyTransparency place={place as any} />
 
                         {/* Reviews Section isolated as Client Component */}
-                        <PlaceReviews placeId={place.id} />
+                        <PlaceReviews placeId={place.id} initialReviews={reviews} />
                         
                     </div>
 

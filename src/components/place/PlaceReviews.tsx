@@ -7,8 +7,9 @@ import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { DbReview } from '@/lib/supabase';
 
-export function PlaceReviews({ placeId }: { placeId: string }) {
+export function PlaceReviews({ placeId, initialReviews = [] }: { placeId: string, initialReviews?: DbReview[] }) {
     const [showReviewForm, setShowReviewForm] = useState(false);
     const { user } = useAuth();
 
@@ -49,7 +50,7 @@ export function PlaceReviews({ placeId }: { placeId: string }) {
                 </div>
             )}
 
-            <ReviewList placeId={placeId} />
+            <ReviewList placeId={placeId} initialReviews={initialReviews} />
         </div>
     );
 }

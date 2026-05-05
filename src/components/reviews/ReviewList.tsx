@@ -8,9 +8,9 @@ import { formatDistanceToNow } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 
-export function ReviewList({ placeId }: { placeId: string }) {
-    const [reviews, setReviews] = useState<DbReview[]>([]);
-    const [loading, setLoading] = useState(true);
+export function ReviewList({ placeId, initialReviews = [] }: { placeId: string, initialReviews?: DbReview[] }) {
+    const [reviews, setReviews] = useState<DbReview[]>(initialReviews);
+    const [loading, setLoading] = useState(initialReviews.length === 0);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editRating, setEditRating] = useState(0);
     const [editComment, setEditComment] = useState('');
