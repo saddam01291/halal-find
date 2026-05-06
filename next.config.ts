@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
         source: '/halal-restaurants-%D8%AF%D8%A8%D9%8A', // /halal-restaurants-دبي
         destination: '/halal-restaurants-dubai',
         permanent: true,
