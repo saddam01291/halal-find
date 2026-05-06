@@ -15,20 +15,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'www.findhalalonly.com',
-          },
-        ],
-        destination: 'https://findhalalonly.com/:path*',
-        permanent: true,
-      },
-      {
         source: '/halal-restaurants-%D8%AF%D8%A8%D9%8A', // /halal-restaurants-دبي
         destination: '/halal-restaurants-dubai',
         permanent: true,

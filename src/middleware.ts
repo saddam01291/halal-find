@@ -2,12 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    const host = request.headers.get('host');
-    if (host && host.startsWith('www.')) {
-        const newHost = host.replace('www.', '');
-        return NextResponse.redirect(`https://${newHost}${request.nextUrl.pathname}${request.nextUrl.search}`, 301);
-    }
-
     let supabaseResponse = NextResponse.next({
         request,
     })
