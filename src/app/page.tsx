@@ -72,6 +72,6 @@ export default async function Home() {
         initialPlaces={initialPlaces} 
         initialPopularCities={initialPopularCities} 
       />
-    </>
+    </main>
   );
 }
