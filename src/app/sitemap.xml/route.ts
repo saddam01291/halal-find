@@ -71,11 +71,11 @@ export async function GET() {
     </url>`;
         });
 
-        xml += '\n</urlset>';
+        xml += '</urlset>';
 
-        return new NextResponse(xml, {
+        return new NextResponse(xml.trim(), {
             headers: {
-                'Content-Type': 'application/xml',
+                'Content-Type': 'application/xml; charset=utf-8',
                 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=43200',
             },
         });
