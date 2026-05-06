@@ -77,6 +77,8 @@ export async function GET() {
             headers: {
                 'Content-Type': 'application/xml; charset=utf-8',
                 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=43200',
+                'X-Robots-Tag': 'noindex, follow', // Sitemap itself shouldn't be indexed, just followed
+                'Access-Control-Allow-Origin': '*',
             },
         });
     } catch (error) {
