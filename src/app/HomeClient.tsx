@@ -446,6 +446,8 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
             </div>
           </div>
         </section>
+      )}
+
       {/* How it Works Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
