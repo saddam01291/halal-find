@@ -147,7 +147,7 @@ export function SearchClient({ initialPlaces, initialQuery }: SearchClientProps)
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
-            <div className="w-full md:w-1/2 lg:w-1/2 overflow-y-auto border-r border-slate-200 bg-white shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)] z-20">
+            <div className="w-full md:w-1/2 lg:w-1/2 overflow-y-auto border-r border-slate-200 bg-white shadow-none md:shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)] z-20">
                 <div className="p-3 sm:p-4 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                     <form onSubmit={handleSearch} className="relative mb-3 sm:mb-4 flex gap-2">
                         <div className="relative flex-1">

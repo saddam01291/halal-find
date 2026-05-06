@@ -39,8 +39,27 @@ export default async function Home() {
     }
   };
 
+  // WebSite SearchBox Schema
+  const websiteSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://findhalalonly.com",
+      "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://findhalalonly.com/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+      }
+  };
+
   return (
-    <>
+    <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

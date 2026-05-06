@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, ArrowRight, Store, ChefHat, Users } from 'lucide-react';
+import { MapPin, ArrowRight, Store, ChefHat, Users, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
@@ -181,7 +181,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
 
             <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 text-xs font-bold text-slate-400 w-full px-4">
               <span className="uppercase tracking-widest text-[10px] text-slate-500 whitespace-nowrap">Trending Cities:</span>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 w-full justify-center sm:justify-start">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 w-full justify-start sm:justify-center">
                 {[
                   { name: 'Dubai', slug: 'dubai' },
                   { name: 'London', slug: 'london' },
@@ -277,7 +277,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
           {availableAreas.length > 0 && (
             <div className="mb-12">
               <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Nearby Neighborhoods</p>
-              <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
                 <button
                   onClick={() => setSelectedArea(null)}
                   className={`px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap border-2 transition-all ${
@@ -446,18 +446,98 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
             </div>
           </div>
         </section>
-      )}
+      {/* How it Works Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4">How FindHalal Works</h2>
+            <p className="text-slate-500">Your simple path to verified dining experiences.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              { 
+                step: '01', 
+                title: 'Search', 
+                desc: 'Find restaurants by city, cuisine, or specific neighborhood.',
+                icon: <MapPin className="h-6 w-6 text-emerald-600" />
+              },
+              { 
+                step: '02', 
+                title: 'Verify', 
+                desc: 'Check the real-time trust score and verification status.',
+                icon: <ShieldCheck className="h-6 w-6 text-emerald-600" />
+              },
+              { 
+                step: '03', 
+                title: 'Dine', 
+                desc: 'Eat with confidence knowing the status is community-vetted.',
+                icon: <ChefHat className="h-6 w-6 text-emerald-600" />
+              },
+              { 
+                step: '04', 
+                title: 'Report', 
+                desc: 'Help others by sharing photos and confirming the halal status.',
+                icon: <Users className="h-6 w-6 text-emerald-600" />
+              }
+            ].map((item, i) => (
+              <div key={i} className="relative group">
+                <div className="mb-6 h-14 w-14 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
+                  {item.icon}
+                </div>
+                <div className="absolute top-0 right-0 text-6xl font-black text-slate-50 -z-10 group-hover:text-emerald-50 transition-colors">
+                  {item.step}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Community Impact Section */}
-      <section className="py-10 sm:py-16 bg-gradient-to-br from-emerald-50 to-amber-50 border-y border-emerald-100">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-4 px-2">
+      <section className="py-12 sm:py-24 bg-gradient-to-br from-emerald-50 to-amber-50 border-y border-emerald-100">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-900 mb-6 px-2 leading-tight">
               Building the World's Most <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-amber-600">Trusted</span> Halal Database
             </h2>
-            <p className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-6 sm:mb-8 px-2">
+            <p className="text-sm sm:text-xl text-slate-600 leading-relaxed px-2">
               Every listing is either owner-certified or confirmed by 5+ community members. No guessing. No compromise.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
+            <div className="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-xl shadow-emerald-500/5 text-center">
+              <div className="h-16 w-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-600/20">
+                <ShieldCheck className="h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Owner Certified</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">Direct verification from restaurant owners providing active Halal certification documents.</p>
+            </div>
+            
+            <div className="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-xl shadow-emerald-500/5 text-center">
+              <div className="h-16 w-16 bg-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/20">
+                <Users className="h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Community Vouched</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">Verified by at least 5 independent community members through on-site visits and reports.</p>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-xl shadow-emerald-500/5 text-center">
+              <div className="h-16 w-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-slate-900/20">
+                <Store className="h-8 w-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">5,000+ Listings</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">Growing daily with verified halal hotels, places, food, and restaurants across the globe.</p>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <Link href="/how-we-verify-halal" className="inline-flex items-center gap-2 text-emerald-600 font-bold hover:underline transition-all">
+                Learn more about our verification process <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>

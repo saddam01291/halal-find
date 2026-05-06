@@ -31,6 +31,16 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Mission Section */}
+      <section className="py-12 bg-emerald-50/50 border-b border-emerald-100">
+        <div className="container mx-auto px-4 text-center">
+            <h2 className="text-sm font-black text-emerald-600 uppercase tracking-widest mb-4">Our Mission Statement</h2>
+            <p className="text-2xl md:text-3xl font-bold text-slate-800 max-w-5xl mx-auto leading-tight italic">
+              "To empower the global Muslim community with a transparent, verified, and community-driven platform to discover the best Halal food near them, ensuring no compromise on religious and dietary values."
+            </p>
+        </div>
+      </section>
+
       {/* Philosophy Section */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">

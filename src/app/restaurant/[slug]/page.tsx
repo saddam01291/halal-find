@@ -227,16 +227,38 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                     {/* LEFT COLUMN: Main Details */}
                     <div className="lg:col-span-2 space-y-5 sm:space-y-8">
                         <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                            <nav className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-6 bg-slate-50 px-4 py-2 rounded-xl w-fit">
+                                <Link href="/" className="hover:text-emerald-600 transition-colors">Home</Link>
+                                <ChevronRight className="h-3 w-3" />
+                                {place.city && (
+                                    <>
+                                        <Link href={`/halal-restaurants-${place.city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`} className="hover:text-emerald-600 transition-colors">{place.city}</Link>
+                                        <ChevronRight className="h-3 w-3" />
+                                    </>
+                                )}
+                                <span className="text-slate-900 truncate max-w-[100px] sm:max-w-none">{name}</span>
+                            </nav>
+
                             <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 sm:mb-8">
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">Transparency & Community Trust</h2>
+                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">About {name} - Halal Dining in {city}</h2>
                                     <p className="text-slate-500 leading-relaxed text-sm sm:text-lg italic">
                                         Helping you find verified Halal dining experiences through transparent community feedback.
                                     </p>
-                                    <p className="text-slate-500 leading-relaxed text-xs sm:text-md mt-3 sm:mt-4">
-                                        {city && city !== 'Unknown' ? `Located in ${city}, ` : ''}{name} offers an authentic {cuisine || 'Halal'} experience. 
-                                        Verified by our community to ensure quality and trust. Always confirm with the owner to be sure of the current Halal status.
-                                    </p>
+                                    <div className="text-slate-600 leading-relaxed text-sm sm:text-base mt-4 sm:mt-6 space-y-4">
+                                        <p>
+                                            Our community of halal diners has highlight <strong>{name}</strong> as a key destination for anyone exploring the <strong>{city}</strong> food scene. 
+                                            Located at {place.address}, this spot specializes in {cuisine || 'Halal'} dishes that have been vetted for quality and authenticity.
+                                        </p>
+                                        <p>
+                                            What sets <strong>{name}</strong> apart is the consistent feedback from local visitors who appreciate its commitment to halal standards. 
+                                            With a solid {place.rating || 0}-star rating from {place.review_count || 0} community members, it has become a reliable choice for families and food enthusiasts alike seeking a genuine <strong>halal restaurant in {city}</strong>.
+                                        </p>
+                                        <p>
+                                            At FindHalal, we don't just list places; we verify them. <strong>{name}</strong> is part of our transparent directory where safety and dietary values come first. 
+                                            Browse the latest community photos and trust scores below to plan your visit with confidence.
+                                        </p>
+                                    </div>
                                 </div>
                                 <PlaceActions placeId={place.id} placeName={place.name} />
                             </div>

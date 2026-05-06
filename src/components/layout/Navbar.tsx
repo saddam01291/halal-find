@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, LogOut, PlusCircle, LayoutDashboard, X } from 'lucide-react';
+import { MapPin, LogOut, PlusCircle, LayoutDashboard, X, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
@@ -29,6 +29,7 @@ export function Navbar() {
                         <div>
                             <span className="block text-xl font-bold tracking-tight text-slate-900 leading-none">Find<span className="text-emerald-600">Halal</span></span>
                             <span className="block text-[10px] font-medium text-amber-600 tracking-wider leading-none">GOURMET</span>
+                            <span className="sr-only">FindHalal - Halal Restaurant Directory</span>
                         </div>
                     </Link>
                     <div className="flex items-center gap-2">
@@ -50,6 +51,12 @@ export function Navbar() {
                                 className="inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                             >
                                 Explore
+                            </Link>
+                            <Link
+                                href="/blog"
+                                className="inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                            >
+                                Blog
                             </Link>
 
                             {/* Location Status Indicator */}
@@ -256,6 +263,17 @@ export function Navbar() {
                                         <MapPin className="h-4 w-4 text-emerald-600" />
                                     </div>
                                     <span className="font-bold text-sm">Explore Restaurants</span>
+                                </Link>
+
+                                <Link
+                                    href="/blog"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-slate-900 active:bg-slate-100 transition-colors"
+                                >
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-sm">
+                                        <BookOpen className="h-4 w-4 text-emerald-600" />
+                                    </div>
+                                    <span className="font-bold text-sm">Our Blog</span>
                                 </Link>
 
                                 <button

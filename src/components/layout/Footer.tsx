@@ -20,7 +20,10 @@ export function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider">Quick Links</h4>
                         <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-                            <li><Link href="/search" className="hover:text-emerald-400 transition-colors flex items-center gap-1">Explore Places</Link></li>
+                            <li><Link href="/search" className="hover:text-emerald-400 transition-colors">Explore Places</Link></li>
+                            <li><Link href="/blog" className="hover:text-emerald-400 transition-colors">FindHalal Blog</Link></li>
+                            <li><Link href="/how-we-verify-halal" className="hover:text-emerald-400 transition-colors">How We Verify</Link></li>
+                            <li><Link href="/halal-certification-guide" className="hover:text-emerald-400 transition-colors">Halal Guide</Link></li>
                             <li><Link href="/about" className="hover:text-emerald-400 transition-colors">About Us</Link></li>
                             <li><Link href="/contact" className="hover:text-emerald-400 transition-colors">Contact Support</Link></li>
                         </ul>
@@ -46,6 +49,7 @@ export function Footer() {
                     <p>&copy; {new Date().getFullYear()} FindHalal. All rights reserved.</p>
                     <div className="flex gap-4">
                         <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                         <Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link>
                     </div>
                 </div>

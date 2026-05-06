@@ -2,11 +2,43 @@ import { getCityPageBySlug, getPlacesByCity, getAllCitySlugsForSitemap } from '@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Star, ChevronRight, ChevronDown, ShieldCheck, Utensils, Users, ArrowRight } from 'lucide-react';
+import { MapPin, Star, ChevronRight, ChevronDown, ShieldCheck, Utensils, Users, ArrowRight, Home } from 'lucide-react';
 import { getValidImageUrl } from '@/lib/utils';
+import { Metadata, ResolvingMetadata } from 'next';
 
 export const dynamic = 'force-static';
 export const revalidate = 86400; // Revalidate every 24 hours
+
+export async function generateMetadata(
+    { params }: { params: Promise<{ citySlug: string }> },
+    parent: ResolvingMetadata
+): Promise<Metadata> {
+    const { citySlug } = await params;
+    const slug = citySlug.replace('halal-restaurants-', '');
+    const cityPage = await getCityPageBySlug(slug);
+
+    if (!cityPage) {
+        return { title: 'City Not Found | FindHalal' };
+    }
+
+    const title = `${cityPage.city_name} Halal Restaurants – Verified & Trusted | FindHalal`;
+    const description = `Find ${cityPage.restaurant_count} verified halal restaurants in ${cityPage.city_name}. Community reviewed, owner certified. Browse the best halal spots near you.`;
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            url: `https://findhalalonly.com/halal-restaurants-${slug}`,
+            siteName: 'Find Halal',
+            type: 'website',
+        },
+        alternates: {
+            canonical: `https://findhalalonly.com/halal-restaurants-${slug}`,
+        }
+    };
+}
 
 export async function generateStaticParams() {
     const citySlugs = await getAllCitySlugsForSitemap();
@@ -34,6 +66,29 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
 
     const restaurants = await getPlacesByCity(cityPage.city_name);
 
+    // LocalBusiness Schema (List)
+    const localBusinessSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: `Halal Restaurants in ${cityPage.city_name}`,
+        description: `Top-rated and verified halal restaurants in ${cityPage.city_name}`,
+        itemListElement: restaurants.slice(0, 10).map((place, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+                '@type': 'Restaurant',
+                name: place.name,
+                url: `https://findhalalonly.com/restaurant/${place.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${place.id}`,
+                address: {
+                    '@type': 'PostalAddress',
+                    streetAddress: place.address || '',
+                    addressLocality: cityPage.city_name,
+                    addressCountry: 'IN'
+                }
+            }
+        }))
+    };
+
     // Breadcrumb Schema
     const breadcrumbSchema = {
         '@context': 'https://schema.org',
@@ -59,6 +114,10 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
             />
             {/* Hero Section */}
             <section className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-slate-900 text-white overflow-hidden">
@@ -141,7 +200,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                         {cityPage.ai_intro && (
                             <article className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
                                 <h2 className="text-2xl font-bold text-slate-900 mb-6">
-                                    Halal Food Guide: {cityPage.city_name}
+                                    Community Insights: Halal Dining in {cityPage.city_name}
                                 </h2>
                                 <div className="prose prose-slate prose-lg max-w-none leading-relaxed">
                                     {cityPage.ai_intro.split('\n').filter(Boolean).map((paragraph: string, i: number) => (

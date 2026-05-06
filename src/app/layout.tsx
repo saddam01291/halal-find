@@ -33,6 +33,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Find Halal - Discover Halal Hotels, Places, Food & Restaurants Near You",
     description: "Discover the best Halal hotels, places, food, and restaurants near you.",
+  },
+  alternates: {
+    canonical: '/',
   }
 };
 
