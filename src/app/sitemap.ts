@@ -72,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const cityUrls: MetadataRoute.Sitemap = citySlugs
         .filter(city => city.city_slug && city.city_slug.length > 0 && city.city_slug !== '-')
         .map((city) => ({
-            url: `${baseUrl}/halal-restaurants-${city.city_slug}`,
+            url: `${baseUrl}/halal-restaurants-${encodeURIComponent(city.city_slug!)}`,
             lastModified: city.generated_at ? new Date(city.generated_at) : new Date(),
             changeFrequency: 'weekly',
             priority: 0.9,
