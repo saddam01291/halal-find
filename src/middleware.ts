@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     
     // Bypass middleware for SEO and static files for maximum compatibility
-    if (pathname.includes('sitemap.xml') || pathname.includes('robots.txt')) {
+    if (pathname.startsWith('/sitemap') || pathname.startsWith('/robots.txt')) {
         return NextResponse.next();
     }
 
