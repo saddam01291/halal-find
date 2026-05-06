@@ -10,70 +10,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         getAllCitySlugsForSitemap(),
     ]);
 
+    const today = new Date().toISOString().split('T')[0];
+
     // Static pages
     const staticPages: MetadataRoute.Sitemap = [
-        {
-            url: baseUrl,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 1,
-        },
-        {
-            url: `${baseUrl}/search`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.9,
-        },
-        {
-            url: `${baseUrl}/about`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        },
-        {
-            url: `${baseUrl}/contact`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        },
-        {
-            url: `${baseUrl}/terms`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.3,
-        },
-        {
-            url: `${baseUrl}/how-we-verify-halal`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.8,
-        },
-        {
-            url: `${baseUrl}/halal-certification-guide`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.8,
-        },
-        {
-            url: `${baseUrl}/for-businesses`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.5,
-        },
-        {
-            url: `${baseUrl}/blog`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.8,
-        },
+        { url: baseUrl, lastModified: today, changeFrequency: 'daily', priority: 1.0 },
+        { url: `${baseUrl}/search`, lastModified: today, changeFrequency: 'daily', priority: 0.9 },
+        { url: `${baseUrl}/blog`, lastModified: today, changeFrequency: 'daily', priority: 0.8 },
+        { url: `${baseUrl}/about`, lastModified: today, changeFrequency: 'monthly', priority: 0.7 },
+        { url: `${baseUrl}/contact`, lastModified: today, changeFrequency: 'monthly', priority: 0.7 },
+        { url: `${baseUrl}/how-we-verify-halal`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
+        { url: `${baseUrl}/halal-certification-guide`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
+        { url: `${baseUrl}/terms`, lastModified: today, changeFrequency: 'monthly', priority: 0.3 },
     ];
 
-    // City landing pages (HIGH priority for SEO)
+    // City landing pages
     const cityUrls: MetadataRoute.Sitemap = citySlugs
         .filter(city => city.city_slug && city.city_slug.length > 0 && city.city_slug !== '-')
         .map((city) => ({
             url: `${baseUrl}/halal-restaurants-${encodeURIComponent(city.city_slug!)}`,
-            lastModified: city.generated_at ? new Date(city.generated_at) : new Date(),
+            lastModified: city.generated_at ? new Date(city.generated_at).toISOString().split('T')[0] : today,
             changeFrequency: 'weekly',
             priority: 0.9,
         }));
@@ -85,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         return {
             url: `${baseUrl}/restaurant/${slug}`,
-            lastModified: place.created_at ? new Date(place.created_at) : new Date(),
+            lastModified: place.created_at ? new Date(place.created_at).toISOString().split('T')[0] : today,
             changeFrequency: 'weekly',
             priority: 0.8,
         };
@@ -94,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Blog Post pages
     const blogUrls: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
         url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: new Date(post.date),
+        lastModified: post.date,
         changeFrequency: 'monthly',
         priority: 0.7,
     }));
