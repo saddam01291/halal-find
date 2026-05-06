@@ -9,7 +9,7 @@ import { LocationProvider } from "@/context/LocationContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://findhalalonly.com'),
+  metadataBase: new URL('https://www.findhalalonly.com'),
   title: "Find Halal Restaurants Near You — Verified by the Community",
   description: "Find halal-certified restaurants, hotels and food near you. Verified by owners and confirmed by the community. 5,000+ trusted halal listings across India and beyond.",
   keywords: [
