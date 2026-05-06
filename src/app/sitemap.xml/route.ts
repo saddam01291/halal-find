@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAllPlaceIdsForSitemap, getAllCitySlugsForSitemap } from '@/lib/api-server';
 import { BLOG_POSTS } from '@/lib/blog';
 
-const baseUrl = 'https://www.findhalalonly.com';
+const baseUrl = 'https://findhalalonly.com';
 
 export async function GET() {
     try {
