@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getAllPlaceIdsForSitemap, getAllCitySlugsForSitemap } from '@/lib/api-server';
 import { BLOG_POSTS } from '../lib/blog';
 
-const baseUrl = 'https://findhalalonly.com';
+const baseUrl = 'https://www.findhalalonly.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [places, citySlugs] = await Promise.all([
