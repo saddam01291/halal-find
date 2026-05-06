@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getAllPlaceIdsForSitemap, getAllCitySlugsForSitemap } from '@/lib/api-server';
-import { BLOG_POSTS } from '@/lib/blog';
+import { BLOG_POSTS } from '../lib/blog';
 
 const baseUrl = 'https://findhalalonly.com';
 

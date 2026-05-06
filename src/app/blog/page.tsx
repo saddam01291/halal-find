@@ -1,4 +1,4 @@
-import { BLOG_POSTS } from '@/lib/blog';
+import { BLOG_POSTS } from '../../lib/blog';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, User, ChevronRight, BookOpen } from 'lucide-react';

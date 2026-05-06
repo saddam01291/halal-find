@@ -1,4 +1,4 @@
-import { getBlogPost, BLOG_POSTS } from '@/lib/blog';
+import { getBlogPost, BLOG_POSTS } from '../../../lib/blog';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
