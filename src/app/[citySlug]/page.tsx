@@ -197,7 +197,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-12">
                         {/* AI Intro Section */}
-                        {cityPage.ai_intro && (
+                        {cityPage.ai_intro ? (
                             <article className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
                                 <h2 className="text-2xl font-bold text-slate-900 mb-6">
                                     Community Insights: Halal Dining in {cityPage.city_name}
@@ -208,6 +208,28 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                            dangerouslySetInnerHTML={{ __html: paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>') }}
                                         />
                                     ))}
+                                </div>
+                            </article>
+                        ) : (
+                            <article className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
+                                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                                    Finding Halal Food in {cityPage.city_name}
+                                </h2>
+                                <div className="prose prose-slate prose-lg max-w-none leading-relaxed space-y-4">
+                                    <p className="text-slate-600 leading-[1.8]">
+                                        Discovering verified <strong>halal restaurants in {cityPage.city_name}</strong> has never been easier. 
+                                        As the community grows, we are seeing a significant increase in the number of dining spots catering to halal dietary requirements. 
+                                        From traditional cuisines to modern fusion, the <strong>{cityPage.city_name}</strong> food scene offers a diverse range of options for local residents and visitors alike.
+                                    </p>
+                                    <p className="text-slate-600 leading-[1.8]">
+                                        At FindHalal, we prioritize transparency. Every listing in our <strong>{cityPage.city_name} halal directory</strong> is subject to community verification. 
+                                        Whether you're looking for a quick bite or a fine dining experience, you can trust our platform to provide up-to-date information on halal status, 
+                                        community ratings, and detailed reviews from fellow diners who share your values.
+                                    </p>
+                                    <p className="text-slate-600 leading-[1.8]">
+                                        Explore our curated list of <strong>{cityPage.restaurant_count} verified spots</strong> below to find your next meal with confidence. 
+                                        Don't forget to contribute back to the community by sharing your own experiences and photos!
+                                    </p>
                                 </div>
                             </article>
                         )}
@@ -281,26 +303,43 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                         </div>
 
                         {/* FAQ Section */}
-                        {cityPage.ai_faq && cityPage.ai_faq.length > 0 && (
-                            <section className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
-                                <h2 className="text-2xl font-bold text-slate-900 mb-8">
-                                    Frequently Asked Questions about Halal Food in {cityPage.city_name}
-                                </h2>
-                                <div className="space-y-6">
-                                    {cityPage.ai_faq.map((faq: { q: string; a: string }, i: number) => (
-                                        <details key={i} className="group border border-slate-100 rounded-2xl overflow-hidden" open={i === 0}>
-                                            <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50 transition-colors list-none">
-                                                <h3 className="font-bold text-slate-900 pr-4">{faq.q}</h3>
-                                                <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform" />
-                                            </summary>
-                                            <div className="px-5 pb-5">
-                                                <p className="text-slate-600 leading-relaxed">{faq.a}</p>
-                                            </div>
-                                        </details>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                        {(() => {
+                            const faqs = (cityPage.ai_faq && cityPage.ai_faq.length > 0) ? cityPage.ai_faq : [
+                                {
+                                    q: `Are there many halal restaurants in ${cityPage.city_name}?`,
+                                    a: `Yes, ${cityPage.city_name} has a growing number of halal options. Currently, we have ${cityPage.restaurant_count} verified halal restaurants listed in our directory, covering various cuisines and price ranges.`
+                                },
+                                {
+                                    q: `How do you verify the halal status of restaurants in ${cityPage.city_name}?`,
+                                    a: `We use a community-driven verification process. Users can report halal status, upload photos of certifications, and provide detailed reviews. Our "Halal Trust Score" helps you understand the reliability of each listing.`
+                                },
+                                {
+                                    q: `What are the most popular halal cuisines in ${cityPage.city_name}?`,
+                                    a: `Based on our data, ${cityPage.top_cuisines?.slice(0, 3).join(', ') || 'various cuisines'} are highly popular among the halal dining community in ${cityPage.city_name}.`
+                                }
+                            ];
+
+                            return (
+                                <section className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-8">
+                                        Frequently Asked Questions about Halal Food in {cityPage.city_name}
+                                    </h2>
+                                    <div className="space-y-6">
+                                        {faqs.map((faq: { q: string; a: string }, i: number) => (
+                                            <details key={i} className="group border border-slate-100 rounded-2xl overflow-hidden" open={i === 0}>
+                                                <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50 transition-colors list-none">
+                                                    <h3 className="font-bold text-slate-900 pr-4">{faq.q}</h3>
+                                                    <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform" />
+                                                </summary>
+                                                <div className="px-5 pb-5">
+                                                    <p className="text-slate-600 leading-relaxed">{faq.a}</p>
+                                                </div>
+                                            </details>
+                                        ))}
+                                    </div>
+                                </section>
+                            );
+                        })()}
                     </div>
 
                     {/* Sidebar */}

@@ -26,23 +26,11 @@ export function Footer() {
                             <li><Link href="/halal-certification-guide" className="hover:text-emerald-400 transition-colors">Halal Guide</Link></li>
                             <li><Link href="/about" className="hover:text-emerald-400 transition-colors">About Us</Link></li>
                             <li><Link href="/contact" className="hover:text-emerald-400 transition-colors">Contact Support</Link></li>
+                            <li><Link href="/sitemap.xml" className="hover:text-amber-400 transition-colors font-bold">XML Sitemap</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider">Get in Touch</h4>
-                        <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-                            <li>
-                                <p className="text-[9px] sm:text-[10px] uppercase font-black text-slate-500 mb-0.5 sm:mb-1">WhatsApp / Call</p>
-                                <a href="tel:8371962838" className="text-white font-bold hover:text-emerald-400 transition-colors">8371962838</a>
-                            </li>
-                            <li>
-                                <p className="text-[9px] sm:text-[10px] uppercase font-black text-slate-500 mb-0.5 sm:mb-1">Email</p>
-                                <div className="flex flex-col gap-0.5 sm:gap-1">
-                                    <a href="mailto:halal.food@findhalalonly.com" className="hover:text-amber-400 transition-colors truncate text-[11px] sm:text-sm">halal.food@findhalalonly.com</a>
-                                    <a href="mailto:saddam.entr.91@gmail.com" className="hover:text-amber-400 transition-colors truncate text-[11px] sm:text-sm">saddam.entr.91@gmail.com</a>
-                                </div>
-                            </li>
-                        </ul>
+                        
                     </div>
                 </div>
                 <div className="border-t border-slate-800 mt-6 sm:mt-10 pt-4 sm:pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] sm:text-xs">
