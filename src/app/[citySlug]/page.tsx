@@ -72,13 +72,16 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
         '@type': 'ItemList',
         name: `Halal Restaurants in ${cityPage.city_name}`,
         description: `Top-rated and verified halal restaurants in ${cityPage.city_name}`,
-        itemListElement: restaurants.slice(0, 10).map((place, index) => ({
+        itemListElement: restaurants.slice(0, 10).map((place, index) => {
+            const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            const slug = `${slugBase}-${place.id}`;
+            return {
             '@type': 'ListItem',
             position: index + 1,
             item: {
                 '@type': 'Restaurant',
                 name: place.name,
-                url: `https://findhalalonly.com/restaurant/${place.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${place.id}`,
+                url: `https://findhalalonly.com/restaurant/${slug}`,
                 address: {
                     '@type': 'PostalAddress',
                     streetAddress: place.address || '',
@@ -86,7 +89,8 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                     addressCountry: 'IN'
                 }
             }
-        }))
+        };
+        })
     };
 
     // Breadcrumb Schema
@@ -248,8 +252,11 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                {restaurants.map((place, index) => (
-                                    <Link href={`/place/${place.id}`} key={place.id} className="group">
+                                {restaurants.map((place, index) => {
+                                    const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                                    const slug = `${slugBase}-${place.id}`;
+                                    return (
+                                    <Link href={`/restaurant/${slug}`} key={place.id} className="group">
                                         <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:-translate-y-1">
                                             <div className="h-48 bg-slate-100 relative overflow-hidden">
                                                 <Image
@@ -290,7 +297,8 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                             </div>
                                         </div>
                                     </Link>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {restaurants.length === 0 && (

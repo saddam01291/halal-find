@@ -311,9 +311,11 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {sortedPlaces.slice(0, 30).map((place, index) => {
               const distance = place.distance;
+              const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+              const slug = `${slugBase}-${place.id}`;
 
               return (
-                <Link href={`/place/${place.id}`} key={`${place.id}-${index}`} className="group">
+                <Link href={`/restaurant/${slug}`} key={`${place.id}-${index}`} className="group">
                   <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 sm:hover:-translate-y-2 active:scale-[0.98] sm:active:scale-100">
                     <div className="h-44 sm:h-64 bg-slate-100 relative overflow-hidden">
                       <Image
