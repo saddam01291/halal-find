@@ -5,19 +5,13 @@ import { BLOG_POSTS } from '@/lib/blog';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = 'https://www.findhalalonly.com';
     
-    let places = [];
-    let citySlugs = [];
-    
-    try {
-        const [fetchedPlaces, fetchedCitySlugs] = await Promise.all([
-            getAllPlaceIdsForSitemap(),
-            getAllCitySlugsForSitemap(),
-        ]);
-        places = fetchedPlaces;
-        citySlugs = fetchedCitySlugs;
-    } catch (e) {
+    const [places, citySlugs] = await Promise.all([
+        getAllPlaceIdsForSitemap(),
+        getAllCitySlugsForSitemap(),
+    ]).catch(e => {
         console.error("Error fetching data for sitemap:", e);
-    }
+        return [[], []] as const;
+    });
 
     const sitemap: MetadataRoute.Sitemap = [
         {
