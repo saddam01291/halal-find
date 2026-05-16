@@ -21,6 +21,63 @@ async function importOrchestrator() {
         process.exit(1);
     }
     
+    if (cityArgs.toLowerCase().includes('india') && !cityArgs.includes(',')) {
+        console.log(`🔍 Querying Overpass API for ALL strictly tagged Halal locations in India...`);
+        const overpassQuery = `
+            [out:json][timeout:300];
+            area["name"="India"]->.searchArea;
+            (
+                node["diet:halal"="yes"](area.searchArea);
+                way["diet:halal"="yes"](area.searchArea);
+                node["cuisine"="halal"](area.searchArea);
+                way["cuisine"="halal"](area.searchArea);
+                node["halal"="yes"](area.searchArea);
+                way["halal"="yes"](area.searchArea);
+            );
+            out center;
+        `;
+        const overpassServers = [
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://overpass.n.osmsurround.org/api/interpreter'
+        ];
+        
+        let overpassRes;
+        let success = false;
+        
+        for (const server of overpassServers) {
+            console.log(`📡 Querying server: ${server}`);
+            try {
+                overpassRes = await fetch(server, {
+                    method: 'POST',
+                    body: overpassQuery,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    timeout: 300000
+                });
+                if (overpassRes.ok) {
+                    success = true;
+                    break;
+                }
+                console.warn(`⚠️  Server ${server} failed with status ${overpassRes.status}`);
+            } catch (err) {
+                console.warn(`⚠️  Server ${server} encountered an error: ${err.message}`);
+            }
+        }
+        
+        if (!success) {
+            console.error(`❌ All Overpass API servers failed for global query.`);
+            process.exit(1);
+        }
+        const osmData = await overpassRes.json();
+        const elements = osmData.elements;
+        if (!elements || elements.length === 0) {
+            console.log(`ℹ️ No Halal locations found via OSM in India.`);
+            process.exit(0);
+        }
+        processElements(elements, "India");
+        return;
+    }
+
     console.log(`\n🌍 Geocoding: ${cityArgs}...`);
     try {
         const nominatimRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityArgs)}&format=json&limit=1`, {
@@ -48,22 +105,44 @@ async function importOrchestrator() {
             (
                 node["diet:halal"="yes"](${overpassBbox});
                 way["diet:halal"="yes"](${overpassBbox});
+                node["cuisine"="halal"](${overpassBbox});
+                way["cuisine"="halal"](${overpassBbox});
+                node["halal"="yes"](${overpassBbox});
+                way["halal"="yes"](${overpassBbox});
             );
             out center;
         `;
         
-        const overpassRes = await fetch(`https://overpass-api.de/api/interpreter`, {
-            method: 'POST',
-            body: overpassQuery,
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        });
+        const overpassServers = [
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://overpass.n.osmsurround.org/api/interpreter'
+        ];
         
-        if (!overpassRes.ok) {
-            const text = await overpassRes.text();
-            console.error(`❌ Overpass API error (${overpassRes.status}). The server might be busy or rate-limiting.`);
-            if (text.includes('<?xml')) {
-                console.log('💡 Note: Received XML error, likely a timeout or capacity issue.');
+        let overpassRes;
+        let success = false;
+        
+        for (const server of overpassServers) {
+            console.log(`📡 Querying server: ${server}`);
+            try {
+                overpassRes = await fetch(server, {
+                    method: 'POST',
+                    body: overpassQuery,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    timeout: 60000
+                });
+                if (overpassRes.ok) {
+                    success = true;
+                    break;
+                }
+                console.warn(`⚠️  Server ${server} failed with status ${overpassRes.status}`);
+            } catch (err) {
+                console.warn(`⚠️  Server ${server} encountered an error: ${err.message}`);
             }
+        }
+        
+        if (!success) {
+            console.error(`❌ All Overpass API servers failed.`);
             process.exit(1);
         }
         
@@ -75,6 +154,14 @@ async function importOrchestrator() {
             process.exit(0);
         }
         
+        processElements(elements, cityArgs);
+    } catch (error) {
+        console.error(`❌ Unexpected error:`, error.message);
+        process.exit(1);
+    }
+}
+
+async function processElements(elements, cityContext) {
         console.log(`✅ Found ${elements.length} strictly tagged Halal places.`);
         console.log(`💾 Inserting into Supabase...`);
         
@@ -93,7 +180,7 @@ async function importOrchestrator() {
             const lat = el.lat || el.center?.lat;
             const lon = el.lon || el.center?.lon;
             const address = `${el.tags['addr:street'] || ''} ${el.tags['addr:housenumber'] || ''}`.trim() || 'Address not listed';
-            const extractedCity = el.tags['addr:city'] || cityArgs.split(',')[0].trim();
+            const extractedCity = el.tags['addr:city'] || cityContext.split(',')[0].trim();
             
             try {
                 // Deduplication check by name and approximate location
@@ -112,7 +199,7 @@ async function importOrchestrator() {
                 
                 const { error: insertErr } = await supabase.from('places').insert({
                     name: name,
-                    cuisine: "", 
+                    cuisine: "Halal", 
                     address: address,
                     city: extractedCity,
                     rating: 0,
@@ -140,14 +227,10 @@ async function importOrchestrator() {
             }
         }
         
-        console.log(`\n🎉 Process Complete for ${cityArgs}!`);
+        console.log(`\n🎉 Process Complete for ${cityContext}!`);
         console.log(`✅ Added: ${addedCount}`);
         console.log(`⏭️  Skipped: ${skippedCount}`);
-        process.exit(addedCount > 0 ? 0 : 0);
-    } catch (error) {
-        console.error(`❌ Unexpected error:`, error.message);
-        process.exit(1);
-    }
+        process.exit(0);
 }
 
 importOrchestrator();

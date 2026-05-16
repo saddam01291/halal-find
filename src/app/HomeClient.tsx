@@ -126,61 +126,63 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] bg-slate-50 relative">
       {/* Hero Section */}
-      <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 py-14 sm:py-24 overflow-hidden bg-gradient-to-br from-amber-50 via-white to-emerald-50">
+      <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 py-16 sm:py-28 overflow-hidden bg-slate-50">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -left-24 w-64 sm:w-96 h-64 sm:h-96 bg-amber-200/20 rounded-full blur-3xl mix-blend-multiply" />
-          <div className="absolute top-1/2 -right-24 w-64 sm:w-96 h-64 sm:h-96 bg-emerald-200/20 rounded-full blur-3xl mix-blend-multiply" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-100/40 via-transparent to-transparent" />
         </div>
 
-        <div className="max-w-4xl space-y-5 sm:space-y-8 relative z-10">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 drop-shadow-sm leading-tight sm:leading-[1.2] mb-4 pb-1">
-            SEARCHING FOR <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">HALAL FOOD NEAR ME</span>
+        <div className="max-w-4xl w-full space-y-6 sm:space-y-8 relative z-10">
+          <h1 className="text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-800 drop-shadow-sm leading-[1.1] sm:leading-[1.15] mb-4">
+            Searching for <br className="block sm:hidden" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Halal Food Near Me?</span>
           </h1>
 
-          <p className="text-sm sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed px-2">
+          <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-2 font-medium">
             Discover verified halal restaurants with trusted reviews. Find halal food easily and eat with confidence.
           </p>
 
-          <div className="flex flex-col items-center gap-4 sm:gap-6 mt-4 sm:mt-8">
+          <div className="flex flex-col items-center gap-4 sm:gap-6 mt-6 sm:mt-10 w-full">
             {locationStatus === 'prompt' && (
-              <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto px-2 sm:px-0">
                 <Button 
                   onClick={requestLocation}
                   size="lg" 
-                  className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 text-sm sm:text-lg font-bold flex items-center gap-2 sm:gap-3 animate-in zoom-in duration-500"
+                  className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-600/20 text-base font-semibold flex items-center justify-center gap-2 transition-all"
                 >
-                  <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />
-                  Find Halal Food Near Me
+                  <MapPin className="h-5 w-5" />
+                  Find Near Me
                 </Button>
-                <Link href="/search" className="inline-block">
+                <Link href="/search" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl bg-white text-emerald-600 border border-emerald-600 hover:bg-emerald-50"
+                    className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-emerald-600 text-base font-semibold transition-all"
                   >
-                    Explore All Cities →
+                    Explore Cities →
                   </Button>
                 </Link>
               </div>
             )}
 
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 w-full max-w-xl p-1.5 sm:p-2 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50">
-              <div className="relative flex-1">
-                <MapPin className="absolute left-3 sm:left-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
-                <Input
-                  placeholder="Area, City, or Category..."
-                  className="pl-9 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base bg-transparent border-0 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button type="submit" size="lg" className="h-11 sm:h-12 px-6 sm:px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg text-sm sm:text-base">
-                Search
-              </Button>
-            </form>
+            <div className="w-full px-2 sm:px-0 flex justify-center">
+              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 w-full max-w-xl p-2 bg-white border border-slate-200/60 rounded-2xl shadow-xl shadow-slate-200/40">
+                <div className="relative flex-1 w-full">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Input
+                    placeholder="Area, City, or Category..."
+                    className="pl-12 h-12 sm:h-14 w-full text-base bg-transparent border-0 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" size="lg" className="h-12 sm:h-14 w-full sm:w-auto px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-md text-base font-semibold transition-all">
+                  Search
+                </Button>
+              </form>
+            </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 text-xs font-bold text-slate-400 w-full px-4">
-              <span className="uppercase tracking-widest text-[10px] text-slate-500 whitespace-nowrap">Trending Cities:</span>
+            <div className="flex flex-col sm:flex-row items-center gap-3 mt-4 sm:mt-6 text-sm font-semibold text-slate-500 w-full max-w-2xl mx-auto px-2">
+              <span className="uppercase tracking-wider text-xs text-slate-400 whitespace-nowrap hidden sm:inline-block">Trending:</span>
               <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 w-full justify-start sm:justify-center">
                 {[
                   { name: 'Dubai', slug: 'dubai' },
@@ -192,7 +194,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
                   <Link 
                     key={city.slug} 
                     href={`/halal-restaurants-${city.slug}`}
-                    className="px-3 py-1 bg-white border border-slate-100 rounded-full text-slate-600 hover:border-emerald-200 hover:text-emerald-600 transition-all shadow-sm whitespace-nowrap"
+                    className="px-4 py-1.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-emerald-300 hover:text-emerald-600 transition-all shadow-sm whitespace-nowrap text-sm"
                   >
                     {city.name}
                   </Link>
@@ -201,10 +203,10 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4 sm:gap-8 pt-4 sm:pt-8 text-slate-600 flex-wrap">
-            <div className="flex items-center gap-1.5 sm:gap-2"><ChefHat className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" /> <span className="text-xs sm:text-sm font-semibold">Gourmet Spots</span></div>
-            <div className="flex items-center gap-1.5 sm:gap-2"><Store className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" /> <span className="text-xs sm:text-sm font-semibold">Verified Places</span></div>
-            <div className="flex items-center gap-1.5 sm:gap-2"><Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" /> <span className="text-xs sm:text-sm font-semibold">Community Verified</span></div>
+          <div className="flex items-center justify-center gap-4 sm:gap-8 pt-8 sm:pt-10 text-slate-600 flex-wrap px-2">
+            <div className="flex items-center gap-2"><ChefHat className="h-5 w-5 text-amber-500" /> <span className="text-sm font-semibold">Gourmet Spots</span></div>
+            <div className="flex items-center gap-2"><Store className="h-5 w-5 text-emerald-500" /> <span className="text-sm font-semibold">Verified Places</span></div>
+            <div className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-500" /> <span className="text-sm font-semibold">Community Verified</span></div>
           </div>
         </div>
 

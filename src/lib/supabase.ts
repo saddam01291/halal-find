@@ -12,7 +12,7 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Database types
-export type VerificationStatus = 'unverified' | 'community_verified' | 'owner_verified';
+export type VerificationStatus = 'unverified' | 'community_verified' | 'owner_verified' | 'osm_import';
 
 export type HalalStatus = string;
 

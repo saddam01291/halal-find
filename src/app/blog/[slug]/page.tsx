@@ -23,7 +23,11 @@ export async function generateMetadata(
             description: post.description,
             images: [{ url: post.image }],
             type: 'article',
+            url: `/blog/${slug}`,
         },
+        alternates: {
+            canonical: `/blog/${slug}`,
+        }
     };
 }
 
@@ -58,7 +62,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             name: 'FindHalal',
             logo: {
                 '@type': 'ImageObject',
-                url: 'https://findhalalonly.com/favicon.ico'
+                url: 'https://www.findhalalonly.com/favicon.ico'
             }
         }
     };

@@ -13,6 +13,9 @@ export async function getPlacesServer(): Promise<DbPlace[]> {
     const { data, error } = await supabaseServer
         .from('places')
         .select(PLACE_LIST_COLUMNS)
+        .not('address', 'is', null)
+        .neq('address', '')
+        .neq('address', 'Address not listed')
         .order('verified', { ascending: false })
         .order('rating', { ascending: false })
         .order('review_count', { ascending: false });
@@ -59,6 +62,9 @@ export async function searchPlacesServer(query: string, coords?: { lat: number; 
     const { data: allData, error } = await supabaseServer
         .from('places')
         .select(PLACE_LIST_COLUMNS)
+        .not('address', 'is', null)
+        .neq('address', '')
+        .neq('address', 'Address not listed')
         .limit(1000); // Higher limit on server since it's pre-rendered
 
     if (error || !allData) {
@@ -140,6 +146,9 @@ export async function getPlacesByCity(cityName: string): Promise<DbPlace[]> {
         .from('places')
         .select(PLACE_LIST_COLUMNS)
         .eq('city', cityName)
+        .not('address', 'is', null)
+        .neq('address', '')
+        .neq('address', 'Address not listed')
         .order('verified', { ascending: false })
         .order('rating', { ascending: false })
         .order('review_count', { ascending: false })

@@ -9,8 +9,7 @@ import { LocationProvider } from "@/context/LocationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://findhalalonly.com'),
+  metadataBase: new URL('https://www.findhalalonly.com'),
   title: "Find Halal Restaurants Near You — Verified by the Community",
   description: "Find halal-certified restaurants, hotels and food near you. Verified by owners and confirmed by the community. 5,000+ trusted halal listings across India and beyond.",
   keywords: [
@@ -29,19 +28,21 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Find Halal",
     locale: "en_US",
+    images: [
+      {
+        url: 'https://www.findhalalonly.com/og-default.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Find Halal Default Image'
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
     title: "Find Halal - Discover Halal Hotels, Places, Food & Restaurants Near You",
     description: "Discover the best Halal hotels, places, food, and restaurants near you.",
+    images: ['https://www.findhalalonly.com/og-default.jpg'],
   },
-  alternates: {
-    canonical: '/',
-  },
-  // ----------------------------------------------------------------
-  // Verification is now handled via DNS TXT record (Domain name provider).
-  // The `verification` and `other` blocks are no longer needed.
-  // ----------------------------------------------------------------
 };
 
 export default function RootLayout({

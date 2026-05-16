@@ -5,6 +5,9 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Find Halal Restaurants Near You — Verified by the Community',
   description: 'Discover the best Halal hotels, places, food, and restaurants near you. Instant lookup of location, reviews, and Halal status.',
+  alternates: {
+    canonical: '/',
+  }
 };
 
 export default async function Home() {
@@ -18,12 +21,12 @@ export default async function Home() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Find Halal",
-    "url": "https://findhalalonly.com",
+    "url": "https://www.findhalalonly.com",
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": "https://findhalalonly.com/search?q={search_term_string}"
+        "urlTemplate": "https://www.findhalalonly.com/search?q={search_term_string}"
       },
       "query-input": "required name=search_term_string"
     }
@@ -33,8 +36,8 @@ export default async function Home() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Find Halal",
-    "url": "https://findhalalonly.com",
-    "logo": "https://findhalalonly.com/favicon.ico",
+    "url": "https://www.findhalalonly.com",
+    "logo": "https://www.findhalalonly.com/favicon.ico",
     "sameAs": [
       "https://facebook.com/findhalalonly",
       "https://instagram.com/findhalalonly",
@@ -47,9 +50,9 @@ export default async function Home() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "name": "Find Halal Platform",
-    "image": "https://findhalalonly.com/favicon.ico",
-    "@id": "https://findhalalonly.com",
-    "url": "https://findhalalonly.com",
+    "image": "https://www.findhalalonly.com/favicon.ico",
+    "@id": "https://www.findhalalonly.com",
+    "url": "https://www.findhalalonly.com",
     "telephone": "+91-8371962838",
     "address": {
       "@type": "PostalAddress",

@@ -718,7 +718,7 @@ function AdminDashboardContent() {
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </Button>
-                                            <Link href={`/place/${place.id}`} target="_blank" className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 inline-flex items-center justify-center">
+                                            <Link href={`/restaurant/${place.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${place.id}`} target="_blank" className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 inline-flex items-center justify-center">
                                                 <ExternalLink className="h-3.5 w-3.5" />
                                             </Link>
                                         </div>

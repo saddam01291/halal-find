@@ -1,35 +1,18 @@
 import { execSync } from 'child_process';
+import path from 'path';
 
-const cities = [
-    "Delhi, India",
-    "Mumbai, India",
-    "Hyderabad, India",
-    "Bangalore, India",
-    "Kolkata, India",
-    "Chennai, India",
-    "New York, USA",
-    "Dubai, UAE",
-    "Toronto, Canada",
-    "Sydney, Australia",
-    "Singapore"
+const files = [
+    "C:\\Users\\Saddam\\.gemini\\antigravity\\brain\\9b7ecc51-1f3e-4239-b9ba-533589d9dc44\\.system_generated\\steps\\264\\content.md", // Toronto
+    "C:\\Users\\Saddam\\.gemini\\antigravity\\brain\\9b7ecc51-1f3e-4239-b9ba-533589d9dc44\\.system_generated\\steps\\267\\content.md", // London
+    "C:\\Users\\Saddam\\.gemini\\antigravity\\brain\\9b7ecc51-1f3e-4239-b9ba-533589d9dc44\\.system_generated\\steps\\271\\content.md"  // Chicago
 ];
 
-console.log("🚀 Starting Bulk OSM Halal Run...");
-
-for (const city of cities) {
+for (const file of files) {
+    console.log(`\n🚀 Starting import for: ${file}`);
     try {
-        console.log(`\n============================`);
-        console.log(`📡 Fetching: ${city}`);
-        console.log(`============================`);
-        
-        execSync(`node scripts/import-osm.mjs "${city}"`, { stdio: 'inherit' });
-        
-        console.log(`\n⏳ Waiting 5 seconds to skip rate limits...`);
-        execSync(`node -e "setTimeout(()=>{}, 5000)"`);
-        
-    } catch (err) {
-        console.error(`❌ Failed on ${city}. Skipping to next...`);
+        execSync(`node scripts/import-zabihah.mjs "${file}"`, { stdio: 'inherit' });
+    } catch (error) {
+        console.error(`❌ Failed to import ${file}:`, error.message);
     }
 }
-
-console.log("\n🎉 Bulk Run Complete!");
+console.log("\n✅ All batches complete!");

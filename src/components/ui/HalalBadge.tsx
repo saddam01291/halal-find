@@ -34,6 +34,12 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, className,
             text: 'Non-Halal Warning',
             color: 'text-white bg-orange-600 border-orange-500 shadow-orange-100',
             description: 'Warning: This place has reports of not serving Halal food.'
+        },
+        osm_import: {
+            icon: HelpCircle,
+            text: 'Unverified - OSM Import',
+            color: 'text-slate-500 bg-slate-100 border-slate-200',
+            description: 'Unverified - needs community confirmation.'
         }
     };
 

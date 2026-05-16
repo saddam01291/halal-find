@@ -21,8 +21,8 @@ export async function generateMetadata(
         return { title: 'City Not Found | FindHalal' };
     }
 
-    const title = `${cityPage.city_name} Halal Restaurants – Verified & Trusted | FindHalal`;
-    const description = `Find ${cityPage.restaurant_count} verified halal restaurants in ${cityPage.city_name}. Community reviewed, owner certified. Browse the best halal spots near you.`;
+    const title = `Halal Restaurants in ${cityPage.city_name} — Verified by Community | FindHalal`;
+    const description = `Find the best halal restaurants in ${cityPage.city_name}. ${cityPage.restaurant_count}+ verified halal spots with reviews, addresses, and real-time status. Eat with confidence.`;
 
     return {
         title,
@@ -30,12 +30,12 @@ export async function generateMetadata(
         openGraph: {
             title,
             description,
-            url: `https://findhalalonly.com/halal-restaurants-${slug}`,
+            url: `/halal-restaurants-${slug}`,
             siteName: 'Find Halal',
             type: 'website',
         },
         alternates: {
-            canonical: `https://findhalalonly.com/halal-restaurants-${slug}`,
+            canonical: `/halal-restaurants-${slug}`,
         }
     };
 }
@@ -102,13 +102,13 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: 'https://findhalalonly.com'
+                item: 'https://www.findhalalonly.com'
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: `Halal Restaurants in ${cityPage.city_name}`,
-                item: `https://findhalalonly.com/halal-restaurants-${slug}`
+                item: `https://www.findhalalonly.com/halal-restaurants-${slug}`
             }
         ]
     };

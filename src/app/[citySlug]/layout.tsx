@@ -75,7 +75,7 @@ export default async function CityLayout({
             item: {
                 '@type': 'Restaurant',
                 name: place.name,
-                url: `https://findhalalonly.com/place/${place.id}`,
+                url: `https://findhalalonly.com/restaurant/${place.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${place.id}`,
                 address: {
                     '@type': 'PostalAddress',
                     streetAddress: place.address || '',

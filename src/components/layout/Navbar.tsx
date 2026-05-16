@@ -88,11 +88,12 @@ export function Navbar() {
                                 <div className="flex items-center gap-3">
                                     <Button
                                         size="sm"
-                                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
+                                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold"
                                         onClick={() => setIsAddPlaceOpen(true)}
                                     >
                                         <PlusCircle className="h-4 w-4" />
-                                        <span>Add Place</span>
+                                        <span className="hidden sm:inline">List your restaurant (Free)</span>
+                                        <span className="sm:hidden">List</span>
                                     </Button>
 
                                     <div className="relative">
@@ -148,13 +149,24 @@ export function Navbar() {
                                     </div>
                                 </div>
                             ) : (
-                                <Button
-                                    size="sm"
-                                    className="rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200"
-                                    onClick={() => setIsLoginOpen(true)}
-                                >
-                                    Sign In / Partner
-                                </Button>
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="hidden lg:flex items-center gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-full font-bold"
+                                        onClick={() => setIsLoginOpen(true)}
+                                    >
+                                        <PlusCircle className="h-4 w-4" />
+                                        List your restaurant (Free)
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200 font-bold"
+                                        onClick={() => setIsLoginOpen(true)}
+                                    >
+                                        Sign In
+                                    </Button>
+                                </div>
                             )}
                         </div>
 

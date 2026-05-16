@@ -10,7 +10,10 @@ export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city,
 export async function getPlaces(coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
     let query = supabase
         .from('places')
-        .select(PLACE_LIST_COLUMNS);
+        .select(PLACE_LIST_COLUMNS)
+        .not('address', 'is', null)
+        .neq('address', '')
+        .neq('address', 'Address not listed');
 
     if (coords && coords.lat && coords.lng) {
         // 1. Smart Radar: Look within a 50km bounding box first to prioritize local spots
@@ -43,6 +46,9 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         const { data: fallbackData } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
+            .not('address', 'is', null)
+            .neq('address', '')
+            .neq('address', 'Address not listed')
             .or('rating.gt.0,verified.eq.true')
             .order('verified', { ascending: false })
             .order('rating', { ascending: false })
@@ -110,6 +116,9 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
         const { data: allData } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
+            .not('address', 'is', null)
+            .neq('address', '')
+            .neq('address', 'Address not listed')
             .limit(500); // Small dataset allows extremely robust JS filtering
             
         if (!allData) return [];

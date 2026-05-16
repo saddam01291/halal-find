@@ -37,8 +37,8 @@ export async function generateMetadata(
     
     const name = place.name || 'Unnamed Place';
     const city = place.city || 'Location Pending';
-    const title = `${name} | Halal Hotel, Place, Food & Restaurant Near ${city} | Find Halal`;
-    const description = `Find verified information, community reviews, and halal status for ${name} in ${city}.`;
+    const title = `${name} — Halal Restaurant in ${city} | FindHalal`;
+    const description = `Is ${name} halal? ${place.verification_status || 'Unverified'}. Located at ${place.address || 'Location pending'}, ${city}. Read community reviews and check halal status.`;
     
     return {
         title,
@@ -46,7 +46,7 @@ export async function generateMetadata(
         openGraph: {
             title,
             description,
-            url: `https://findhalalonly.com/restaurant/${slug}`,
+            url: `/restaurant/${slug}`,
             siteName: 'Find Halal',
             images: [
                 {
@@ -63,6 +63,9 @@ export async function generateMetadata(
             title,
             description,
             images: [getValidImageUrl(place.image, place.id, name, place.cuisine || 'Halal Food')],
+        },
+        alternates: {
+            canonical: `/restaurant/${slug}`,
         }
     };
 }
@@ -109,7 +112,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
         '@type': 'Restaurant',
         name: name,
         image: getValidImageUrl(place.image, place.id, name, cuisine),
-        url: `https://findhalalonly.com/restaurant/${slug}`,
+        url: `https://www.findhalalonly.com/restaurant/${slug}`,
         servesCuisine: ['Halal', cuisine].filter(Boolean),
         address: {
             '@type': 'PostalAddress',
@@ -122,12 +125,8 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
             '@type': 'GeoCoordinates',
             latitude: place.lat,
             longitude: place.lng,
-        } : {
-            '@type': 'GeoCoordinates',
-            latitude: 22.5726,
-            longitude: 88.3639
-        },
-        telephone: place.phone || '+91-8371962838',
+        } : undefined,
+        telephone: place.phone || undefined,
         ...(place.email ? { email: place.email } : {}),
         priceRange: '$$',
         ...(place.rating > 0 && place.review_count > 0 ? {
@@ -138,15 +137,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                 bestRating: '5',
                 worstRating: '1',
             }
-        } : {
-            aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.5',
-                reviewCount: '1',
-                bestRating: '5',
-                worstRating: '1',
-            }
-        })
+        } : {})
     };
 
     // Breadcrumb Schema
@@ -158,19 +149,19 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: 'https://findhalalonly.com'
+                item: 'https://www.findhalalonly.com'
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: city,
-                item: `https://findhalalonly.com/halal-restaurants-${city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                item: `https://www.findhalalonly.com/halal-restaurants-${city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
             },
             {
                 '@type': 'ListItem',
                 position: 3,
                 name: name,
-                item: `https://findhalalonly.com/restaurant/${slug}`
+                item: `https://www.findhalalonly.com/restaurant/${slug}`
             }
         ]
     };
