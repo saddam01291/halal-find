@@ -5,7 +5,7 @@ import { DbPlace, DbProfile, DbVerificationRequest, DbReview } from './supabase'
 
 export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol, phone, email';
 
-// --- Places ---
+// ─── Places ───────────────────────────────────────────────────────────────────
 
 export async function getPlaces(coords?: {lat: number, lng: number}): Promise<DbPlace[]> {
     let query = supabase
@@ -16,8 +16,8 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .neq('address', 'Address not listed');
 
     if (coords && coords.lat && coords.lng) {
-        // 1. Smart Radar: Look within a 50km bounding box first to prioritize local spots
-        const radiusKm = 50; 
+        // Smart Radar: Look within a 50km bounding box first to prioritize local spots
+        const radiusKm = 50;
         const latDelta = radiusKm / 111;
         const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
 
@@ -40,8 +40,7 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .order('name', { ascending: true })
         .limit(200);
 
-    // 2. Global Fallback: If nearby search returned 0 (e.g. user is in a new city), 
-    // fetch the absolute best of the platform globally (quality filter applied).
+    // Global Fallback: If nearby search returned 0, fetch the best globally
     if (coords && data && data.length === 0) {
         const { data: fallbackData } = await supabase
             .from('places')
@@ -66,7 +65,7 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
     return data || [];
 }
 
-// Admin-only: fetch ALL places without quality filters so admin sees everything
+// Admin-only: fetch ALL places without quality filters
 // Uses pagination to bypass Supabase's 1000-row default limit
 export async function getAllPlacesAdmin(): Promise<DbPlace[]> {
     const PAGE_SIZE = 1000;
@@ -93,7 +92,6 @@ export async function getAllPlacesAdmin(): Promise<DbPlace[]> {
             allData = allData.concat(data);
         }
 
-        // If we got fewer rows than PAGE_SIZE, we've reached the end
         hasMore = (data?.length || 0) === PAGE_SIZE;
         page++;
     }
@@ -107,36 +105,36 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
         search_query: query,
         user_lat: coords?.lat || null,
         user_lng: coords?.lng || null,
-        radius_km: 50.0 // Prioritize local, but RPC returns global if none near
+        radius_km: 50.0
     });
 
     if (error) {
         console.error('Error searching places via RPC:', error);
-        // Guaranteed Universal Fallback: Fetch broadly and filter in memory to completely ignore spaces and casing
+        // Guaranteed Universal Fallback
         const { data: allData } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
             .not('address', 'is', null)
             .neq('address', '')
             .neq('address', 'Address not listed')
-            .limit(500); // Small dataset allows extremely robust JS filtering
-            
+            .limit(500);
+
         if (!allData) return [];
-        
+
         const cleansedSearch = query.replace(/\s+/g, '').toLowerCase();
-        
+
         const fuzzyFiltered = allData.filter(p => {
             const nameStr = (p.name || '').replace(/\s+/g, '').toLowerCase();
             const cityStr = (p.city || '').replace(/\s+/g, '').toLowerCase();
             const addrStr = (p.address || '').replace(/\s+/g, '').toLowerCase();
             const cuisineStr = (p.cuisine || '').replace(/\s+/g, '').toLowerCase();
-            
-            return nameStr.includes(cleansedSearch) || 
-                   cityStr.includes(cleansedSearch) || 
+
+            return nameStr.includes(cleansedSearch) ||
+                   cityStr.includes(cleansedSearch) ||
                    addrStr.includes(cleansedSearch) ||
                    cuisineStr.includes(cleansedSearch);
         });
-        
+
         return fuzzyFiltered.slice(0, 50);
     }
 
@@ -188,7 +186,7 @@ export async function updatePlace(id: string, updates: Partial<Omit<DbPlace, 'id
 }
 
 export async function deletePlace(id: string) {
-    // Also delete associated verification requests first
+    // Delete associated verification requests first
     await supabase
         .from('verification_requests')
         .delete()
@@ -203,6 +201,13 @@ export async function deletePlace(id: string) {
     return true;
 }
 
+// ─── Deduplication ────────────────────────────────────────────────────────────
+
+/**
+ * Checks if a place with the same name + similar address/city already exists.
+ * Returns the matched place record (with id, name, city, address) or null.
+ * Used by both the frontend modal (real-time) and the API submission guard.
+ */
 export async function checkDuplicatePlace(name: string, city: string, address?: string): Promise<any | null> {
     const trimmedName = name.trim();
     const trimmedCity = city.trim();
@@ -210,45 +215,49 @@ export async function checkDuplicatePlace(name: string, city: string, address?: 
 
     if (!trimmedName || trimmedName.length < 3) return null;
 
-    // Fetch all places with exact name match
+    // Fetch all places with a case-insensitive exact name match
     const { data: places, error } = await supabase
         .from('places')
-        .select('id, name, city, address')
+        .select('id, name, city, address, verification_status')
         .ilike('name', trimmedName);
 
     if (error || !places || places.length === 0) return null;
 
-    // Check each potential duplicate in JS for fuzzy address match
     for (const place of places) {
-        // We no longer block based ONLY on city, as same restaurants can have multiple branches in one city.
-        // We only block if the name matches AND the address is very similar.
-
         if (trimmedAddress && trimmedAddress.length > 5 && place.address) {
             const existingAddress = place.address.trim().toLowerCase();
-            
+
             // 1. Exact or Substring Address Match
-            if (trimmedAddress === existingAddress || trimmedAddress.includes(existingAddress) || existingAddress.includes(trimmedAddress)) {
+            if (
+                trimmedAddress === existingAddress ||
+                trimmedAddress.includes(existingAddress) ||
+                existingAddress.includes(trimmedAddress)
+            ) {
                 return place;
             }
 
-            // 2. Word overlap match - only trigger if they are in the SAME city AND share significant address words
+            // 2. Word overlap match — same city AND share significant address words
             if (place.city && place.city.trim().toLowerCase() === trimmedCity.toLowerCase()) {
                 const newWords = trimmedAddress.split(/\W+/).filter((w: string) => w.length > 3);
                 const existWords = existingAddress.split(/\W+/).filter((w: string) => w.length > 3);
-                
+
                 let sharedWords = 0;
                 for (const word of newWords) {
                     if (existWords.includes(word)) sharedWords++;
                 }
-                
-                // If they share at least 3 significant words (Street name, Landmark, Building name), consider it a same-location duplicate
+
+                // 3+ shared significant words (street name, landmark, building) = same location
                 if (sharedWords >= 3) {
                     return place;
                 }
             }
+        } else if (!trimmedAddress || trimmedAddress.length <= 5) {
+            // No address provided — fall back to city-level name match
+            if (place.city && place.city.trim().toLowerCase() === trimmedCity.toLowerCase()) {
+                return place;
+            }
         }
     }
-
 
     return null;
 }
@@ -271,7 +280,7 @@ export async function addPlaceAsAdmin(place: Omit<DbPlace, 'id' | 'created_at' |
     return data;
 }
 
-// --- Reviews ---
+// ─── Reviews ──────────────────────────────────────────────────────────────────
 
 export async function getReviewsForPlace(placeId: string): Promise<DbReview[]> {
     const { data, error } = await supabase
@@ -291,7 +300,6 @@ export async function createReview(review: Omit<DbReview, 'id' | 'created_at' | 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Fetch user profile for name/avatar
     const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, avatar_url')
@@ -315,7 +323,7 @@ export async function createReview(review: Omit<DbReview, 'id' | 'created_at' | 
     return data;
 }
 
-// --- Verification Requests (Admin) ---
+// ─── Verification Requests ────────────────────────────────────────────────────
 
 export async function getPendingVerifications(): Promise<DbVerificationRequest[]> {
     const { data, error } = await supabase
@@ -332,12 +340,41 @@ export async function getPendingVerifications(): Promise<DbVerificationRequest[]
     return data || [];
 }
 
-export async function submitVerificationRequest(request: Omit<DbVerificationRequest, 'id' | 'created_at' | 'status' | 'user_id'>) {
+/**
+ * Submit a community addition (a new place suggested by a user).
+ * 
+ * GATE: Enforces server-side duplicate check before inserting.
+ * If a duplicate is found, throws a structured DuplicatePlaceError
+ * so the frontend can redirect the user to claim the existing listing.
+ */
+export async function submitVerificationRequest(
+    request: Omit<DbVerificationRequest, 'id' | 'created_at' | 'status' | 'user_id'>
+) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Step 1: Insert core fields (always works, even without the review columns)
-    const coreRequest = {
+    // ── SYSTEMATIC DEDUPLICATION GATE ──────────────────────────────────────
+    // Always enforce before any INSERT, regardless of frontend state.
+    // This catches race conditions, direct API calls, and edge cases.
+    if (request.restaurant_name && request.type !== 'claim') {
+        const duplicate = await checkDuplicatePlace(
+            request.restaurant_name,
+            request.city || '',
+            request.address || ''
+        );
+
+        if (duplicate) {
+            // Throw a structured error the frontend can parse to show the claim CTA
+            const err = new Error('DUPLICATE_PLACE_FOUND') as any;
+            err.code = 'DUPLICATE_PLACE_FOUND';
+            err.existingPlace = duplicate;
+            throw err;
+        }
+    }
+    // ── END DEDUPLICATION GATE ──────────────────────────────────────────────
+
+    // Build insertion payload — only include defined fields
+    const coreRequest: Record<string, any> = {
         restaurant_name: request.restaurant_name,
         owner_name: request.owner_name,
         certificate_url: request.certificate_url,
@@ -366,7 +403,7 @@ export async function submitVerificationRequest(request: Omit<DbVerificationRequ
 
     if (error) throw error;
 
-    // Step 2: Try to store review fields (safe fallback if columns don't exist yet)
+    // Store review fields (safe fallback if columns don't exist yet)
     if (data && (request.initial_review || request.initial_rating)) {
         const { error: reviewUpdateError } = await supabase
             .from('verification_requests')
@@ -377,7 +414,6 @@ export async function submitVerificationRequest(request: Omit<DbVerificationRequ
             .eq('id', data.id);
 
         if (reviewUpdateError) {
-            // Columns not yet in DB — log but don't fail the submission
             console.warn('Review fields not saved (run SQL migration):', reviewUpdateError.message);
         }
     }
@@ -385,8 +421,111 @@ export async function submitVerificationRequest(request: Omit<DbVerificationRequ
     return data;
 }
 
-export async function updateVerificationStatus(id: string, status: 'approved' | 'rejected') {
-    // 1. Fetch the request to know which place to update
+/**
+ * Submit a business claim request.
+ * Called when an owner wants to claim an existing community-added listing.
+ * 
+ * Validates:
+ *  1. User is authenticated
+ *  2. No pending claim already exists for this place by this user
+ *  3. Place is not already owner-verified (can't reclaim)
+ */
+export async function claimBusiness(params: {
+    placeId: string;
+    placeName: string;
+    ownerName: string;
+    phone?: string;
+    email?: string;
+    halalStatus?: string;
+    halalSource?: string;
+    certificateUrl?: string;
+    initialReview?: string;
+    initialRating?: number;
+}): Promise<{ success: boolean; message: string; data?: any }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, message: 'Please sign in to claim your business.' };
+
+    // Check: is this place already owner-verified?
+    const { data: place, error: placeError } = await supabase
+        .from('places')
+        .select('id, name, verification_status, owner_id')
+        .eq('id', params.placeId)
+        .single();
+
+    if (placeError || !place) {
+        return { success: false, message: 'Business listing not found.' };
+    }
+
+    if (place.verification_status === 'owner_verified') {
+        return {
+            success: false,
+            message: 'This business has already been claimed by its owner. If you believe this is an error, please contact our support team.'
+        };
+    }
+
+    // Check: does this user already have a pending claim for this place?
+    const { data: existingClaim } = await supabase
+        .from('verification_requests')
+        .select('id, status')
+        .eq('place_id', params.placeId)
+        .eq('user_id', user.id)
+        .eq('type', 'claim')
+        .eq('status', 'pending')
+        .maybeSingle();
+
+    if (existingClaim) {
+        return {
+            success: false,
+            message: 'You already have a pending claim request for this business. Our team will review it shortly.'
+        };
+    }
+
+    // Insert the claim request
+    const { data, error } = await supabase
+        .from('verification_requests')
+        .insert({
+            user_id: user.id,
+            restaurant_name: params.placeName,
+            owner_name: params.ownerName,
+            place_id: params.placeId,
+            type: 'claim',
+            status: 'pending',
+            phone: params.phone || null,
+            email: params.email || null,
+            halal_status: params.halalStatus || null,
+            halal_source: params.halalSource || null,
+            certificate_url: params.certificateUrl || null,
+            initial_review: params.initialReview || null,
+            initial_rating: params.initialRating || null
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error submitting claim:', error);
+        // Handle unique constraint violation (duplicate pending claim)
+        if (error.code === '23505') {
+            return {
+                success: false,
+                message: 'A pending claim for this business already exists from your account.'
+            };
+        }
+        return { success: false, message: `Claim submission failed: ${error.message}` };
+    }
+
+    return {
+        success: true,
+        message: 'Your claim has been submitted and is under review. We will notify you within 2–3 business days.',
+        data
+    };
+}
+
+export async function updateVerificationStatus(
+    id: string,
+    status: 'approved' | 'rejected',
+    adminNote?: string
+) {
+    // 1. Fetch the request
     const { data: request, error: fetchError } = await supabase
         .from('verification_requests')
         .select('*')
@@ -395,71 +534,85 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
 
     if (fetchError) throw fetchError;
 
-    // 2. Update the verification request status
+    // 2. Update verification request status (triggers DB-level automation)
+    const updatePayload: Record<string, any> = { status };
+    if (adminNote) updatePayload.admin_note = adminNote;
+
     const { data, error } = await supabase
         .from('verification_requests')
-        .update({ status })
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
 
     if (error) throw error;
 
-    // 3. If approved, update the corresponding place OR create it
+    // 3. If approved, ensure the linked place is updated
+    //    DB trigger handles verification_status + owner_id binding.
+    //    JS layer handles: creating the place if missing, and review migration.
     if (status === 'approved') {
         let targetPlaceId = request.place_id;
 
-        // Build safe update payload - ONLY overwrite fields if the request actually contains data
+        // Build place update payload
         const placeUpdate: Record<string, any> = { verified: true };
         if (request.restaurant_name) placeUpdate.name = request.restaurant_name;
-        if (request.cuisine) placeUpdate.cuisine = request.cuisine;
-        if (request.address) placeUpdate.address = request.address;
-        if (request.city) placeUpdate.city = request.city;
-        if (request.lat) placeUpdate.lat = request.lat;
-        if (request.lng) placeUpdate.lng = request.lng;
-        if (request.tags) placeUpdate.tags = request.tags;
-        if (request.halal_status) placeUpdate.halal_status = request.halal_status;
+        if (request.cuisine)         placeUpdate.cuisine = request.cuisine;
+        if (request.address)         placeUpdate.address = request.address;
+        if (request.city)            placeUpdate.city = request.city;
+        if (request.lat)             placeUpdate.lat = request.lat;
+        if (request.lng)             placeUpdate.lng = request.lng;
+        if (request.tags)            placeUpdate.tags = request.tags;
+        if (request.halal_status)    placeUpdate.halal_status = request.halal_status;
         if (request.serves_alcohol !== undefined) placeUpdate.serves_alcohol = request.serves_alcohol;
-        if (request.halal_source) placeUpdate.halal_source = request.halal_source;
-        if (request.phone) placeUpdate.phone = request.phone;
-        if (request.email) placeUpdate.email = request.email;
+        if (request.halal_source)    placeUpdate.halal_source = request.halal_source;
+        if (request.phone)           placeUpdate.phone = request.phone;
+        if (request.email)           placeUpdate.email = request.email;
         if (request.certificate_url) placeUpdate.image = request.certificate_url;
-        
+
         if (request.type === 'claim' && targetPlaceId) {
             placeUpdate.verification_status = 'owner_verified';
             placeUpdate.owner_id = request.user_id;
-            
-            const { error: placeError } = await supabase.from('places').update(placeUpdate).eq('id', targetPlaceId);
+
+            const { error: placeError } = await supabase
+                .from('places')
+                .update(placeUpdate)
+                .eq('id', targetPlaceId);
             if (placeError) console.error('Error updating place on claim approval:', placeError);
+
         } else if (request.type === 'community_addition' || request.type === 'new_place') {
             placeUpdate.verification_status = 'community_verified';
-            
+
             if (targetPlaceId) {
-                // Place was pre-created during submission. Just update verification status 
-                // without wiping out location data (handled by truthy checks above).
-                const { error: placeError } = await supabase.from('places').update(placeUpdate).eq('id', targetPlaceId);
+                const { error: placeError } = await supabase
+                    .from('places')
+                    .update(placeUpdate)
+                    .eq('id', targetPlaceId);
                 if (placeError) console.error('Error updating existing place on community approval:', placeError);
             } else {
-                // Fallback: Create NEW place if it didn't exist
-                const { data: newPlace, error: placeError } = await supabase.from('places').insert({
-                    ...placeUpdate, review_count: 0, rating: 0
-                }).select().single();
-                
+                // Fallback: Create new place if it didn't exist
+                const { data: newPlace, error: placeError } = await supabase
+                    .from('places')
+                    .insert({ ...placeUpdate, review_count: 0, rating: 0 })
+                    .select()
+                    .single();
+
                 if (placeError) {
                     console.error('Error creating new place on approval:', placeError);
                 } else if (newPlace) {
                     targetPlaceId = newPlace.id;
-                    await supabase.from('verification_requests').update({ place_id: targetPlaceId }).eq('id', id);
+                    await supabase
+                        .from('verification_requests')
+                        .update({ place_id: targetPlaceId })
+                        .eq('id', id);
                 }
             }
         }
 
-        // --- NEW: Automatic Review Migration ---
-        // Runs for ALL approved requests that have a target place and an initial review/rating
+        // Automatic Review Migration: move the initial review to the reviews table
         if (targetPlaceId && (request.initial_review || request.initial_rating)) {
             try {
-                // Ensure we haven't already migrated a review for this user/place combo
-                const { data: existingReview } = await supabase.from('reviews')
+                const { data: existingReview } = await supabase
+                    .from('reviews')
                     .select('id')
                     .eq('place_id', targetPlaceId)
                     .eq('user_id', request.user_id)
@@ -476,19 +629,11 @@ export async function updateVerificationStatus(id: string, status: 'approved' | 
                         is_non_halal_report: false,
                         is_dispute_resolved: false
                     });
-                    
+
                     if (reviewError) {
                         console.error('Error creating automatic review:', reviewError);
-                    } else {
-                        // Update place rating/count
-                        await supabase
-                            .from('places')
-                            .update({ 
-                                rating: request.initial_rating || 5,
-                                review_count: 1 
-                            })
-                            .eq('id', targetPlaceId);
                     }
+                    // Note: rating/review_count is now handled by the DB trigger on_review_changed
                 }
             } catch (reviewErr) {
                 console.error('Critical failure in review migration:', reviewErr);
@@ -511,7 +656,7 @@ export async function updateVerificationRequest(id: string, updates: Partial<DbV
     return data;
 }
 
-// --- Safety & Disputes (Admin) ---
+// ─── Safety & Disputes ────────────────────────────────────────────────────────
 
 export async function getDisputedReviews(): Promise<DbReview[]> {
     const { data, error } = await supabase
@@ -556,9 +701,17 @@ export async function updateUserRole(id: string, role: 'admin' | 'user') {
     return data;
 }
 
-// --- Reviews (User Edit + Admin Delete) ---
+// ─── Reviews (User Edit + Admin Delete) ───────────────────────────────────────
 
-export async function updateReview(id: string, updates: { rating?: number; comment?: string; is_halal_confirmed?: boolean; is_non_halal_report?: boolean }) {
+export async function updateReview(
+    id: string,
+    updates: {
+        rating?: number;
+        comment?: string;
+        is_halal_confirmed?: boolean;
+        is_non_halal_report?: boolean;
+    }
+) {
     const { data, error } = await supabase
         .from('reviews')
         .update(updates)
@@ -570,8 +723,6 @@ export async function updateReview(id: string, updates: { rating?: number; comme
     return data;
 }
 
-
-
 export async function deleteReview(id: string) {
     const { error } = await supabase
         .from('reviews')
@@ -582,7 +733,7 @@ export async function deleteReview(id: string) {
     return true;
 }
 
-// --- Profiles (Admin) ---
+// ─── Profiles ─────────────────────────────────────────────────────────────────
 
 export async function getProfiles(): Promise<DbProfile[]> {
     const { data, error } = await supabase
@@ -617,7 +768,7 @@ export async function getSystemStats() {
     };
 }
 
-// --- Admin Settings (Admin) ---
+// ─── Admin Settings ───────────────────────────────────────────────────────────
 
 export async function getAdminSettings(): Promise<Record<string, any>> {
     const { data, error } = await supabase
@@ -660,7 +811,7 @@ export async function updateAdminSettings(settings: Record<string, any>) {
     return true;
 }
 
-// --- Storage ---
+// ─── Storage ──────────────────────────────────────────────────────────────────
 
 export async function uploadImage(file: File) {
     console.log('--- STORAGE UPLOAD DEBUG ---');
@@ -669,7 +820,6 @@ export async function uploadImage(file: File) {
     console.log('File Type:', file.type);
 
     let fileExt = file.name.split('.').pop()?.toLowerCase();
-    // Normalize .wbp to .webp if needed
     if (fileExt === 'wbp') fileExt = 'webp';
     if (!fileExt) fileExt = 'jpg';
 
@@ -701,7 +851,6 @@ export async function uploadImage(file: File) {
 
     return data.publicUrl;
 }
-
 
 export async function getPopularCities(): Promise<{city_name: string, city_slug: string, restaurant_count: number}[]> {
     const { data, error } = await supabase

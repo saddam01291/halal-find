@@ -1,6 +1,6 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import { getPlaceByIdServer, getReviewsForPlaceServer } from '@/lib/api-server';
-import { Star, MapPin, Phone, Clock, ChevronRight, AlertCircle, Mail } from 'lucide-react';
+import { Star, MapPin, Phone, Clock, ChevronRight, AlertCircle, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { getValidImageUrl } from '@/lib/utils';
@@ -24,22 +24,22 @@ export async function generateMetadata(
 ): Promise<Metadata> {
     const { slug } = await params;
     const id = extractIdFromSlug(slug);
-    
+
     if (!id) {
         return { title: 'Place Not Found | FindHalal' };
     }
 
     const place = await getPlaceByIdServer(id);
-    
+
     if (!place) {
         return { title: 'Place Not Found | FindHalal' };
     }
-    
+
     const name = place.name || 'Unnamed Place';
     const city = place.city || 'Location Pending';
     const title = `${name} — Halal Restaurant in ${city} | FindHalal`;
     const description = `Is ${name} halal? ${place.verification_status || 'Unverified'}. Located at ${place.address || 'Location pending'}, ${city}. Read community reviews and check halal status.`;
-    
+
     return {
         title,
         description,
@@ -70,8 +70,15 @@ export async function generateMetadata(
     };
 }
 
-export default async function RestaurantPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function RestaurantPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ claim?: string }>;
+}) {
     const { slug } = await params;
+    const { claim } = await searchParams;
     const id = extractIdFromSlug(slug);
 
     if (!id) {
@@ -91,7 +98,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                         <AlertCircle className="h-8 w-8" />
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 mb-2">Something went wrong</h1>
-                    <p className="text-slate-500 mb-8">We couldn't find the restaurant you're looking for. It might have been moved or removed.</p>
+                    <p className="text-slate-500 mb-8">We couldn&apos;t find the restaurant you&apos;re looking for. It might have been moved or removed.</p>
                     <Link href="/search">
                         <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 rounded-xl h-12 font-bold shadow-lg shadow-emerald-200">
                             Back to Discovery
@@ -106,11 +113,16 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
     const city = place.city || 'Location Pending';
     const cuisine = place.cuisine || 'Halal Food';
 
-    // JSON-LD Schema
+    // Determine if this listing can be claimed (not already owner-verified)
+    const isClaimed = place.verification_status === 'owner_verified';
+    // Auto-open the claim modal if ?claim=true is in the URL
+    const autoOpenClaim = claim === 'true' && !isClaimed;
+
+    // JSON-LD Restaurant Schema
     const schema = {
         '@context': 'https://schema.org',
         '@type': 'Restaurant',
-        name: name,
+        name,
         image: getValidImageUrl(place.image, place.id, name, cuisine),
         url: `https://www.findhalalonly.com/restaurant/${slug}`,
         servesCuisine: ['Halal', cuisine].filter(Boolean),
@@ -160,7 +172,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
             {
                 '@type': 'ListItem',
                 position: 3,
-                name: name,
+                name,
                 item: `https://www.findhalalonly.com/restaurant/${slug}`
             }
         ]
@@ -189,7 +201,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                     className="object-cover transition-transform duration-1000 hover:scale-105 opacity-80"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-                
+
                 <div className="container mx-auto px-4 h-full relative">
                     <div className="absolute bottom-6 sm:bottom-12 left-4 right-4 md:left-8 md:right-8">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -198,8 +210,8 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                             </span>
                             <div className="flex flex-col gap-1 sm:gap-2">
                                 <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white/60 ml-1">Verification Status</span>
-                                <HalalBadge 
-                                    status={place.verification_status} 
+                                <HalalBadge
+                                    status={place.verification_status}
                                     hasActiveReports={reviews.some(r => r.is_non_halal_report && !r.is_dispute_resolved)}
                                     className="sm:scale-110 origin-left"
                                 />
@@ -226,7 +238,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
             {/* Main Content Grid */}
             <div className="container mx-auto px-4 -mt-4 sm:-mt-8 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                    
+
                     {/* LEFT COLUMN: Main Details */}
                     <div className="lg:col-span-2 space-y-5 sm:space-y-8">
                         <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
@@ -243,29 +255,62 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                             </nav>
 
                             <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 sm:mb-8">
-                                <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">About {name} - Halal Dining in {city}</h2>
+                                <div className="flex-1">
+                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">About {name} — Halal Dining in {city}</h2>
                                     <p className="text-slate-500 leading-relaxed text-sm sm:text-lg italic">
                                         Helping you find verified Halal dining experiences through transparent community feedback.
                                     </p>
                                     <div className="text-slate-600 leading-relaxed text-sm sm:text-base mt-4 sm:mt-6 space-y-4">
                                         <p>
-                                            Our community of halal diners has highlight <strong>{name}</strong> as a key destination for anyone exploring the <strong>{city}</strong> food scene. 
+                                            Our community of halal diners has highlighted <strong>{name}</strong> as a key destination for anyone exploring the <strong>{city}</strong> food scene.
                                             Located at {place.address}, this spot specializes in {cuisine || 'Halal'} dishes that have been vetted for quality and authenticity.
                                         </p>
                                         <p>
-                                            What sets <strong>{name}</strong> apart is the consistent feedback from local visitors who appreciate its commitment to halal standards. 
+                                            What sets <strong>{name}</strong> apart is the consistent feedback from local visitors who appreciate its commitment to halal standards.
                                             With a solid {place.rating || 0}-star rating from {place.review_count || 0} community members, it has become a reliable choice for families and food enthusiasts alike seeking a genuine <strong>halal restaurant in {city}</strong>.
                                         </p>
                                         <p>
-                                            At FindHalal, we don't just list places; we verify them. <strong>{name}</strong> is part of our transparent directory where safety and dietary values come first. 
+                                            At FindHalal, we don&apos;t just list places; we verify them. <strong>{name}</strong> is part of our transparent directory where safety and dietary values come first.
                                             Browse the latest community photos and trust scores below to plan your visit with confidence.
                                         </p>
                                     </div>
                                 </div>
-                                <PlaceActions placeId={place.id} placeName={place.name} />
+
+                                {/* PlaceActions — now wired with all new props */}
+                                <PlaceActions
+                                    placeId={place.id}
+                                    placeName={place.name}
+                                    placeCity={place.city}
+                                    placeAddress={place.address}
+                                    verificationStatus={place.verification_status}
+                                    autoOpenClaim={autoOpenClaim}
+                                />
                             </div>
-                            
+
+                            {/* Claim Banner — shown prominently for unclaimed listings */}
+                            {!isClaimed && (
+                                <div className="mb-6 p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-slate-900 text-sm">Is this your restaurant?</p>
+                                            <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                                Claim this listing to get verified, update details, and manage your business profile.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href={`?claim=true`}
+                                        className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        <ShieldCheck className="h-4 w-4" />
+                                        Claim Business
+                                    </Link>
+                                </div>
+                            )}
+
                             <div className="pt-8 border-t border-slate-50">
                                 <div className="space-y-4">
                                     <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Business Details</h4>
@@ -279,7 +324,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                                                 <span className="text-xs text-slate-400">Regularly audited by FindHalal community</span>
                                             </div>
                                         </div>
-                                        
+
                                         {place.phone && (
                                             <div className="flex items-center gap-3 text-slate-700">
                                                 <div className="h-10 w-10 flex-shrink-0 bg-slate-50 rounded-xl flex items-center justify-center">
@@ -309,7 +354,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                         </div>
 
                         {/* Verification Info */}
-                        <HalalTrustScore 
+                        <HalalTrustScore
                             status={place.verification_status}
                             halalVotes={reviews.filter(r => r.is_halal_confirmed).length}
                             reportCount={reviews.filter(r => r.is_non_halal_report && !r.is_dispute_resolved).length}
@@ -319,9 +364,8 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                         {/* Transparency Details */}
                         <SafetyTransparency place={place as any} />
 
-                        {/* Reviews Section isolated as Client Component */}
+                        {/* Reviews Section */}
                         <PlaceReviews placeId={place.id} initialReviews={reviews} />
-                        
                     </div>
 
                     {/* RIGHT COLUMN: Map & Action */}
@@ -331,15 +375,15 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                                 <h3 className="font-bold text-slate-900 mb-1 text-sm sm:text-base">Locate on Map</h3>
                                 <p className="text-xs sm:text-sm text-slate-500 font-medium truncate">{place.address}</p>
                             </div>
-                            
+
                             <div className="h-52 sm:h-80 w-full relative bg-slate-100">
                                 {displayCoords ? (
-                                        <GoogleMap 
-                                            center={displayCoords}
-                                            zoom={place.lat ? 16 : 12} 
-                                            className="h-full w-full"
-                                            isStatic={true} 
-                                        />
+                                    <GoogleMap
+                                        center={displayCoords}
+                                        zoom={place.lat ? 16 : 12}
+                                        className="h-full w-full"
+                                        isStatic={true}
+                                    />
                                 ) : (
                                     <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center space-y-4 bg-slate-50">
                                         <div className="h-12 w-12 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-slate-100 italic font-bold text-emerald-600">?</div>
@@ -354,7 +398,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                             </div>
 
                             <div className="p-5 sm:p-8 space-y-4">
-                                <a 
+                                <a
                                     className="w-full bg-slate-900 hover:bg-black text-white px-6 sm:px-8 h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center gap-2 group transition-all active:scale-95 text-sm sm:text-base"
                                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                                         [place.name, place.address, place.city]
@@ -376,6 +420,17 @@ export default async function RestaurantPage({ params }: { params: Promise<{ slu
                                         className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-6 h-11 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs border border-emerald-100"
                                     >
                                         More Halal in {place.city} <ChevronRight className="h-4 w-4" />
+                                    </Link>
+                                )}
+
+                                {/* Sidebar Claim CTA for unclaimed places */}
+                                {!isClaimed && (
+                                    <Link
+                                        href={`?claim=true`}
+                                        className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-6 h-11 rounded-xl font-black flex items-center justify-center gap-2 transition-all text-xs uppercase tracking-widest active:scale-95"
+                                    >
+                                        <ShieldCheck className="h-4 w-4" />
+                                        Own This? Claim It
                                     </Link>
                                 )}
                             </div>
