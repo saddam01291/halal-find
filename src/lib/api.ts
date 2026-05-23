@@ -93,20 +93,32 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
         radius_km: 50.0
     });
 
-    if (error) {
-        console.error('Error searching places via RPC:', error);
-        // Guaranteed Universal Fallback
+    if (error || !data || data.length === 0) {
+        if (error) console.error('Error searching places via RPC:', error);
+        
+        // Guaranteed Universal Fallback for typos and errors
         const { data: allData } = await supabase
             .from('places')
             .select(PLACE_LIST_COLUMNS)
             .not('address', 'is', null)
             .neq('address', '')
             .neq('address', 'Address not listed')
-            .limit(500);
+            .limit(1000);
 
         if (!allData) return [];
 
         const cleansedSearch = query.replace(/\s+/g, '').toLowerCase();
+
+        // Subsequence matcher (handles missing letters like "drgapur" for "durgapur")
+        const isFuzzyMatch = (str: string, search: string) => {
+            if (!str) return false;
+            let i = 0, j = 0;
+            while (i < str.length && j < search.length) {
+                if (str[i] === search[j]) j++;
+                i++;
+            }
+            return j === search.length;
+        };
 
         const fuzzyFiltered = allData.filter(p => {
             const nameStr = (p.name || '').replace(/\s+/g, '').toLowerCase();
@@ -114,10 +126,10 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
             const addrStr = (p.address || '').replace(/\s+/g, '').toLowerCase();
             const cuisineStr = (p.cuisine || '').replace(/\s+/g, '').toLowerCase();
 
-            return nameStr.includes(cleansedSearch) ||
-                   cityStr.includes(cleansedSearch) ||
-                   addrStr.includes(cleansedSearch) ||
-                   cuisineStr.includes(cleansedSearch);
+            return isFuzzyMatch(nameStr, cleansedSearch) ||
+                   isFuzzyMatch(cityStr, cleansedSearch) ||
+                   isFuzzyMatch(addrStr, cleansedSearch) ||
+                   isFuzzyMatch(cuisineStr, cleansedSearch);
         });
 
         return fuzzyFiltered.slice(0, 50);
