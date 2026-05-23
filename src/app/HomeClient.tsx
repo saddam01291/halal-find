@@ -229,7 +229,9 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
                     <span className="text-lg">🔒</span> <strong>How to turn on:</strong>
                   </p>
                   <p className="mt-1 ml-7">
-                    Click the lock icon (or settings icon) in your browser's address bar at the top, and change "Location" to <strong>Allow</strong>. Then click Try Again below.
+                    <strong>On Mobile:</strong> Go to your phone's <strong>Settings &gt; Privacy / Location Services</strong>, and allow location access for your browser (Chrome/Safari).<br/>
+                    <strong>On Desktop:</strong> Click the lock icon (🔒) in the address bar and change "Location" to Allow.<br/>
+                    Then click Try Again below.
                   </p>
                 </div>
               </div>
