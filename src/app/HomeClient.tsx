@@ -144,24 +144,40 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
 
           <div className="flex flex-col items-center gap-4 sm:gap-6 mt-6 sm:mt-10 w-full">
             {locationStatus === 'prompt' && (
-              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto px-2 sm:px-0">
-                <Button 
-                  onClick={requestLocation}
-                  size="lg" 
-                  className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-600/20 text-base font-semibold flex items-center justify-center gap-2 transition-all"
-                >
-                  <MapPin className="h-5 w-5" />
-                  Find Near Me
-                </Button>
-                <Link href="/search" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-emerald-600 text-base font-semibold transition-all"
-                  >
-                    Explore Cities →
-                  </Button>
-                </Link>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative animate-in zoom-in-95 duration-300">
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-6">
+                    <MapPin className="h-8 w-8 text-emerald-600" />
+                  </div>
+                  <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
+                    Find Halal Near You
+                  </h3>
+                  <p className="text-center text-slate-500 mb-8">
+                    Allow location access to instantly discover halal restaurants near you — or search manually by city name.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={requestLocation}
+                      className="w-full h-12 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                    >
+                      <MapPin className="h-5 w-5" />
+                      Use My Location
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        clearLocation();
+                        setTimeout(() => {
+                          const el = document.querySelector('input[type="text"]') as HTMLElement;
+                          el?.focus();
+                        }, 100);
+                      }}
+                      variant="outline"
+                      className="w-full h-12 sm:h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-base"
+                    >
+                      Search Manually by Name
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -218,38 +234,32 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
                 <MapPin className="h-8 w-8 text-amber-600" />
               </div>
               <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
-                Location Required
+                Location Blocked
               </h3>
-              <div className="text-center text-slate-600 mb-8">
-                <p>
-                  To show the best halal restaurants near you, please turn on your location. Alternatively, you can search manually by city name.
-                </p>
-              </div>
+              <p className="text-center text-slate-500 mb-8">
+                Location access was denied by your device. Go to your phone's <strong>Settings → Privacy → Location</strong> to allow it, then reload — or just search by city name below.
+              </p>
               <div className="flex flex-col gap-3">
-                <Button 
-                  onClick={requestLocation}
+                <Button
+                  onClick={() => {
+                    clearLocation();
+                    setTimeout(() => {
+                      const el = document.querySelector('input[type="text"]') as HTMLElement;
+                      el?.focus();
+                    }, 100);
+                  }}
                   className="w-full h-12 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base shadow-lg shadow-emerald-500/20"
                 >
-                  Turn on Location
+                  Search by City Name
                 </Button>
-                <Button 
-                  onClick={() => {
-                    const el = document.querySelector('input[type="text"]');
-                    (el as HTMLElement)?.focus();
-                    clearLocation(); // Resets state to prompt so the modal closes
-                  }}
-                  variant="outline" 
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
                   className="w-full h-12 sm:h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-base"
                 >
-                  Search Manually by Name
+                  I've enabled it — Reload
                 </Button>
               </div>
-              <button 
-                onClick={clearLocation}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                ✕
-              </button>
             </div>
           </div>
         )}
