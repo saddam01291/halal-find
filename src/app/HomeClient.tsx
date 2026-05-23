@@ -143,16 +143,16 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
           </p>
 
           <div className="flex flex-col items-center gap-4 sm:gap-6 mt-6 sm:mt-10 w-full">
-            {(locationStatus === 'prompt' || locationStatus === 'denied') && (
+            {locationStatus === 'prompt' && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 flex flex-col items-center gap-6">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
                   <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
                     <MapPin className="h-8 w-8 text-emerald-600" />
                   </div>
                   <div className="text-center">
-                    <h3 className="text-xl font-black text-slate-900 mb-2">Location is Off</h3>
+                    <h3 className="text-xl font-black text-slate-900 mb-2">Find Halal Near You</h3>
                     <p className="text-slate-500 text-sm">
-                      Turn on location to find halal restaurants near you, or search by name.
+                      Allow location access to discover verified halal restaurants nearby, or search manually.
                     </p>
                   </div>
                   <div className="flex flex-col gap-3 w-full">
@@ -160,19 +160,31 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
                       onClick={requestLocation}
                       className="w-full h-13 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-base"
                     >
-                      📍 Turn on Location
+                      📍 Use My Location
                     </Button>
                     <Button
-                      onClick={() => {
-                        clearLocation();
-                        setTimeout(() => (document.querySelector('input') as HTMLElement)?.focus(), 100);
-                      }}
+                      onClick={clearLocation}
                       variant="outline"
                       className="w-full h-13 border-2 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-bold text-base"
                     >
                       🔍 Search Manually
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {locationStatus === 'denied' && (
+              <div className="w-full max-w-xl">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-2xl text-sm">
+                  <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span className="text-amber-700 font-medium">Location blocked.</span>
+                  <button
+                    onClick={requestLocation}
+                    className="ml-auto text-emerald-600 font-bold hover:underline whitespace-nowrap"
+                  >
+                    Try again
+                  </button>
                 </div>
               </div>
             )}
