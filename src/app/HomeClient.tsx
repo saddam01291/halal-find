@@ -143,40 +143,45 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
           </p>
 
           <div className="flex flex-col items-center gap-4 sm:gap-6 mt-6 sm:mt-10 w-full">
-            {locationStatus === 'prompt' && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative animate-in zoom-in-95 duration-300">
-                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-6">
+            {(locationStatus === 'prompt' || locationStatus === 'denied') && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 flex flex-col items-center gap-6">
+                  <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
                     <MapPin className="h-8 w-8 text-emerald-600" />
                   </div>
-                  <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
-                    Find Halal Near You
-                  </h3>
-                  <p className="text-center text-slate-500 mb-8">
-                    Allow location access to instantly discover halal restaurants near you — or search manually by city name.
-                  </p>
-                  <div className="flex flex-col gap-3">
+                  <div className="text-center">
+                    <h3 className="text-xl font-black text-slate-900 mb-2">Location is Off</h3>
+                    <p className="text-slate-500 text-sm">
+                      Turn on location to find halal restaurants near you, or search by name.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3 w-full">
                     <Button
                       onClick={requestLocation}
-                      className="w-full h-12 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                      className="w-full h-13 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-base"
                     >
-                      <MapPin className="h-5 w-5" />
-                      Use My Location
+                      📍 Turn on Location
                     </Button>
                     <Button
                       onClick={() => {
                         clearLocation();
-                        setTimeout(() => {
-                          const el = document.querySelector('input[type="text"]') as HTMLElement;
-                          el?.focus();
-                        }, 100);
+                        setTimeout(() => (document.querySelector('input') as HTMLElement)?.focus(), 100);
                       }}
                       variant="outline"
-                      className="w-full h-12 sm:h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-base"
+                      className="w-full h-13 border-2 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-bold text-base"
                     >
-                      Search Manually by Name
+                      🔍 Search Manually
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {locationStatus === 'loading' && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-600 border-t-transparent" />
+                  <p className="text-slate-700 font-bold">Detecting your location...</p>
                 </div>
               </div>
             )}
@@ -227,42 +232,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
           </div>
         </div>
 
-        {locationStatus === 'denied' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative animate-in zoom-in-95 duration-300">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-amber-100 mb-6">
-                <MapPin className="h-8 w-8 text-amber-600" />
-              </div>
-              <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
-                Location Blocked
-              </h3>
-              <p className="text-center text-slate-500 mb-8">
-                Location access was denied by your device. Go to your phone's <strong>Settings → Privacy → Location</strong> to allow it, then reload — or just search by city name below.
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => {
-                    clearLocation();
-                    setTimeout(() => {
-                      const el = document.querySelector('input[type="text"]') as HTMLElement;
-                      el?.focus();
-                    }, 100);
-                  }}
-                  className="w-full h-12 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base shadow-lg shadow-emerald-500/20"
-                >
-                  Search by City Name
-                </Button>
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                  className="w-full h-12 sm:h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-base"
-                >
-                  I've enabled it — Reload
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+
       </section>
 
       {/* Featured Places */}
