@@ -218,22 +218,12 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
                 <MapPin className="h-8 w-8 text-amber-600" />
               </div>
               <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
-                Location Access Needed
+                Let's find food near you!
               </h3>
-              <div className="text-center text-slate-600 mb-8 space-y-2">
+              <div className="text-center text-slate-600 mb-8">
                 <p>
-                  To find the best halal restaurants near you, please enable location services.
+                  Please allow location access in your phone settings to see the best spots nearby, or just search manually!
                 </p>
-                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 mt-4 text-sm font-medium text-amber-800 text-left">
-                  <p className="flex items-center gap-2">
-                    <span className="text-lg">🔒</span> <strong>How to turn on:</strong>
-                  </p>
-                  <p className="mt-1 ml-7">
-                    <strong>On Mobile:</strong> Go to your phone's <strong>Settings &gt; Privacy / Location Services</strong>, and allow location access for your browser (Chrome/Safari).<br/>
-                    <strong>On Desktop:</strong> Click the lock icon (🔒) in the address bar and change "Location" to Allow.<br/>
-                    Then click Try Again below.
-                  </p>
-                </div>
               </div>
               <div className="flex flex-col gap-3">
                 <Button 

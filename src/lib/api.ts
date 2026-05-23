@@ -25,7 +25,7 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .order('rating', { ascending: false })
         .order('review_count', { ascending: false })
         .order('name', { ascending: true })
-        .limit(200);
+        .limit(1500);
 
     if (error) {
         console.error('Error fetching places:', error);
@@ -88,7 +88,7 @@ export async function searchPlaces(query: string, coords?: {lat: number, lng: nu
             .not('address', 'is', null)
             .neq('address', '')
             .neq('address', 'Address not listed')
-            .limit(1000);
+            .limit(1500);
 
         if (!allData) return [];
 
