@@ -220,9 +220,19 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
               <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
                 Location Access Needed
               </h3>
-              <p className="text-center text-slate-600 mb-8">
-                To find the best halal restaurants near you, please enable location services in your browser settings, or search manually by city/name.
-              </p>
+              <div className="text-center text-slate-600 mb-8 space-y-2">
+                <p>
+                  To find the best halal restaurants near you, please enable location services.
+                </p>
+                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 mt-4 text-sm font-medium text-amber-800 text-left">
+                  <p className="flex items-center gap-2">
+                    <span className="text-lg">🔒</span> <strong>How to turn on:</strong>
+                  </p>
+                  <p className="mt-1 ml-7">
+                    Click the lock icon (or settings icon) in your browser's address bar at the top, and change "Location" to <strong>Allow</strong>. Then click Try Again below.
+                  </p>
+                </div>
+              </div>
               <div className="flex flex-col gap-3">
                 <Button 
                   onClick={() => {
