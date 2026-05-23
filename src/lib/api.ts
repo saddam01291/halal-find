@@ -15,10 +15,23 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .neq('address', '')
         .neq('address', 'Address not listed');
 
-    // We fetch quality/recent places regardless of location.
-    // The frontend (HomeClient) automatically calculates exact distance and sorts them so the nearest are on top.
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    query = query.or(`rating.gt.0,verified.eq.true,created_at.gte.${thirtyDaysAgo}`);
+    if (coords && coords.lat && coords.lng) {
+        // Smart Radar: Look within a 200km bounding box first to ensure nearby places are prioritized
+        // The frontend will do the exact distance sorting, but this guarantees the DB returns local places instead of distant highly-rated ones
+        const radiusKm = 200;
+        const latDelta = radiusKm / 111;
+        const lngDelta = radiusKm / (111 * Math.cos(coords.lat * (Math.PI / 180)));
+
+        query = query
+            .gte('lat', coords.lat - latDelta)
+            .lte('lat', coords.lat + latDelta)
+            .gte('lng', coords.lng - lngDelta)
+            .lte('lng', coords.lng + lngDelta);
+    } else {
+        // We fetch quality/recent places globally if no location is provided
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        query = query.or(`rating.gt.0,verified.eq.true,created_at.gte.${thirtyDaysAgo}`);
+    }
 
     let { data, error } = await query
         .order('verified', { ascending: false })
@@ -26,6 +39,23 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .order('review_count', { ascending: false })
         .order('name', { ascending: true })
         .limit(1500);
+
+    // Global Fallback: If nearby search returned 0, fetch the best globally so the user still sees restaurants
+    if (coords && data && data.length === 0) {
+        const { data: fallbackData } = await supabase
+            .from('places')
+            .select(PLACE_LIST_COLUMNS)
+            .not('address', 'is', null)
+            .neq('address', '')
+            .neq('address', 'Address not listed')
+            .or('rating.gt.0,verified.eq.true')
+            .order('verified', { ascending: false })
+            .order('rating', { ascending: false })
+            .order('review_count', { ascending: false })
+            .order('name', { ascending: true })
+            .limit(200);
+        return fallbackData || [];
+    }
 
     if (error) {
         console.error('Error fetching places:', error);

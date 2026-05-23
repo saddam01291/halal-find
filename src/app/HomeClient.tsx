@@ -212,44 +212,22 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
         </div>
 
         {locationStatus === 'denied' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative animate-in zoom-in-95 duration-300">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-amber-100 mb-6">
-                <MapPin className="h-8 w-8 text-amber-600" />
+          <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 font-bold">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-4 bg-white/80 backdrop-blur-md border border-amber-100 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3 text-amber-700">
+                <div className="p-2 bg-amber-100 rounded-full">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <p className="text-sm">Location is disabled. Search by City above to explore manually.</p>
               </div>
-              <h3 className="text-2xl font-black text-center text-slate-900 mb-2">
-                Let's find food near you!
-              </h3>
-              <div className="text-center text-slate-600 mb-8">
-                <p>
-                  Please allow location access in your phone settings to see the best spots nearby, or just search manually!
-                </p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button 
-                  onClick={() => {
-                    const el = document.querySelector('input[type="text"]');
-                    (el as HTMLElement)?.focus();
-                    clearLocation(); // This resets state to prompt so the modal closes
-                  }}
-                  className="w-full h-12 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-base shadow-lg shadow-emerald-500/20"
-                >
-                  Search Manually
-                </Button>
-                <Button 
-                  onClick={requestLocation}
-                  variant="outline" 
-                  className="w-full h-12 sm:h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-base"
-                >
-                  Try Again
-                </Button>
-              </div>
-              <button 
-                onClick={clearLocation}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              <Button 
+                onClick={requestLocation}
+                variant="outline" 
+                size="sm" 
+                className="bg-amber-600 hover:bg-amber-700 text-white border-0 rounded-xl"
               >
-                ✕
-              </button>
+                Try Again
+              </Button>
             </div>
           </div>
         )}
