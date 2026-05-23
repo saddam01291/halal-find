@@ -63,13 +63,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         // We could also geocode the city to get coords here
     };
 
-    // Auto-request on mount
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-            // Prompt immediately to provide a fast and personalized experience
-            requestLocation();
-        }
-    }, []);
+    // Do NOT auto-request on mount.
+    // We show our own modal first so the user consciously chooses to allow or search manually.
+    // requestLocation() is called only when the user clicks "Use My Location".
 
     const clearLocation = () => {
         setUserCoords(null);
