@@ -134,7 +134,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
         <div className="max-w-4xl w-full space-y-6 sm:space-y-8 relative z-10">
           <h1 className="text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-800 drop-shadow-sm leading-[1.1] sm:leading-[1.15] mb-4">
             Searching for <br className="block sm:hidden" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Halal Food Near Me?</span>
+            <span className="text-emerald-600">Halal Food</span> near by
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-2 font-medium">

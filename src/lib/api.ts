@@ -40,22 +40,7 @@ export async function getPlaces(coords?: {lat: number, lng: number}): Promise<Db
         .order('name', { ascending: true })
         .limit(200);
 
-    // Global Fallback: If nearby search returned 0, fetch the best globally
-    if (coords && data && data.length === 0) {
-        const { data: fallbackData } = await supabase
-            .from('places')
-            .select(PLACE_LIST_COLUMNS)
-            .not('address', 'is', null)
-            .neq('address', '')
-            .neq('address', 'Address not listed')
-            .or('rating.gt.0,verified.eq.true')
-            .order('verified', { ascending: false })
-            .order('rating', { ascending: false })
-            .order('review_count', { ascending: false })
-            .order('name', { ascending: true })
-            .limit(100);
-        return fallbackData || [];
-    }
+    // Nearby results strictly returned without fallback to global
 
     if (error) {
         console.error('Error fetching places:', error);

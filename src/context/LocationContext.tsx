@@ -54,7 +54,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             () => {
                 setLocationStatus('denied');
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
         );
     };
 
@@ -63,23 +63,12 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         // We could also geocode the city to get coords here
     };
 
-    // Auto-request on mount if previously granted
+    // Auto-request on mount
     useEffect(() => {
-        const checkPermissionAndRequest = async () => {
-            if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-                try {
-                    // Check if we already have permission to avoid surprising people with prompts
-                    const status = await navigator.permissions.query({ name: 'geolocation' });
-                    if (status.state === 'granted') {
-                        requestLocation();
-                    }
-                } catch (e) {
-                    // Fallback for browsers that don't support permissions.query
-                    console.log('Permission check not supported, waiting for user click');
-                }
-            }
-        };
-        checkPermissionAndRequest();
+        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+            // Prompt immediately to provide a fast and personalized experience
+            requestLocation();
+        }
     }, []);
 
     const clearLocation = () => {
