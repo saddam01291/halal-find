@@ -34,8 +34,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
     ];
 
+    // Filter: only include clean ASCII slugs, no test/junk entries
+    const ASCII_SLUG = /^[a-z0-9-]+$/;
+    const BLOCKED_SLUGS = new Set(['test']);
+
     citySlugs
-        .filter(city => city.city_slug && city.city_slug.length > 0)
+        .filter(city =>
+            city.city_slug &&
+            city.city_slug.length > 0 &&
+            ASCII_SLUG.test(city.city_slug) &&
+            !BLOCKED_SLUGS.has(city.city_slug)
+        )
         .forEach(city => {
             sitemap.push({
                 url: `${baseUrl}/halal-restaurants-${city.city_slug}`,
@@ -55,8 +64,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     places.forEach(place => {
-        const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
         const slug = `${slugBase}-${place.id}`;
+        // Skip if the slug contains non-ASCII characters (e.g. Arabic city names)
+        if (!ASCII_SLUG.test(slug)) return;
         sitemap.push({
             url: `${baseUrl}/restaurant/${slug}`,
             lastModified: new Date(),
