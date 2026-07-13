@@ -26,9 +26,9 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, reviewCoun
         },
         caution: {
             icon: AlertOctagon,
-            text: 'CAUTION: Unverified',
-            color: 'text-white bg-orange-600 border-orange-500 shadow-orange-200 animate-pulse',
-            description: 'CAUTION: This place was imported from a general directory and currently has NO community reviews regarding Halal status.'
+            text: 'Halal Status Unconfirmed',
+            color: 'text-white bg-orange-500 border-orange-400 shadow-orange-200 animate-pulse',
+            description: 'Halal status not yet confirmed. Insufficient reviews available — verify with the restaurant directly.'
         },
         unverified: {
             icon: HelpCircle,
@@ -52,8 +52,8 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, reviewCoun
 
     let currentStatus = hasActiveReports ? 'reported' : status;
     
-    // If it's unverified and has zero reviews, elevate it to a loud caution
-    if ((currentStatus === 'unverified' || currentStatus === 'osm_import') && reviewCount === 0) {
+    // All unverified places show orange caution badge
+    if (currentStatus === 'unverified' || currentStatus === 'osm_import') {
         currentStatus = 'caution' as any;
     }
 
