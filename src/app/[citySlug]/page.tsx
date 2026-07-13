@@ -75,6 +75,21 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
 
     const restaurants = await getPlacesByCity(cityPage.city_name);
 
+    // Compute live stats from actual fetched data (DB fields may be stale)
+    const liveCount = restaurants.length;
+    const ratedRestaurants = restaurants.filter((r: any) => r.rating && r.rating > 0);
+    const liveAvgRating = ratedRestaurants.length > 0
+        ? Math.round((ratedRestaurants.reduce((sum: number, r: any) => sum + r.rating, 0) / ratedRestaurants.length) * 10) / 10
+        : 0;
+    // Deduplicate cuisines
+    const rawCuisines = (cityPage.top_cuisines || []) as string[];
+    const uniqueCuisines = Array.from(new Set(
+        rawCuisines
+            .flatMap((c: string) => c.split(/[,\/]/g))
+            .map((c: string) => c.trim())
+            .filter(Boolean)
+    ));
+
     // LocalBusiness Schema (List)
     const localBusinessSchema = {
         '@context': 'https://schema.org',
@@ -150,7 +165,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                     <div className="max-w-4xl">
                         <div className="flex items-center gap-3 mb-4">
                             <span className="bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-emerald-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
-                                {cityPage.restaurant_count} Verified Restaurants
+                                {liveCount} Restaurants Listed
                             </span>
                             {cityPage.state && (
                                 <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white/80 px-3 py-1.5 rounded-full text-xs font-bold">
@@ -165,22 +180,22 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             </span>
                         </h1>
                         <p className="text-lg sm:text-xl text-white/70 max-w-2xl leading-relaxed">
-                            Discover {cityPage.restaurant_count} community-verified Halal restaurants in {cityPage.city_name}. Rated {cityPage.avg_rating}/5 average. Find trusted Halal food near you.
+                            Discover {liveCount} community-verified Halal restaurants in {cityPage.city_name}.{liveAvgRating > 0 ? ` Rated ${liveAvgRating}/5 average.` : ''} Find trusted Halal food near you.
                         </p>
                     </div>
 
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-4 mt-10 max-w-lg">
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
-                            <div className="text-2xl font-bold text-emerald-300">{cityPage.restaurant_count}</div>
+                            <div className="text-2xl font-bold text-emerald-300">{liveCount}</div>
                             <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">Restaurants</div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
-                            <div className="text-2xl font-bold text-amber-300">{cityPage.avg_rating}</div>
-                            <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">Avg Rating</div>
+                            <div className="text-2xl font-bold text-amber-300">{liveAvgRating > 0 ? liveAvgRating : 'NEW'}</div>
+                            <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">{liveAvgRating > 0 ? 'Avg Rating' : 'Rating'}</div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
-                            <div className="text-2xl font-bold text-white">{cityPage.top_cuisines?.length || 0}</div>
+                            <div className="text-2xl font-bold text-white">{uniqueCuisines.length || 0}</div>
                             <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">Cuisines</div>
                         </div>
                     </div>
@@ -195,7 +210,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5">
                                 <Utensils className="h-3 w-3" /> Popular Cuisines
                             </span>
-                            {cityPage.top_cuisines.map((cuisine: string) => (
+                            {uniqueCuisines.map((cuisine: string) => (
                                 <span key={cuisine} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-600 whitespace-nowrap">
                                     {cuisine}
                                 </span>
@@ -358,8 +373,15 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
 
                             faqs = faqs.map((faq: {q: string, a: string}) => {
                                 let answer = faq.a;
-                                answer = answer.replace(/\b\d+\s+verified Halal restaurants\b/gi, `${cityPage.restaurant_count} verified Halal restaurants`);
-                                answer = answer.replace(/average rating(?:.*?)is\s+[0-9.]+\/5/gi, `average rating is ${cityPage.avg_rating}/5`);
+                                // Replace stale restaurant count with live count
+                                answer = answer.replace(/\b\d+\s+verified Halal restaurants\b/gi, `${liveCount} verified Halal restaurants`);
+                                answer = answer.replace(/\bCurrently,? we have \d+ verified/gi, `Currently, we have ${liveCount} verified`);
+                                answer = answer.replace(/\b\d+\s+restaurants on our platform\b/gi, `${liveCount} restaurants on our platform`);
+                                // Replace stale average rating with live avg
+                                if (liveAvgRating > 0) {
+                                    answer = answer.replace(/average rating(?:.*?)is\s+[0-9.]+\/5/gi, `average rating is ${liveAvgRating}/5`);
+                                }
+                                // Fix broken grammar
                                 answer = answer.replace(/several top-rated spots is among the top-rated Halal restaurants/gi, 'there are several excellent choices among the top-rated Halal restaurants');
                                 return { q: faq.q, a: answer };
                             });
@@ -393,7 +415,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden sticky top-24">
                             <div className="p-6 border-b border-slate-50">
                                 <h3 className="font-bold text-slate-900">Halal Restaurants in {cityPage.city_name}</h3>
-                                <p className="text-xs text-slate-400 mt-1">{cityPage.restaurant_count} verified spots</p>
+                                <p className="text-xs text-slate-400 mt-1">{liveCount} verified spots</p>
                             </div>
                             <div className="h-56 bg-slate-100 relative">
                                 {restaurants[0]?.lat && restaurants[0]?.lng ? (
@@ -453,7 +475,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             <h3 className="font-bold mb-2">Know a Halal spot in {cityPage.city_name}?</h3>
                             <p className="text-sm text-emerald-100 mb-4 leading-relaxed">Help the community by adding restaurants you trust.</p>
                             <Link
-                                href="/"
+                                href="/add-missing-restaurant"
                                 className="w-full bg-white text-emerald-700 px-6 h-10 rounded-xl font-bold flex items-center justify-center gap-2 text-sm hover:bg-emerald-50 transition-colors"
                             >
                                 Add a Restaurant
