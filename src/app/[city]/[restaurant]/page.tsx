@@ -30,17 +30,9 @@ export async function generateMetadata(
     const description = `Is ${name} halal? ${place.verification_status || 'Unverified'}. Located at ${place.address || 'Location pending'}, ${placeCity}. Read community reviews and check halal status.`;
     const canonicalPath = buildRestaurantUrl(place.city, place.slug || restaurant);
 
-    // Noindex thin pages: unverified imports with 0 reviews and no contact info
-    const isThinPage =
-        (place.verification_status === 'unverified' || place.verification_status === 'osm_import') &&
-        (place.review_count ?? 0) === 0 &&
-        !place.phone &&
-        !place.email;
-
     return {
         title,
         description,
-        ...(isThinPage ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title,
             description,

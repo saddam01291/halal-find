@@ -14,7 +14,8 @@ export async function generateMetadata(
     parent: ResolvingMetadata
 ): Promise<Metadata> {
     const { citySlug } = await params;
-    const slug = citySlug.replace('halal-restaurants-', '');
+    const decodedSlug = decodeURIComponent(citySlug);
+    const slug = decodedSlug.replace('halal-restaurants-', '');
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {
@@ -42,8 +43,15 @@ export async function generateMetadata(
 
 export async function generateStaticParams() {
     const citySlugs = await getAllCitySlugsForSitemap();
+    const ASCII_SLUG = /^[a-z0-9-]+$/;
+    
     return citySlugs
-        .filter(city => city.city_slug && city.city_slug.length > 0 && city.city_slug !== '-')
+        .filter(city => 
+            city.city_slug && 
+            city.city_slug.length > 0 && 
+            city.city_slug !== '-' &&
+            ASCII_SLUG.test(city.city_slug)
+        )
         .map((city) => ({
             citySlug: `halal-restaurants-${city.city_slug}`,
         }));
@@ -51,13 +59,14 @@ export async function generateStaticParams() {
 
 export default async function CityPage({ params }: { params: Promise<{ citySlug: string }> }) {
     const { citySlug } = await params;
+    const decodedSlug = decodeURIComponent(citySlug);
 
     // Only handle slugs that start with 'halal-restaurants-'
-    if (!citySlug.startsWith('halal-restaurants-')) {
+    if (!decodedSlug.startsWith('halal-restaurants-')) {
         notFound();
     }
 
-    const slug = citySlug.replace('halal-restaurants-', '');
+    const slug = decodedSlug.replace('halal-restaurants-', '');
     const cityPage = await getCityPageBySlug(slug);
 
     if (!cityPage) {
