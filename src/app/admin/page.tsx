@@ -690,7 +690,7 @@ function AdminDashboardContent() {
                                                 <Check className="h-3 w-3" /> Verified
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black uppercase tracking-widest">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase tracking-widest">
                                                 Unverified
                                             </span>
                                         )}

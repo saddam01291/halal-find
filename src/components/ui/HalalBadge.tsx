@@ -33,7 +33,7 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, reviewCoun
         unverified: {
             icon: HelpCircle,
             text: 'Unverified',
-            color: 'text-slate-500 bg-slate-100 border-slate-200',
+            color: 'text-white bg-orange-500 border-orange-400 shadow-orange-200',
             description: 'New or unchecked listing. Please verify status with the owner.'
         },
         reported: {
@@ -44,18 +44,13 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, reviewCoun
         },
         osm_import: {
             icon: HelpCircle,
-            text: 'Unverified - OSM Import',
-            color: 'text-slate-500 bg-slate-100 border-slate-200',
-            description: 'Unverified - needs community confirmation.'
+            text: 'Imported Data',
+            color: 'text-white bg-orange-500 border-orange-400 shadow-orange-200',
+            description: 'Data imported from external sources. Needs community confirmation.'
         }
     };
 
     let currentStatus = hasActiveReports ? 'reported' : status;
-    
-    // All unverified places show orange caution badge
-    if (currentStatus === 'unverified' || currentStatus === 'osm_import') {
-        currentStatus = 'caution' as any;
-    }
 
     const config = configs[currentStatus as keyof typeof configs] || configs.unverified;
     const Icon = config.icon;

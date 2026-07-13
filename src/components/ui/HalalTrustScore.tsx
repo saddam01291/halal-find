@@ -55,14 +55,26 @@ export function HalalTrustScore({ status, halalVotes, reportCount, isDisputed, c
             };
         }
 
+        if (status === 'osm_import') {
+            return {
+                label: 'Imported Data',
+                color: 'text-orange-600',
+                bg: 'bg-orange-50',
+                border: 'border-orange-200',
+                icon: HelpCircle,
+                description: 'Data imported from external sources. Halal status needs community confirmation.',
+                level: 'warning'
+            };
+        }
+
         return {
             label: 'Unverified',
-            color: 'text-slate-500',
-            bg: 'bg-slate-50',
-            border: 'border-slate-200',
+            color: 'text-orange-600',
+            bg: 'bg-orange-50',
+            border: 'border-orange-200',
             icon: HelpCircle,
             description: 'This place has not been verified yet. Use your own discretion and ask the owner.',
-            level: 'none'
+            level: 'warning'
         };
     };
 
