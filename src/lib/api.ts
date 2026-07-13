@@ -3,7 +3,7 @@
 import { supabase } from './supabase';
 import { DbPlace, DbProfile, DbVerificationRequest, DbReview } from './supabase';
 
-export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol, phone, email';
+export const PLACE_LIST_COLUMNS = 'id, created_at, slug, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol, phone, email';
 
 // ─── Places ───────────────────────────────────────────────────────────────────
 
