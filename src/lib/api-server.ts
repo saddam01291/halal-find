@@ -42,19 +42,43 @@ export async function getPlaceByIdServer(id: string): Promise<DbPlace | null> {
 }
 
 export async function getPlaceByCityAndSlugServer(city: string, slug: string): Promise<DbPlace | null> {
+    // Decode city from URL format back to plain text (e.g., "new-delhi" → "new delhi")
+    const cityText = city.replace(/-/g, ' ');
+
+    // 1. Primary lookup: slug + city (case-insensitive)
     const { data, error } = await supabaseServer
         .from('places')
         .select('*')
-        .ilike('city', city.replace(/-/g, ' '))
+        .ilike('city', cityText)
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
 
-    if (error) {
-        console.error('Error fetching place by city and slug:', error);
-        return null;
-    }
-    return data || null;
+    if (data) return data;
+
+    if (error) console.error('Error fetching place by city+slug:', error);
+
+    // 2. Fallback: slug only (in case city stored differently)
+    const { data: bySlugOnly, error: slugError } = await supabaseServer
+        .from('places')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle();
+
+    if (bySlugOnly) return bySlugOnly;
+    if (slugError) console.error('Error fetching place by slug only:', slugError);
+
+    // 3. Last resort: try matching by name derived from slug
+    const nameGuess = slug.replace(/-/g, ' ');
+    const { data: byName } = await supabaseServer
+        .from('places')
+        .select('*')
+        .ilike('city', cityText)
+        .ilike('name', nameGuess)
+        .maybeSingle();
+
+    return byName || null;
 }
+
 
 export async function getReviewsForPlaceServer(placeId: string): Promise<any[]> {
     const { data, error } = await supabaseServer

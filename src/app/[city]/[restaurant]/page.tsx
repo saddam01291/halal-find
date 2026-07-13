@@ -28,7 +28,7 @@ export async function generateMetadata(
     const placeCity = place.city || 'India';
     const title = `${name} — Halal Restaurant in ${placeCity} | FindHalal`;
     const description = `Is ${name} halal? ${place.verification_status || 'Unverified'}. Located at ${place.address || 'Location pending'}, ${placeCity}. Read community reviews and check halal status.`;
-    const canonicalPath = buildRestaurantUrl(place.city, place.slug);
+    const canonicalPath = buildRestaurantUrl(place.city, place.slug || restaurant);
 
     // Noindex thin pages: unverified imports with 0 reviews and no contact info
     const isThinPage =
@@ -105,13 +105,15 @@ export default async function RestaurantPage({
     const name = place.name || 'Unnamed Place';
     const placeCity = place.city || 'India';
     const cuisine = place.cuisine || 'Halal Food';
-    const canonicalPath = buildRestaurantUrl(place.city, place.slug);
+    const canonicalPath = buildRestaurantUrl(place.city, place.slug || restaurant);
 
     // Redirect non-canonical URLs to the canonical path (e.g. old slugs, wrong city prefix)
+    // Only redirect when we have a real slug to avoid redirect loops
     const currentPath = `/${city}/${restaurant}`;
-    if (currentPath !== canonicalPath) {
+    if (place.slug && currentPath !== canonicalPath) {
         redirect(canonicalPath);
     }
+
 
     const isClaimed = place.verification_status === 'owner_verified';
     const autoOpenClaim = claim === 'true' && !isClaimed;
