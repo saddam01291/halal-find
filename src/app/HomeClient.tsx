@@ -566,7 +566,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
       <section className="py-12 sm:py-20 bg-white text-center">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Not sure if a place is halal?</h2>
         <p className="text-slate-600 max-w-2xl mx-auto mb-6">Search it. Report it. Help the community.</p>
-        <p className="mt-4"><Link href="/for-businesses"><span className="text-emerald-600 underline">Add a missing restaurant</span></Link></p>
+        <p className="mt-4"><Link href="/add-missing-restaurant"><span className="text-emerald-600 underline">Add a missing restaurant</span></Link></p>
       </section>
 
       <LoginModal
