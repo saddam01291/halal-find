@@ -32,7 +32,7 @@ export function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider">For Business</h4>
                         <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm mb-6 sm:mb-8">
-                            <li><Link href="#" className="inline-flex items-center gap-2 text-emerald-400 font-bold hover:text-emerald-300 transition-colors"><PlusCircle className="h-4 w-4" /> List your restaurant (Free)</Link></li>
+                            <li><Link href="/for-businesses" className="inline-flex items-center gap-2 text-emerald-400 font-bold hover:text-emerald-300 transition-colors"><PlusCircle className="h-4 w-4" /> List your restaurant (Free)</Link></li>
                         </ul>
                         
                         <h4 className="text-white font-semibold mb-3 sm:mb-4 text-xs sm:text-sm uppercase tracking-wider">Stay Updated</h4>

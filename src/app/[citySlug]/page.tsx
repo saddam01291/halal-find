@@ -207,11 +207,19 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                     Community Insights: Halal Dining in {cityPage.city_name}
                                 </h2>
                                 <div className="prose prose-slate prose-lg max-w-none leading-relaxed">
-                                    {cityPage.ai_intro.split('\n').filter(Boolean).map((paragraph: string, i: number) => (
-                                        <p key={i} className="text-slate-600 leading-[1.8]"
-                                           dangerouslySetInnerHTML={{ __html: paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>') }}
-                                        />
-                                    ))}
+                                    {cityPage.ai_intro.split('\n').filter(Boolean).map((paragraph: string, i: number) => {
+                                        let cleaned = paragraph
+                                            .replace(/Mughlai\/Biryani/gi, '')
+                                            .replace(/Mughlai \/ Biryani/gi, '')
+                                            .replace(/,\s*,/g, ',')
+                                            .replace(/,\s*and\b/gi, ' and')
+                                            .replace(/,\s*\./g, '.');
+                                        return (
+                                            <p key={i} className="text-slate-600 leading-[1.8]"
+                                               dangerouslySetInnerHTML={{ __html: cleaned.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>') }}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </article>
                         ) : (
@@ -273,11 +281,24 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                                 )}
                                             </div>
                                             <div className="p-5">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1">{place.name}</h3>
-                                                    <span className="flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-100">
-                                                        {place.rating || 0} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                                                    </span>
+                                                <div className="flex justify-between items-start mb-2 gap-2">
+                                                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1" title={place.name}>
+                                                        {place.name}
+                                                        {place.address && (
+                                                            <span className="text-sm font-normal text-slate-500 ml-1.5">
+                                                                - {place.address.split(',')[0]}
+                                                            </span>
+                                                        )}
+                                                    </h3>
+                                                    {place.rating && place.rating > 0 ? (
+                                                        <span className="flex-shrink-0 flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-100">
+                                                            {place.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex-shrink-0 flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-100">
+                                                            NEW
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-slate-400 mb-3">
                                                     <MapPin className="h-3 w-3" />
@@ -311,7 +332,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
 
                         {/* FAQ Section */}
                         {(() => {
-                            const faqs = (cityPage.ai_faq && cityPage.ai_faq.length > 0) ? cityPage.ai_faq : [
+                            let faqs = (cityPage.ai_faq && cityPage.ai_faq.length > 0) ? cityPage.ai_faq : [
                                 {
                                     q: `Are there many halal restaurants in ${cityPage.city_name}?`,
                                     a: `Yes, ${cityPage.city_name} has a growing number of halal options. Currently, we have ${cityPage.restaurant_count} verified halal restaurants listed in our directory, covering various cuisines and price ranges.`
@@ -325,6 +346,14 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                     a: `Based on our data, ${cityPage.top_cuisines?.slice(0, 3).join(', ') || 'various cuisines'} are highly popular among the halal dining community in ${cityPage.city_name}.`
                                 }
                             ];
+
+                            faqs = faqs.map((faq: {q: string, a: string}) => {
+                                let answer = faq.a;
+                                answer = answer.replace(/\b\d+\s+verified Halal restaurants\b/gi, `${cityPage.restaurant_count} verified Halal restaurants`);
+                                answer = answer.replace(/average rating(?:.*?)is\s+[0-9.]+\/5/gi, `average rating is ${cityPage.avg_rating}/5`);
+                                answer = answer.replace(/several top-rated spots is among the top-rated Halal restaurants/gi, 'there are several excellent choices among the top-rated Halal restaurants');
+                                return { q: faq.q, a: answer };
+                            });
 
                             return (
                                 <section className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
@@ -386,7 +415,9 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-100">
                                 <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Also Explore</h3>
                                 <div className="space-y-3">
-                                    {cityPage.nearby_cities.map((nc: { name: string; slug: string; count: number }) => {
+                                    {cityPage.nearby_cities
+                                        .filter((nc: any) => nc.slug !== cityPage.city_slug && nc.name !== cityPage.city_name)
+                                        .map((nc: { name: string; slug: string; count: number }) => {
                                         const cityLink = `/halal-restaurants-${nc.slug}`;
                                         return (
                                             <Link
