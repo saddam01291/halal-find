@@ -18,13 +18,13 @@ export async function generateMetadata({ params }: { params: Promise<{ citySlug:
     }
 
     return {
-        title: cityPage.meta_title || `Halal Restaurants in ${cityPage.city_name} | FindHalalOnly`,
+        title: cityPage.meta_title || `Halal Restaurants in ${cityPage.city_name} | FindHalal`,
         description: cityPage.meta_description || `Find verified Halal restaurants in ${cityPage.city_name}. Community-rated and owner-verified.`,
         openGraph: {
             title: cityPage.meta_title || `Halal Restaurants in ${cityPage.city_name}`,
             description: cityPage.meta_description || '',
-            url: `https://findhalalonly.com/halal-restaurants-${slug}`,
-            siteName: 'FindHalalOnly',
+            url: `https://www.findhalalonly.com/halal-restaurants-${slug}`,
+            siteName: 'Find Halal',
             type: 'website',
         },
         twitter: {
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ citySlug:
             description: cityPage.meta_description || '',
         },
         alternates: {
-            canonical: `https://findhalalonly.com/halal-restaurants-${slug}`,
+            canonical: `/halal-restaurants-${slug}`,
         },
     };
 }
@@ -67,7 +67,7 @@ export default async function CityLayout({
         '@type': 'ItemList',
         name: `Halal Restaurants in ${cityPage.city_name}`,
         description: cityPage.meta_description || `Verified Halal restaurants in ${cityPage.city_name}`,
-        url: `https://findhalalonly.com/halal-restaurants-${slug}`,
+        url: `https://www.findhalalonly.com/halal-restaurants-${slug}`,
         numberOfItems: restaurants.length,
         itemListElement: restaurants.slice(0, 30).map((place, index) => ({
             '@type': 'ListItem',
@@ -75,13 +75,13 @@ export default async function CityLayout({
             item: {
                 '@type': 'Restaurant',
                 name: place.name,
-                url: `https://findhalalonly.com/restaurant/${place.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${place.id}`,
+                url: `https://www.findhalalonly.com/${(place.city || 'india').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}/${(place.name || 'restaurant').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${place.id}`,
                 address: {
                     '@type': 'PostalAddress',
                     streetAddress: place.address || '',
                     addressLocality: place.city || cityPage.city_name,
                     addressRegion: cityPage.state || '',
-                    addressCountry: cityPage.country || '',
+                    addressCountry: cityPage.country || 'IN',
                 },
                 servesCuisine: ['Halal', place.cuisine || 'Halal Food'],
                 ...(place.lat && place.lng ? {

@@ -18,6 +18,7 @@ export type HalalStatus = string;
 
 export interface DbPlace {
     id: string;
+    slug?: string;
     name: string;
     cuisine: string;
     address: string;

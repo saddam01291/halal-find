@@ -1,15 +1,16 @@
-import { ShieldCheck, CheckCircle2, HelpCircle, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, HelpCircle, AlertTriangle, AlertOctagon } from 'lucide-react';
 import { VerificationStatus } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 interface HalalBadgeProps {
     status?: VerificationStatus;
     hasActiveReports?: boolean;
+    reviewCount?: number;
     className?: string;
     showText?: boolean;
 }
 
-export function HalalBadge({ status = 'unverified', hasActiveReports, className, showText = true }: HalalBadgeProps) {
+export function HalalBadge({ status = 'unverified', hasActiveReports, reviewCount, className, showText = true }: HalalBadgeProps) {
     const configs = {
         owner_verified: {
             icon: ShieldCheck,
@@ -23,6 +24,12 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, className,
             color: 'text-white bg-blue-600 border-blue-500 shadow-blue-100',
             description: 'Multiple community members have confirmed the Halal status.'
         },
+        caution: {
+            icon: AlertOctagon,
+            text: 'CAUTION: Unverified',
+            color: 'text-white bg-orange-600 border-orange-500 shadow-orange-200 animate-pulse',
+            description: 'CAUTION: This place was imported from a general directory and currently has NO community reviews regarding Halal status.'
+        },
         unverified: {
             icon: HelpCircle,
             text: 'Unverified',
@@ -32,7 +39,7 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, className,
         reported: {
             icon: AlertTriangle,
             text: 'Non-Halal Warning',
-            color: 'text-white bg-orange-600 border-orange-500 shadow-orange-100',
+            color: 'text-white bg-red-600 border-red-500 shadow-red-100',
             description: 'Warning: This place has reports of not serving Halal food.'
         },
         osm_import: {
@@ -43,8 +50,14 @@ export function HalalBadge({ status = 'unverified', hasActiveReports, className,
         }
     };
 
-    const currentStatus = hasActiveReports ? 'reported' : status;
-    const config = configs[currentStatus] || configs.unverified;
+    let currentStatus = hasActiveReports ? 'reported' : status;
+    
+    // If it's unverified and has zero reviews, elevate it to a loud caution
+    if ((currentStatus === 'unverified' || currentStatus === 'osm_import') && reviewCount === 0) {
+        currentStatus = 'caution' as any;
+    }
+
+    const config = configs[currentStatus as keyof typeof configs] || configs.unverified;
     const Icon = config.icon;
 
     return (

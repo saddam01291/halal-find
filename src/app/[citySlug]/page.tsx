@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Star, ChevronRight, ChevronDown, ShieldCheck, Utensils, Users, ArrowRight, Home } from 'lucide-react';
-import { getValidImageUrl } from '@/lib/utils';
+import { getValidImageUrl, buildRestaurantUrl } from '@/lib/utils';
 import { Metadata, ResolvingMetadata } from 'next';
 
 export const dynamic = 'force-static';
@@ -30,12 +30,12 @@ export async function generateMetadata(
         openGraph: {
             title,
             description,
-            url: `/halal-restaurants-${slug}`,
+            url: `/halal-restaurants-${cityPage.city_slug}`,
             siteName: 'Find Halal',
             type: 'website',
         },
         alternates: {
-            canonical: `/halal-restaurants-${slug}`,
+            canonical: `/halal-restaurants-${cityPage.city_slug}`,
         }
     };
 }
@@ -81,7 +81,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
             item: {
                 '@type': 'Restaurant',
                 name: place.name,
-                url: `https://findhalalonly.com/restaurant/${slug}`,
+                url: `https://www.findhalalonly.com/restaurant/${slug}`,
                 address: {
                     '@type': 'PostalAddress',
                     streetAddress: place.address || '',
@@ -108,7 +108,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                 '@type': 'ListItem',
                 position: 2,
                 name: `Halal Restaurants in ${cityPage.city_name}`,
-                item: `https://www.findhalalonly.com/halal-restaurants-${slug}`
+                item: `https://www.findhalalonly.com/halal-restaurants-${cityPage.city_slug}`
             }
         ]
     };
@@ -253,10 +253,9 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 {restaurants.map((place, index) => {
-                                    const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                                    const slug = `${slugBase}-${place.id}`;
+                                    const restaurantUrl = buildRestaurantUrl(place.city, place.slug);
                                     return (
-                                    <Link href={`/restaurant/${slug}`} key={place.id} className="group">
+                                    <Link href={restaurantUrl} key={place.id} className="group">
                                         <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:-translate-y-1">
                                             <div className="h-48 bg-slate-100 relative overflow-hidden">
                                                 <Image

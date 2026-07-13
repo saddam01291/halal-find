@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getPlaces, searchPlaces, getPopularCities } from '@/lib/api';
 import { DbPlace } from '@/lib/supabase';
-import { getDistance, getValidImageUrl, getAreaFromAddress, calculateRelevance } from '@/lib/utils';
+import { getDistance, getValidImageUrl, getAreaFromAddress, calculateRelevance, buildRestaurantUrl } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation } from '@/context/LocationContext';
 import { HalalBadge } from '@/components/ui/HalalBadge';
@@ -328,11 +328,10 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {sortedPlaces.slice(0, 30).map((place, index) => {
               const distance = place.distance;
-              const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-              const slug = `${slugBase}-${place.id}`;
+              const restaurantUrl = buildRestaurantUrl(place.city, place.slug);
 
               return (
-                <Link href={`/restaurant/${slug}`} key={`${place.id}-${index}`} className="group">
+                <Link href={restaurantUrl} key={`${place.id}-${index}`} className="group">
                   <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 overflow-hidden hover:border-emerald-200 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 sm:hover:-translate-y-2 active:scale-[0.98] sm:active:scale-100">
                     <div className="h-44 sm:h-64 bg-slate-100 relative overflow-hidden">
                       <Image
@@ -357,7 +356,7 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
                     </div>
                     <div className="p-5 sm:p-8">
                       <div className="flex justify-between items-start mb-3 sm:mb-4">
-                        <HalalBadge status={place.verification_status} className="text-[9px] sm:text-[11px] px-2.5 sm:px-4 py-1 sm:py-1.5" />
+                        <HalalBadge status={place.verification_status} reviewCount={place.review_count} className="text-[9px] sm:text-[11px] px-2.5 sm:px-4 py-1 sm:py-1.5" />
                         <span className="flex items-center gap-1 sm:gap-1.5 bg-amber-500/10 text-amber-700 text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-amber-500/20 uppercase tracking-wider">
                           {place.rating || 0} ★
                         </span>

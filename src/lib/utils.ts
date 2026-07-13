@@ -176,6 +176,23 @@ export function getAreaFromAddress(address?: string | null, city?: string | null
 }
 
 /**
+ * Builds the canonical URL path for a restaurant detail page.
+ * Format: /{city-slug}/{restaurant-slug}
+ * Example: /kolkata/paradise-biryani
+ */
+export function buildRestaurantUrl(city: string | null | undefined, slug: string | null | undefined): string {
+    const citySlug = (city || 'india')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    const finalSlug = (slug || 'restaurant')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    return `/${citySlug}/${finalSlug}`;
+}
+
+/**
  * Calculates a relevance score for a place based on proximity, rating, and verification.
  * Heavily weights Quality (Verified/Rated) to ensure trusted results stay at the top.
  */

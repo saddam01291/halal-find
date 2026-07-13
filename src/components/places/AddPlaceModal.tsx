@@ -19,22 +19,14 @@ interface AddPlaceModalProps {
 
 interface DuplicateMatch {
     id: string;
+    slug?: string;
     name: string;
     city: string;
     address: string;
     verification_status?: string;
 }
 
-function buildRestaurantSlug(id: string, name: string): string {
-    const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .substring(0, 50);
-    return `${slug}-${id}`;
-}
+import { buildRestaurantUrl } from '@/lib/utils';
 
 export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
     const { user } = useAuth();
@@ -179,7 +171,7 @@ export function AddPlaceModal({ isOpen, onClose }: AddPlaceModalProps) {
 
     const isDuplicateBlocked = !!duplicateMatch;
     const restaurantUrl = duplicateMatch?.id
-        ? `/restaurant/${buildRestaurantSlug(duplicateMatch.id, duplicateMatch.name)}`
+        ? buildRestaurantUrl(duplicateMatch.city, duplicateMatch.slug)
         : null;
 
     return (

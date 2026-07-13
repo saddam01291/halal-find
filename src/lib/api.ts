@@ -230,7 +230,7 @@ export async function checkDuplicatePlace(name: string, city: string, address?: 
     // Fetch all places with a case-insensitive exact name match
     const { data: places, error } = await supabase
         .from('places')
-        .select('id, name, city, address, verification_status')
+        .select('id, slug, name, city, address, verification_status')
         .ilike('name', trimmedName);
 
     if (error || !places || places.length === 0) return null;

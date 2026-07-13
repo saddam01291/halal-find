@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getAllPlaceIdsForSitemap, getAllCitySlugsForSitemap } from '@/lib/api-server';
+import { buildRestaurantUrl } from '@/lib/utils';
 import { BLOG_POSTS } from '@/lib/blog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -64,15 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     places.forEach(place => {
-        const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '');
-        const slug = `${slugBase}-${place.id}`;
-        // Skip if the slug contains non-ASCII characters (e.g. Arabic city names)
-        if (!ASCII_SLUG.test(slug)) return;
+        // Skip if there's no slug (e.g. before DB migration is run)
+        if (!place.slug) return;
+        
+        const urlPath = buildRestaurantUrl(place.city, place.slug);
+        
         sitemap.push({
-            url: `${baseUrl}/restaurant/${slug}`,
+            url: `${baseUrl}${urlPath}`,
             lastModified: new Date(),
             changeFrequency: 'weekly',
             priority: 0.8,

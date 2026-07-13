@@ -7,7 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 // Create a standard server/node client for data fetching in Server Components
 export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey);
 
-export const PLACE_LIST_COLUMNS = 'id, created_at, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol, phone, email';
+export const PLACE_LIST_COLUMNS = 'id, created_at, slug, name, cuisine, address, city, rating, review_count, image, lat, lng, tags, verified, verification_status, halal_status, halal_source, serves_alcohol, phone, email';
 
 export async function getPlacesServer(): Promise<DbPlace[]> {
     const { data, error } = await supabaseServer
@@ -36,6 +36,21 @@ export async function getPlaceByIdServer(id: string): Promise<DbPlace | null> {
 
     if (error) {
         console.error('Error fetching place on server:', error);
+        return null;
+    }
+    return data || null;
+}
+
+export async function getPlaceByCityAndSlugServer(city: string, slug: string): Promise<DbPlace | null> {
+    const { data, error } = await supabaseServer
+        .from('places')
+        .select('*')
+        .ilike('city', city.replace(/-/g, ' '))
+        .eq('slug', slug)
+        .single();
+
+    if (error) {
+        console.error('Error fetching place by city and slug:', error);
         return null;
     }
     return data || null;
@@ -93,10 +108,10 @@ export async function searchPlacesServer(query: string, coords?: { lat: number; 
     
     return fuzzyFiltered.slice(0, 100);
 }
-export async function getAllPlaceIdsForSitemap(): Promise<{ id: string, name: string | null, city: string | null, created_at: string | null }[]> {
+export async function getAllPlaceIdsForSitemap(): Promise<{ id: string, name: string | null, city: string | null, slug: string | null, created_at: string | null }[]> {
     const { data, error } = await supabaseServer
         .from('places')
-        .select('id, name, city, created_at')
+        .select('id, name, city, slug, created_at')
         .order('created_at', { ascending: false })
         .limit(50000);
 

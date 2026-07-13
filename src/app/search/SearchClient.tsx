@@ -9,7 +9,7 @@ import { Star, MapPin, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { getValidImageUrl, getDistance, getAreaFromAddress, calculateRelevance } from '@/lib/utils';
+import { getValidImageUrl, getDistance, getAreaFromAddress, calculateRelevance, buildRestaurantUrl } from '@/lib/utils';
 import { HalalBadge } from '@/components/ui/HalalBadge';
 import { useLocation } from '@/context/LocationContext';
 
@@ -247,11 +247,10 @@ export function SearchClient({ initialPlaces, initialQuery }: SearchClientProps)
                             )}
 
                             {sortedPlaces.slice(0, 100).map((place, index) => {
-                                const slugBase = `${place.name || 'restaurant'} ${place.city || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                                const slug = `${slugBase}-${place.id}`;
+                                const restaurantUrl = buildRestaurantUrl(place.city, place.slug);
                                 return (
                                 <Link
-                                    href={`/restaurant/${slug}`}
+                                    href={restaurantUrl}
                                     key={`${place.id}-${index}`}
                                     className="flex gap-3 sm:gap-5 p-3 sm:p-5 hover:bg-slate-50 transition-all group border-b border-slate-50 last:border-0 active:bg-slate-50"
                                 >
