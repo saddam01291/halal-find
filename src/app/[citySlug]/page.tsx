@@ -6,8 +6,7 @@ import { MapPin, Star, ChevronRight, ChevronDown, ShieldCheck, Utensils, Users, 
 import { getValidImageUrl, buildRestaurantUrl } from '@/lib/utils';
 import { Metadata, ResolvingMetadata } from 'next';
 
-export const dynamic = 'force-static';
-export const revalidate = 86400; // Revalidate every 24 hours
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(
     { params }: { params: Promise<{ citySlug: string }> },
