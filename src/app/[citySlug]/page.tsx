@@ -34,6 +34,20 @@ export async function generateMetadata(
             url: `/halal-restaurants-${cityPage.city_slug}`,
             siteName: 'Find Halal',
             type: 'website',
+            images: [
+                {
+                    url: cityPage.image_url || `https://www.findhalalonly.com/og-default.jpg`,
+                    width: 1200,
+                    height: 630,
+                    alt: `Halal Restaurants in ${cityPage.city_name}`
+                }
+            ]
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [cityPage.image_url || `https://www.findhalalonly.com/og-default.jpg`],
         },
         alternates: {
             canonical: `/halal-restaurants-${cityPage.city_slug}`,
@@ -137,6 +151,36 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
         ]
     };
 
+    // FAQ Schema
+    const faqSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: (() => {
+            const faqs = (cityPage.ai_faq && cityPage.ai_faq.length > 0) ? cityPage.ai_faq : [
+                {
+                    q: `Are there many halal restaurants in ${cityPage.city_name}?`,
+                    a: `Yes, ${cityPage.city_name} has a growing number of halal options. Currently, we have ${liveCount} verified halal restaurants listed in our directory, covering various cuisines like ${uniqueCuisines.slice(0, 3).join(', ')}.`
+                },
+                {
+                    q: `How do you verify the halal status of restaurants in ${cityPage.city_name}?`,
+                    a: `We use a community-driven verification process. Users can report halal status, upload photos of certifications, and provide detailed reviews. Our "Halal Trust Score" helps you understand the reliability of each listing.`
+                },
+                {
+                    q: `What are the most popular halal cuisines in ${cityPage.city_name}?`,
+                    a: `Based on our data, ${uniqueCuisines.slice(0, 3).join(', ') || 'various cuisines'} are highly popular among the halal dining community in ${cityPage.city_name}.`
+                }
+            ];
+            return faqs.map((faq: {q: string, a: string}) => ({
+                '@type': 'Question',
+                name: faq.q,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: faq.a
+                }
+            }));
+        })()
+    };
+
     return (
         <div className="min-h-screen bg-slate-50">
             <script
@@ -146,6 +190,10 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
             {/* Hero Section */}
             <section className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-slate-900 text-white overflow-hidden">
@@ -253,18 +301,18 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                 </h2>
                                 <div className="prose prose-slate prose-lg max-w-none leading-relaxed space-y-4">
                                     <p className="text-slate-600 leading-[1.8]">
-                                        Discovering verified <strong>halal restaurants in {cityPage.city_name}</strong> has never been easier. 
-                                        As the community grows, we are seeing a significant increase in the number of dining spots catering to halal dietary requirements. 
-                                        From traditional cuisines to modern fusion, the <strong>{cityPage.city_name}</strong> food scene offers a diverse range of options for local residents and visitors alike.
+                                        Discovering verified <strong>halal restaurants in {cityPage.city_name}</strong> is easier than ever. 
+                                        Based on our latest community data, there are {liveCount} active halal dining spots here.
+                                        {uniqueCuisines.length > 0 && ` The local halal food scene is incredibly diverse, with strong representations of ${uniqueCuisines.slice(0, 3).join(', ')} cuisines.`}
                                     </p>
                                     <p className="text-slate-600 leading-[1.8]">
                                         At FindHalal, we prioritize transparency. Every listing in our <strong>{cityPage.city_name} halal directory</strong> is subject to community verification. 
-                                        Whether you're looking for a quick bite or a fine dining experience, you can trust our platform to provide up-to-date information on halal status, 
-                                        community ratings, and detailed reviews from fellow diners who share your values.
+                                        {ratedRestaurants.length > 0 && ` Currently, the top-rated spots boast an impressive average rating of ${liveAvgRating}/5.`} 
+                                        You can trust our platform to provide up-to-date information on halal status and community ratings.
                                     </p>
                                     <p className="text-slate-600 leading-[1.8]">
-                                        Explore our curated list of <strong>{cityPage.restaurant_count} verified spots</strong> below to find your next meal with confidence. 
-                                        Don't forget to contribute back to the community by sharing your own experiences and photos!
+                                        Explore our curated list of <strong>{liveCount} verified spots</strong> below to find your next meal with confidence. 
+                                        {ratedRestaurants.length > 0 && ` For instance, highly-rated places like ${ratedRestaurants[0]?.name} are setting the standard for halal dining in the city.`}
                                     </p>
                                 </div>
                             </article>
@@ -284,7 +332,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                {restaurants.map((place, index) => {
+                                {ratedRestaurants.filter((r: any) => r.rating > 0).sort((a: any, b: any) => b.rating - a.rating).map((place: any, index: number) => {
                                     const restaurantUrl = buildRestaurantUrl(place.city, place.slug);
                                     return (
                                     <Link href={restaurantUrl} key={place.id} className="group">
@@ -359,7 +407,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                             let faqs = (cityPage.ai_faq && cityPage.ai_faq.length > 0) ? cityPage.ai_faq : [
                                 {
                                     q: `Are there many halal restaurants in ${cityPage.city_name}?`,
-                                    a: `Yes, ${cityPage.city_name} has a growing number of halal options. Currently, we have ${cityPage.restaurant_count} verified halal restaurants listed in our directory, covering various cuisines and price ranges.`
+                                    a: `Yes, ${cityPage.city_name} has a growing number of halal options. Currently, we have ${liveCount} verified halal restaurants listed in our directory, covering various cuisines like ${uniqueCuisines.slice(0, 3).join(', ')}.`
                                 },
                                 {
                                     q: `How do you verify the halal status of restaurants in ${cityPage.city_name}?`,
@@ -367,7 +415,7 @@ export default async function CityPage({ params }: { params: Promise<{ citySlug:
                                 },
                                 {
                                     q: `What are the most popular halal cuisines in ${cityPage.city_name}?`,
-                                    a: `Based on our data, ${cityPage.top_cuisines?.slice(0, 3).join(', ') || 'various cuisines'} are highly popular among the halal dining community in ${cityPage.city_name}.`
+                                    a: `Based on our data, ${uniqueCuisines.slice(0, 3).join(', ') || 'various cuisines'} are highly popular among the halal dining community in ${cityPage.city_name}.`
                                 }
                             ];
 

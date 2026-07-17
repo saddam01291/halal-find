@@ -1,0 +1,4 @@
+Restaurant Name,City,Old Status,New Status,Reason
+"Test","Test","Full Halal / unverified / false","Unknown / unverified / false","Claims halal/verified but lacks certificate, source, or >= 5 reviews"
+"Food Cloud","New Delhi","Full Halal / unverified / false","Unknown / unverified / false","Claims halal/verified but lacks certificate, source, or >= 5 reviews"
+"Cream Bell","Noida","Full Halal / unverified / false","Unknown / unverified / false","Claims halal/verified but lacks certificate, source, or >= 5 reviews"

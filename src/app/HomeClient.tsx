@@ -80,6 +80,10 @@ export function HomeClient({ initialPlaces, initialPopularCities }: HomeClientPr
       filtered = filtered.filter(p => getAreaFromAddress(p.address, p.city) === selectedArea);
     }
 
+    if (!activeSearchTerm && !userCoords) {
+      filtered = filtered.filter(p => p.rating && p.rating > 0 && p.review_count && p.review_count > 0);
+    }
+
     const scoredPlaces = filtered.map(p => {
       const { score, distance } = calculateRelevance(
         p as any,
