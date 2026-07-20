@@ -28,7 +28,9 @@ async function geocodeGoogle(address) {
                 lat: result.geometry.location.lat,
                 lng: result.geometry.location.lng,
                 formatted_address: result.formatted_address,
-                city: result.address_components.find(c => c.types.includes('locality'))?.long_name || ''
+                city: result.address_components.find(c => c.types.includes('locality'))?.long_name || 
+                      result.address_components.find(c => c.types.includes('sublocality'))?.long_name || 
+                      result.address_components.find(c => c.types.includes('administrative_area_level_2'))?.long_name || ''
             };
         }
     } catch (error) {}
@@ -48,7 +50,7 @@ async function geocodeNominatim(query) {
                 lat: parseFloat(result.lat),
                 lng: parseFloat(result.lon),
                 formatted_address: result.display_name,
-                city: result.address?.city || result.address?.town || ''
+                city: result.address?.city || result.address?.town || result.address?.village || result.address?.county || result.address?.state_district || ''
             };
         }
     } catch (error) {}
@@ -128,11 +130,21 @@ async function run() {
 
         const geo = await geocode(item.name, item.address, targetCity);
         if (geo) {
+            let finalCity = geo.city;
+            if (finalCity && finalCity.endsWith(' District')) {
+                finalCity = finalCity.replace(' District', '');
+            }
+            if (!finalCity) {
+                 console.log(`⚠️  Could not determine city for ${item.name}. Skipping to prevent data contamination.`);
+                 skippedCount++;
+                 continue;
+            }
+
             const { error } = await supabase.from('places').insert({
                 name: item.name,
                 cuisine: "Halal", 
                 address: geo.formatted_address || item.address,
-                city: geo.city || targetCity,
+                city: finalCity,
                 rating: 0,
                 review_count: 0,
                 lat: geo.lat,
