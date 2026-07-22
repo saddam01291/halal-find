@@ -164,6 +164,7 @@ export interface SeoCityPage {
     nearby_cities: { name: string; slug: string; count: number }[];
     avg_rating: number;
     generated_at: string;
+    image_url: string | null;
 }
 
 export async function getCityPageBySlug(slug: string): Promise<SeoCityPage | null> {
